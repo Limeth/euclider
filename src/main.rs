@@ -57,7 +57,11 @@ impl<U: Universe> Simulation<U> {
         let time = Instant::now() - start_instant;
 
         self.universe.render(&mut frame, &time);
-        frame.finish();
+
+        match frame.finish() {
+            Err(error) => panic!("An error occured while swapping the OpenGL buffers: {:?}", error),
+            _ => (),
+        }
     }
 
     fn update(&mut self) -> Result<(), Event> {

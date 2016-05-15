@@ -60,7 +60,7 @@ impl<U: Universe> Simulation<U> {
         frame.finish();
     }
 
-    fn update(&mut self) -> Result<(), ()> {
+    fn update(&mut self) -> Result<(), Event> {
         let delta: Duration;
         let now = Instant::now();
 
@@ -70,17 +70,10 @@ impl<U: Universe> Simulation<U> {
             delta = now - self.last_updated_instant.unwrap();
         }
 
+        let result = self.context.update(self.facade.as_mut().unwrap());
         self.universe.update(&delta);
 
-        if self.context.pressed_keys.iter()
-            .any(|&tuple| tuple.1.is_some() && tuple.1.unwrap() == VirtualKeyCode::Escape) {
-            return Result::Err(());
-        }
-
-        println!("{:?}", self.context);
-
-        self.context.update(self.facade.as_mut().unwrap());
-        Result::Ok(())
+        result
     }
 
     fn builder() -> SimulationBuilder<U> {
@@ -129,7 +122,7 @@ impl SimulationContext {
         &self.pressed_mouse_buttons
     }
 
-    pub fn update(&mut self, facade: &mut GlutinFacade) {
+    pub fn update(&mut self, facade: &mut GlutinFacade) -> Result<(), Event> {
         for event in facade.poll_events() {
             match event {
                 Event::KeyboardInput(state, character, virtual_code) => {
@@ -141,16 +134,32 @@ impl SimulationContext {
                             self.pressed_keys.remove_if(|tuple: &(u8, Option<VirtualKeyCode>)| {
                                 tuple.0 == character
                             });
+                            if virtual_code.map_or(false, |virtual_code| {
+                                virtual_code == VirtualKeyCode::Escape
+                            }) {
+                                return Err(event);
+                            }
                         },
                     };
                 },
                 Event::MouseInput(state, button) => {
-
+                    match state {
+                        ElementState::Pressed => {
+                            self.pressed_mouse_buttons.insert(button);
+                        },
+                        ElementState::Released => {
+                            self.pressed_mouse_buttons.remove(&button);
+                        },
+                    }
+                },
+                Event::Closed => {
+                    return Err(event);
                 },
                 _ => (),
             }
             print_type_of(&event);
-        }
+        };
+        Ok(())
     }
 }
 

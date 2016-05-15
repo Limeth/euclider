@@ -4,3 +4,5 @@ version = "0.1.0"
 authors = ["Jakub Hlusička <jakub.hlusicka@email.cz>"]
 
 [dependencies]
+glium = "0.*"
+sdl2 = "0.*"

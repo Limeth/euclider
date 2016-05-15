@@ -2,7 +2,7 @@ use std::time::Duration;
 use glium::Surface;
 
 pub trait Universe {
-    fn render(&self, surface: &mut Surface, time: &Duration);
+    fn render<S: Surface>(&self, surface: &mut S, time: &Duration);
     fn update(&mut self, delta_time: &Duration);
 }
 
@@ -19,7 +19,7 @@ impl Universe3D {
 }
 
 impl Universe for Universe3D {
-    fn render(&self, surface: &mut Surface, time: &Duration) {
+    fn render<S: Surface>(&self, surface: &mut S, time: &Duration) {
 
     }
 

@@ -50,6 +50,7 @@ matrix:
     # - os: osx
     #   rust: stable
     #   env: TARGET=i686-apple-darwin
+    #   sudo: required
     # - os: linux
     #   rust: stable
     #   env: TARGET=i686-unknown-linux-gnu
@@ -58,15 +59,19 @@ matrix:
     #       packages: &i686_unknown_linux_gnu
     #         # Cross compiler and cross compiled C libraries
     #         - gcc-multilib
+    #   sudo: required
     # - os: osx
     #   rust: stable
     #   env: TARGET=x86_64-apple-darwin
+    #   sudo: required
     # - os: linux
     #   rust: stable
     #   env: TARGET=x86_64-unknown-linux-gnu
+    #   sudo: required
     # - os: linux
     #   rust: stable
     #   env: TARGET=x86_64-unknown-linux-musl
+    #   sudo: required
     # # Beta channel
     # - os: linux
     #   rust: beta
@@ -87,21 +92,26 @@ matrix:
     # - os: osx
     #   rust: beta
     #   env: TARGET=i686-apple-darwin
+    #   sudo: required
     # - os: linux
     #   rust: beta
     #   env: TARGET=i686-unknown-linux-gnu
     #   addons:
     #     apt:
     #       packages: *i686_unknown_linux_gnu
+    #   sudo: required
     # - os: osx
     #   rust: beta
     #   env: TARGET=x86_64-apple-darwin
+    #   sudo: required
     # - os: linux
     #   rust: beta
     #   env: TARGET=x86_64-unknown-linux-gnu
+    #   sudo: required
     # - os: linux
     #   rust: beta
     #   env: TARGET=x86_64-unknown-linux-musl
+    #   sudo: required
     # Nightly channel
     - os: linux
       rust: nightly
@@ -122,21 +132,26 @@ matrix:
     - os: osx
       rust: nightly
       env: TARGET=i686-apple-darwin
+      sudo: required
     - os: linux
       rust: nightly
       env: TARGET=i686-unknown-linux-gnu
+      sudo: required
       addons:
         apt:
           packages: *i686_unknown_linux_gnu
     - os: osx
       rust: nightly
       env: TARGET=x86_64-apple-darwin
+      sudo: required
     - os: linux
       rust: nightly
       env: TARGET=x86_64-unknown-linux-gnu
+      sudo: required
     - os: linux
       rust: nightly
       env: TARGET=x86_64-unknown-linux-musl
+      sudo: required
 
 before_install:
   - export PATH="$PATH:$HOME/.cargo/bin"

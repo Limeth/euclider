@@ -56,7 +56,7 @@ impl<U: Universe> Simulation<U> {
         let start_instant = self.start_instant.unwrap();
         let time = Instant::now() - start_instant;
 
-        self.universe.render(&mut frame, &time);
+        self.universe.render(&mut frame, &time, &self.context);
 
         match frame.finish() {
             Err(error) => panic!("An error occured while swapping the OpenGL buffers: {:?}", error),
@@ -75,7 +75,7 @@ impl<U: Universe> Simulation<U> {
         }
 
         let result = self.context.update(self.facade.as_mut().unwrap());
-        self.universe.update(&delta);
+        self.universe.update(&delta, &self.context);
 
         result
     }
@@ -161,14 +161,12 @@ impl SimulationContext {
                 },
                 _ => (),
             }
-            print_type_of(&event);
         };
         Ok(())
     }
 }
 
 fn main() {
-    println!("Hello, world!");
     let simulation = Simulation::builder()
         .universe(Box::new(Universe3D::new()))
         .build();

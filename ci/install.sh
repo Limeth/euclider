@@ -55,11 +55,11 @@ main() {
     configure_cargo
 
     # TODO if you need to install extra stuff add it here
-    sudo dpkg --add-architecture i386
+    # sudo dpkg --add-architecture i386
     echo ARCHITECTURES:
     dpkg --print-foreign-architectures
-    sudo apt-get install libc6:i386
-    sudo apt-get install ia32-libs
+    sudo apt-get install -y libc6:i386
+    sudo apt-get install -y ia32-libs
 }
 
 main

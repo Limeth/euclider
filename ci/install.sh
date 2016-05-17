@@ -59,8 +59,8 @@ main() {
     echo ARCHITECTURES:
     dpkg --print-foreign-architectures
     sudo apt-get install -y libc6:i386
-    sudo apt-get install -y ia32-libs-multiarch
     sudo apt-get install -y ia32-libs
+    sudo apt-get -fy install
 }
 
 main

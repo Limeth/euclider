@@ -113,45 +113,45 @@ matrix:
     #   env: TARGET=x86_64-unknown-linux-musl
     #   sudo: required
     # Nightly channel
-    - os: linux
-      rust: nightly
-      env: TARGET=aarch64-unknown-linux-gnu
-      dist: trusty
-      sudo: required
-      addons:
-        apt:
-          packages: *aarch64_unknown_linux_gnu
-    - os: linux
-      rust: nightly
-      env: TARGET=armv7-unknown-linux-gnueabihf
-      sudo: required
-      addons:
-        apt:
-          # Use the same packages the stable version uses
-          packages: *armv7_unknown_linux_gnueabihf
-    - os: osx
-      rust: nightly
-      env: TARGET=i686-apple-darwin
-      sudo: required
-    - os: linux
-      rust: nightly
-      env: TARGET=i686-unknown-linux-gnu
-      sudo: required
-      addons:
-        apt:
-          packages: *i686_unknown_linux_gnu
-    - os: osx
-      rust: nightly
-      env: TARGET=x86_64-apple-darwin
-      sudo: required
+    # - os: linux
+    #   rust: nightly
+    #   env: TARGET=aarch64-unknown-linux-gnu
+    #   dist: trusty
+    #   sudo: required
+    #   addons:
+    #     apt:
+    #       packages: *aarch64_unknown_linux_gnu
+    # - os: linux
+    #   rust: nightly
+    #   env: TARGET=armv7-unknown-linux-gnueabihf
+    #   sudo: required
+    #   addons:
+    #     apt:
+    #       # Use the same packages the stable version uses
+    #       packages: *armv7_unknown_linux_gnueabihf
+    # - os: osx
+    #   rust: nightly
+    #   env: TARGET=i686-apple-darwin
+    #   sudo: required
+    # - os: linux
+    #   rust: nightly
+    #   env: TARGET=i686-unknown-linux-gnu
+    #   sudo: required
+    #   addons:
+    #     apt:
+    #       packages: *i686_unknown_linux_gnu
+    # - os: osx
+    #   rust: nightly
+    #   env: TARGET=x86_64-apple-darwin
+    #   sudo: required
     - os: linux
       rust: nightly
       env: TARGET=x86_64-unknown-linux-gnu
       sudo: required
-    - os: linux
-      rust: nightly
-      env: TARGET=x86_64-unknown-linux-musl
-      sudo: required
+    # - os: linux
+    #   rust: nightly
+    #   env: TARGET=x86_64-unknown-linux-musl
+    #   sudo: required
 
 before_install:
   - export PATH="$PATH:$HOME/.cargo/bin"

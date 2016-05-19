@@ -48,12 +48,12 @@ pub trait Traceable {
     fn trace(&self) -> Rgba;
 }
 
-pub trait Locatable<P: NumPoint<i32>> {
+pub trait Locatable<P: NumPoint<f32>> {
     fn get_location(&self) -> P;
     fn set_location(&mut self, location: P);
 }
 
-pub trait Rotatable<P: NumVector<i32>> {
+pub trait Rotatable<P: NumVector<f32>> {
     fn get_rotation(&self) -> P;
     fn set_rotation(&mut self, location: P);
 }

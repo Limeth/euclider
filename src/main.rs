@@ -1,5 +1,6 @@
 #![feature(core_intrinsics)]
 
+extern crate nalgebra as na;
 extern crate glium;
 mod universe;
 pub mod util;
@@ -7,6 +8,7 @@ pub mod util;
 use std::collections::HashSet;
 use std::time::Instant;
 use std::time::Duration;
+use na::*;
 use glium::DisplayBuild;
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::glutin::VirtualKeyCode;
@@ -108,6 +110,8 @@ impl<U: Universe> SimulationBuilder<U> {
 pub struct SimulationContext {
     pressed_keys: HashSet<(u8, Option<VirtualKeyCode>)>,
     pressed_mouse_buttons: HashSet<MouseButton>,
+    mouse: Point2<i32>,
+    delta_mouse: Point2<i32>,
 }
 
 impl SimulationContext {
@@ -115,18 +119,29 @@ impl SimulationContext {
         SimulationContext {
             pressed_keys: HashSet::new(),
             pressed_mouse_buttons: HashSet::new(),
+            mouse: na::origin(),
+            delta_mouse: na::origin(),
         }
     }
 
-    pub fn get_pressed_keys(&self) -> &HashSet<(u8, Option<VirtualKeyCode>)> {
+    pub fn pressed_keys(&self) -> &HashSet<(u8, Option<VirtualKeyCode>)> {
         &self.pressed_keys
     }
 
-    pub fn get_pressed_mouse_buttons(&self) -> &HashSet<MouseButton> {
+    pub fn pressed_mouse_buttons(&self) -> &HashSet<MouseButton> {
         &self.pressed_mouse_buttons
     }
 
+    pub fn delta_mouse(&self) -> Point2<i32> {
+        self.delta_mouse
+    }
+
+    fn reset_delta_mouse(&mut self) {
+        self.delta_mouse = na::origin();
+    }
+
     pub fn update(&mut self, facade: &mut GlutinFacade) -> Result<(), Event> {
+        self.reset_delta_mouse();
         for event in facade.poll_events() {
             match event {
                 Event::KeyboardInput(state, character, virtual_code) => {
@@ -155,6 +170,19 @@ impl SimulationContext {
                             self.pressed_mouse_buttons.remove(&button);
                         },
                     }
+                },
+                Event::MouseMoved(x, y) => {
+                    let window = facade.get_window().unwrap();
+                    let window_size = window.get_inner_size_pixels().unwrap();
+                    let center_x = window_size.0 as i32 / 2;
+                    let center_y = window_size.1 as i32 / 2;
+
+                    self.delta_mouse.x = self.mouse.x - x;
+                    self.delta_mouse.y = self.mouse.y - y;
+                    self.mouse.x = x;
+                    self.mouse.y = y;
+
+                    window.set_cursor_position(center_x, center_y).expect("Could not reset the cursor position.");
                 },
                 Event::Closed => {
                     return Err(event);

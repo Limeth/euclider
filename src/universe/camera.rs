@@ -24,7 +24,7 @@ impl Camera {
 
 impl Updatable for Camera {
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext) {
-        
+        println!("delta_mouse: {:?}", context.delta_mouse);
     }
 }
 

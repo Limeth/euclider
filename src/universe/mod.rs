@@ -22,7 +22,7 @@ pub trait Universe {
     }
 
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext) {
-
+        self.camera_mut().update(delta_time, context);
     }
 }
 

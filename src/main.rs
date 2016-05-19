@@ -14,7 +14,7 @@ use glium::glutin::MouseButton;
 use glium::glutin::ElementState;
 use glium::glutin::Event;
 use universe::Universe;
-use universe::Universe3D;
+use universe::d3::Universe3D;
 use util::RemoveIf;
 
 pub struct Simulation<U: Universe> {

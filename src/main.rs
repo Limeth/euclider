@@ -111,7 +111,7 @@ pub struct SimulationContext {
     pressed_keys: HashSet<(u8, Option<VirtualKeyCode>)>,
     pressed_mouse_buttons: HashSet<MouseButton>,
     mouse: Point2<i32>,
-    delta_mouse: Point2<i32>,
+    delta_mouse: Vector2<i32>,
 }
 
 impl SimulationContext {
@@ -120,7 +120,7 @@ impl SimulationContext {
             pressed_keys: HashSet::new(),
             pressed_mouse_buttons: HashSet::new(),
             mouse: na::origin(),
-            delta_mouse: na::origin(),
+            delta_mouse: na::zero(),
         }
     }
 
@@ -132,12 +132,12 @@ impl SimulationContext {
         &self.pressed_mouse_buttons
     }
 
-    pub fn delta_mouse(&self) -> Point2<i32> {
+    pub fn delta_mouse(&self) -> Vector2<i32> {
         self.delta_mouse
     }
 
     fn reset_delta_mouse(&mut self) {
-        self.delta_mouse = na::origin();
+        self.delta_mouse = na::zero();
     }
 
     pub fn update(&mut self, facade: &mut GlutinFacade) -> Result<(), Event> {

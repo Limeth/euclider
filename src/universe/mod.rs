@@ -19,6 +19,8 @@ pub trait Universe {
     fn render<S: Surface>(&self, surface: &mut S, time: &Duration, context: &SimulationContext) {
         let (width, height) = surface.get_dimensions();
         surface.clear_color(0.0, 0.0, 1.0, 1.0);
+
+        // TODO: Render stuff
     }
 
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext) {
@@ -30,10 +32,18 @@ pub struct Rgba {
     data: [u8; 4],
 }
 
+impl Rgba {
+    fn new(red: u8, green: u8, blue: u8, alpha: u8) -> Rgba {
+        Rgba {
+            data: [red, green, blue, alpha],
+        }
+    }
+}
+
 pub trait Entity {
-    fn as_updateable(&mut self) -> &mut Updatable;
+    fn as_updatable(&mut self) -> Option<&mut Updatable>;
     // fn as_drawable<T: Drawable>(&mut self) -> &mut T;
-    fn as_traceable(&mut self) -> &mut Traceable;
+    fn as_traceable(&mut self) -> Option<&mut Traceable>;
 }
 
 pub trait Updatable {

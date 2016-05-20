@@ -1,9 +1,9 @@
 extern crate nalgebra as na;
-extern crate palette;
+extern crate image;
 
 use std::time::Duration;
 use self::na::*;
-use self::palette::Rgba;
+use self::image::Rgba;
 use universe::Entity;
 use universe::Locatable;
 use universe::Rotatable;
@@ -53,8 +53,10 @@ impl Updatable for Camera {
 
 /// TODO: Remove this, because it's not really needed. Just for testing.
 impl Traceable for Camera {
-    fn trace(&self) -> Rgba {
-        Rgba::new(0.0, 1.0, 0.0, 1.0)
+    fn trace(&self) -> Rgba<u8> {
+        Rgba {
+            data: [0u8, 255u8, 0u8, 255u8]
+        }
     }
 }
 

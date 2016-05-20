@@ -33,7 +33,11 @@ pub trait Universe {
 
     fn trace(&self, screen_x: i32, screen_y: i32) -> Rgb<u8> {
         Rgb {
-            data: [255u8, 0u8, 0u8],
+            data: [
+                (self.camera().rotation().x * 255.0) as u8,
+                (self.camera().rotation().y * 255.0) as u8,
+                (self.camera().rotation().z * 255.0) as u8
+            ],
         }
     }
 
@@ -85,11 +89,13 @@ pub trait Traceable {
 }
 
 pub trait Locatable<P: NumPoint<f32>> {
-    fn get_location(&self) -> P;
+    fn location_mut(&mut self) -> &mut P;
+    fn location(&self) -> &P;
     fn set_location(&mut self, location: P);
 }
 
 pub trait Rotatable<P: NumVector<f32>> {
-    fn get_rotation(&self) -> P;
+    fn rotation_mut(&mut self) -> &mut P;
+    fn rotation(&self) -> &P;
     fn set_rotation(&mut self, location: P);
 }

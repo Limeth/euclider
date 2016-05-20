@@ -15,6 +15,7 @@ use glium::glutin::VirtualKeyCode;
 use glium::glutin::MouseButton;
 use glium::glutin::ElementState;
 use glium::glutin::Event;
+use glium::glutin::CursorState;
 use universe::Universe;
 use universe::d3::Universe3D;
 use util::RemoveIf;
@@ -38,6 +39,9 @@ impl<U: Universe> Simulation<U> {
             .with_title(format!("Hello world"))
             .build_glium()
             .unwrap();
+
+        facade.get_window().unwrap().set_cursor_state(CursorState::Hide);
+
         self.facade = Some(facade);
         self.start_instant = Some(Instant::now());
 

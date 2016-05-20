@@ -13,8 +13,11 @@ use self::glium::backend::Facade;
 use self::image::Rgba;
 use self::image::DynamicImage;
 use self::image::GenericImage;
+use self::glium::BlitTarget;
+use self::glium::texture::RawImage2d;
 use self::glium::texture::Texture2dDataSource;
 use self::glium::texture::PixelValue;
+use self::glium::uniforms::MagnifySamplerFilter;
 use ::SimulationContext;
 use universe::camera::Camera;
 
@@ -26,16 +29,27 @@ pub trait Universe {
     fn entities(&self) -> &Vec<Box<Entity>>;
     fn set_entities(&mut self, entities: Vec<Box<Entity>>);
 
-    fn render<F: Facade, S: Surface>(&self, facade: &mut F, surface: &mut S, time: &Duration, context: &SimulationContext) {
+    fn render<F: Facade, S: Surface>(&self, facade: &F, surface: &mut S, time: &Duration, context: &SimulationContext) {
         let (width, height) = surface.get_dimensions();
         surface.clear_color(0.0, 0.0, 1.0, 1.0);
 
         // let buffer: Vec<Vec<Rgba<u8>>> = Vec::new();
         // buffer.into_raw();
-        let buffer: DynamicImage = DynamicImage::new_rgba8(width, height);
+        let mut buffer: DynamicImage = DynamicImage::new_rgba8(width, height);
         buffer.put_pixel(0, 0, self.camera().trace());
         // let texture: SrgbTexture2d = SrgbTexture2d::new(facade, buffer);
-        let texture = Texture2d::new(facade, buffer);
+        // let texture = Texture2d::new(facade, buffer);
+        let image = RawImage2d::from_raw_rgba_reversed(buffer.raw_pixels(), buffer.dimensions());
+        let texture = Texture2d::new(facade, image).unwrap();
+        let image_surface = texture.as_surface();
+        let blit_target = BlitTarget {
+            left: 0,
+            bottom: 0,
+            width: width as i32,
+            height: height as i32,
+        };
+
+        image_surface.blit_whole_color_to(surface, &blit_target, MagnifySamplerFilter::Nearest);
     }
 
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext) {

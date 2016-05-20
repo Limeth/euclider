@@ -1,10 +1,14 @@
 extern crate nalgebra as na;
+extern crate palette;
+extern crate glium;
 pub mod d3;
 mod camera;
 
 use std::time::Duration;
 use self::na::*;
 use glium::Surface;
+use self::palette::Rgb;
+use self::palette::Rgba;
 use ::SimulationContext;
 use universe::camera::Camera;
 
@@ -25,18 +29,6 @@ pub trait Universe {
 
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext) {
         self.camera_mut().update(delta_time, context);
-    }
-}
-
-pub struct Rgba {
-    data: [u8; 4],
-}
-
-impl Rgba {
-    fn new(red: u8, green: u8, blue: u8, alpha: u8) -> Rgba {
-        Rgba {
-            data: [red, green, blue, alpha],
-        }
     }
 }
 

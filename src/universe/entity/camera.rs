@@ -67,7 +67,7 @@ impl Entity<Point3<f32>, Vector3<f32>> for Camera {
         Some(self)
     }
 
-    fn as_traceable(&mut self) -> Option<&mut Traceable<Point3<f32>>> {
+    fn as_traceable(&mut self) -> Option<&mut Traceable<Point3<f32>, Vector3<f32>>> {
         None
     }
 }

@@ -10,18 +10,19 @@ use SimulationContext;
 
 pub trait Entity<P: NumPoint<f32>, V: NumVector<f32>> {
     fn as_updatable(&mut self) -> Option<&mut Updatable>;
-    fn as_traceable(&mut self) -> Option<&mut Traceable<P>>;
+    fn as_traceable(&mut self) -> Option<&mut Traceable<P, V>>;
 }
 
-pub trait Shape {
+pub trait Shape<P: NumPoint<f32>, V: NumVector<f32>> {
+    fn get_normal_at(&self, point: P) -> V;
+    fn is_point_inside(&self, point: P) -> bool;
+}
+
+pub trait Material<P: NumPoint<f32>, V: NumVector<f32>> {
 
 }
 
-pub trait Material {
-
-}
-
-pub trait Surface {
+pub trait Surface<P: NumPoint<f32>, V: NumVector<f32>> {
 
 }
 
@@ -29,12 +30,12 @@ pub trait Updatable {
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext);
 }
 
-pub trait Traceable<P: NumPoint<f32>> {
+pub trait Traceable<P: NumPoint<f32>, V: NumVector<f32>> {
     fn trace(&self) -> Rgba<u8>;
-    fn is_point_inside(&self, point: P);
-    fn shape(&self) -> &Shape;
-    fn material(&self) -> &Option<Box<&Material>>;
-    fn surface(&self) -> Option<Box<&Surface>>;
+    fn is_point_inside(&self, point: P) -> bool;
+    fn shape(&self) -> &Box<Shape<P, V>>;
+    fn material(&self) -> &Option<Box<Material<P, V>>>;
+    fn surface(&self) -> &Option<Box<Surface<P, V>>>;
 }
 
 pub trait Locatable<P: NumPoint<f32>> {

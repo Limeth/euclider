@@ -34,6 +34,7 @@ impl Camera {
         }
     }
 
+    // TODO: Optimize - compute the step_yaw/step_pitch variables lazily and cache them
     pub fn get_ray_vector(&self, screen_x: i32, screen_y: i32, screen_width: i32, screen_height: i32) -> Vector3<f32> {
         let screen_width = screen_width as f32;
         let screen_height = screen_height as f32;

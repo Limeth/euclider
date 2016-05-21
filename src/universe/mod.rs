@@ -2,26 +2,25 @@ extern crate nalgebra as na;
 extern crate image;
 extern crate glium;
 pub mod d3;
-mod camera;
+mod entity;
 
 use std::time::Duration;
 use self::na::*;
 use self::glium::Surface;
-use self::glium::texture::SrgbTexture2d;
 use self::glium::texture::Texture2d;
 use self::glium::backend::Facade;
 use self::image::Rgb;
-use self::image::Rgba;
 use self::image::Pixel;
 use self::image::DynamicImage;
 use self::image::GenericImage;
 use self::glium::BlitTarget;
 use self::glium::texture::RawImage2d;
-use self::glium::texture::Texture2dDataSource;
-use self::glium::texture::PixelValue;
 use self::glium::uniforms::MagnifySamplerFilter;
-use ::SimulationContext;
-use universe::camera::Camera;
+use SimulationContext;
+use universe::entity::camera::Camera;
+use universe::entity::Entity;
+use universe::entity::Locatable;
+use universe::entity::Updatable;
 
 pub trait Universe {
     fn camera_mut(&mut self) -> &mut Camera;
@@ -68,34 +67,4 @@ pub trait Universe {
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext) {
         self.camera_mut().update(delta_time, context);
     }
-}
-
-pub trait Entity {
-    fn as_updatable(&mut self) -> Option<&mut Updatable>;
-    // fn as_drawable<T: Drawable>(&mut self) -> &mut T;
-    fn as_traceable(&mut self) -> Option<&mut Traceable>;
-}
-
-pub trait Updatable {
-    fn update(&mut self, delta_time: &Duration, context: &SimulationContext);
-}
-
-// pub trait Drawable {
-//     fn render<S: Surface>(&self, surface: &mut S, time: &Duration, context: &SimulationContext);
-// }
-
-pub trait Traceable {
-    fn trace(&self) -> Rgba<u8>;
-}
-
-pub trait Locatable<P: NumPoint<f32>> {
-    fn location_mut(&mut self) -> &mut P;
-    fn location(&self) -> &P;
-    fn set_location(&mut self, location: P);
-}
-
-pub trait Rotatable<P: NumVector<f32>> {
-    fn rotation_mut(&mut self) -> &mut P;
-    fn rotation(&self) -> &P;
-    fn set_rotation(&mut self, location: P);
 }

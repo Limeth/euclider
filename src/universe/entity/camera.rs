@@ -7,11 +7,11 @@ use std::time::Duration;
 use self::na::*;
 use self::image::Rgba;
 use glium::glutin::VirtualKeyCode;
-use universe::Entity;
-use universe::Locatable;
-use universe::Rotatable;
-use universe::Updatable;
-use universe::Traceable;
+use universe::entity::Entity;
+use universe::entity::Locatable;
+use universe::entity::Rotatable;
+use universe::entity::Updatable;
+use universe::entity::Traceable;
 use SimulationContext;
 
 #[derive(Clone, Copy, PartialEq)]

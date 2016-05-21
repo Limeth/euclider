@@ -3,9 +3,9 @@ extern crate image;
 
 use self::image::Rgb;
 use self::na::*;
-use universe::camera::Camera;
+use universe::entity::camera::Camera;
 use universe::Universe;
-use universe::Entity;
+use universe::entity::Entity;
 
 pub struct Universe3D {
     camera: Camera,

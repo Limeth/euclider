@@ -30,33 +30,28 @@ pub trait Universe {
     fn entities_mut(&mut self) -> &mut Vec<Box<Entity>>;
     fn entities(&self) -> &Vec<Box<Entity>>;
     fn set_entities(&mut self, entities: Vec<Box<Entity>>);
+    fn trace(&self, location: &Point3<f32>, rotation: &Vector3<f32>) -> Rgb<u8>;
 
-    fn trace(&self, screen_x: i32, screen_y: i32, screen_width: i32, screen_height: i32) -> Rgb<u8> {
+    fn trace_screen_point(&self, screen_x: i32, screen_y: i32, screen_width: i32, screen_height: i32) -> Rgb<u8> {
         let camera = self.camera();
         let vector = camera.get_ray_vector(screen_x, screen_y, screen_width, screen_height);
-        // TODO: Do something with the vector.
 
-        Rgb {
-            data: [
-                (self.camera().rotation().x * 255.0) as u8,
-                (self.camera().rotation().y * 255.0) as u8,
-                (self.camera().rotation().z * 255.0) as u8
-            ],
-        }
+        self.trace(camera.location(), &vector)
     }
 
     fn render<F: Facade, S: Surface>(&self, facade: &F, surface: &mut S, time: &Duration, context: &SimulationContext) {
         let (width, height) = surface.get_dimensions();
-        println!("{}x{}", width, height);
         let mut buffer: DynamicImage = DynamicImage::new_rgb8(width, height);
 
+        // TODO: This loop takes a long time!
         for x in 0 .. width {
             for y in 0 .. height {
-                buffer.put_pixel(x, y, self.trace(x as i32, y as i32, width as i32, height as i32).to_rgba())
+                buffer.put_pixel(x, y, self.trace_screen_point(x as i32, y as i32, width as i32, height as i32).to_rgba())
             }
         }
 
         // Convert into an OpenGL texture and draw the result
+        // TODO: This next method takes a long time!
         let image = RawImage2d::from_raw_rgb_reversed(buffer.raw_pixels(), buffer.dimensions());
         let texture = Texture2d::new(facade, image).unwrap();
         let image_surface = texture.as_surface();

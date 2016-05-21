@@ -1,3 +1,8 @@
+extern crate nalgebra as na;
+extern crate image;
+
+use self::image::Rgb;
+use self::na::*;
 use universe::camera::Camera;
 use universe::Universe;
 use universe::Entity;
@@ -17,6 +22,16 @@ impl Universe3D {
 }
 
 impl Universe for Universe3D {
+    fn trace(&self, location: &Point3<f32>, rotation: &Vector3<f32>) -> Rgb<u8> {
+        Rgb {
+            data: [
+                ((rotation.x + 1.0) * 255.0 / 2.0) as u8,
+                ((rotation.y + 1.0) * 255.0 / 2.0) as u8,
+                ((rotation.z + 1.0) * 255.0 / 2.0) as u8,
+            ],
+        }
+    }
+
     fn camera_mut(&mut self) -> &mut Camera {
         &mut self.camera
     }

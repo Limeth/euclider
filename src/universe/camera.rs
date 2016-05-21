@@ -1,5 +1,6 @@
 extern crate nalgebra as na;
 extern crate image;
+extern crate std;
 
 use std::collections::HashSet;
 use std::time::Duration;
@@ -19,6 +20,7 @@ pub struct Camera {
     rotation: Vector3<f32>,
     mouse_sensitivity: f32,
     speed: f32,
+    fov: u8,
 }
 
 impl Camera {
@@ -28,7 +30,28 @@ impl Camera {
             rotation: Vector3::new(1f32, 0f32, 0f32),
             mouse_sensitivity: 0.01,
             speed: 1.0,
+            fov: 90,
         }
+    }
+
+    pub fn get_ray_vector(&self, screen_x: i32, screen_y: i32, screen_width: i32, screen_height: i32) -> Vector3<f32> {
+        /*
+         * The formula to get the step yaw is the following:
+         * step_yaw =
+         * */
+        let screen_width = screen_width as f32;
+        let screen_height = screen_height as f32;
+        let fov_rad = std::f32::consts::PI * (self.fov as f32) / 180.0;
+
+        let step_angle_partial = (fov_rad / 2.0).tan() / (screen_width * screen_width + screen_height * screen_height).sqrt();
+        let step_yaw = 2.0 * (screen_width * step_angle_partial).atan() / screen_width;
+        let step_pitch = 2.0 * (screen_height * step_angle_partial).atan() / screen_height;
+        let yaw = (screen_x as f32 - screen_width / 2.0) * step_yaw;
+        let pitch = (screen_y as f32 - screen_height / 2.0) * step_pitch;
+        let quaternion = UnitQuaternion::new_with_euler_angles(0f32, yaw, pitch);
+        let vector = quaternion.rotate(&self.rotation);
+
+        vector
     }
 
     fn update_rotation(&mut self, context: &SimulationContext) {

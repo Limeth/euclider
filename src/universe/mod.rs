@@ -31,7 +31,11 @@ pub trait Universe {
     fn entities(&self) -> &Vec<Box<Entity>>;
     fn set_entities(&mut self, entities: Vec<Box<Entity>>);
 
-    fn trace(&self, screen_x: i32, screen_y: i32) -> Rgb<u8> {
+    fn trace(&self, screen_x: i32, screen_y: i32, screen_width: i32, screen_height: i32) -> Rgb<u8> {
+        let camera = self.camera();
+        let vector = camera.get_ray_vector(screen_x, screen_y, screen_width, screen_height);
+        // TODO: Do something with the vector.
+
         Rgb {
             data: [
                 (self.camera().rotation().x * 255.0) as u8,
@@ -43,11 +47,12 @@ pub trait Universe {
 
     fn render<F: Facade, S: Surface>(&self, facade: &F, surface: &mut S, time: &Duration, context: &SimulationContext) {
         let (width, height) = surface.get_dimensions();
+        println!("{}x{}", width, height);
         let mut buffer: DynamicImage = DynamicImage::new_rgb8(width, height);
 
         for x in 0 .. width {
             for y in 0 .. height {
-                buffer.put_pixel(x, y, self.trace(x as i32, y as i32).to_rgba())
+                buffer.put_pixel(x, y, self.trace(x as i32, y as i32, width as i32, height as i32).to_rgba())
             }
         }
 

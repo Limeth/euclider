@@ -35,10 +35,6 @@ impl Camera {
     }
 
     pub fn get_ray_vector(&self, screen_x: i32, screen_y: i32, screen_width: i32, screen_height: i32) -> Vector3<f32> {
-        /*
-         * The formula to get the step yaw is the following:
-         * step_yaw =
-         * */
         let screen_width = screen_width as f32;
         let screen_height = screen_height as f32;
         let fov_rad = std::f32::consts::PI * (self.fov as f32) / 180.0;
@@ -49,9 +45,7 @@ impl Camera {
         let yaw = (screen_x as f32 - screen_width / 2.0) * step_yaw;
         let pitch = (screen_y as f32 - screen_height / 2.0) * step_pitch;
         let quaternion = UnitQuaternion::new_with_euler_angles(0f32, yaw, pitch);
-        let vector = quaternion.rotate(&self.rotation);
-
-        vector
+        quaternion.rotate(&self.rotation)
     }
 
     fn update_rotation(&mut self, context: &SimulationContext) {

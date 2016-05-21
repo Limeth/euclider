@@ -62,12 +62,12 @@ impl Camera {
     }
 }
 
-impl Entity for Camera {
+impl Entity<Point3<f32>, Vector3<f32>> for Camera {
     fn as_updatable(&mut self) -> Option<&mut Updatable> {
         Some(self)
     }
 
-    fn as_traceable(&mut self) -> Option<&mut Traceable> {
+    fn as_traceable(&mut self) -> Option<&mut Traceable<Point3<f32>>> {
         Some(self)
     }
 }
@@ -92,15 +92,6 @@ impl Updatable for Camera {
         }
 
         println!("location: {}\trotation: {}", self.location, self.rotation);
-    }
-}
-
-/// TODO: Remove this, because it's not really needed. Just for testing.
-impl Traceable for Camera {
-    fn trace(&self) -> Rgba<u8> {
-        Rgba {
-            data: [0u8, 255u8, 0u8, 255u8]
-        }
     }
 }
 

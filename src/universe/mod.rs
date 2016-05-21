@@ -23,12 +23,14 @@ use universe::entity::Locatable;
 use universe::entity::Updatable;
 
 pub trait Universe {
+    type P: NumPoint<f32>;
+    type V: NumVector<f32>;
     fn camera_mut(&mut self) -> &mut Camera;
     fn camera(&self) -> &Camera;
     fn set_camera(&mut self, camera: &Camera);
-    fn entities_mut(&mut self) -> &mut Vec<Box<Entity>>;
-    fn entities(&self) -> &Vec<Box<Entity>>;
-    fn set_entities(&mut self, entities: Vec<Box<Entity>>);
+    fn entities_mut(&mut self) -> &mut Vec<Box<Entity<Self::P, Self::V>>>;
+    fn entities(&self) -> &Vec<Box<Entity<Self::P, Self::V>>>;
+    fn set_entities(&mut self, entities: Vec<Box<Entity<Self::P, Self::V>>>);
     fn trace(&self, location: &Point3<f32>, rotation: &Vector3<f32>) -> Rgb<u8>;
 
     fn trace_screen_point(&self, screen_x: i32, screen_y: i32, screen_width: i32, screen_height: i32) -> Rgb<u8> {

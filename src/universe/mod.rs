@@ -116,6 +116,8 @@ pub trait Universe {
     }
 
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext) {
+        self.camera_mut().as_updatable_mut().map(|x| x.update(delta_time, context));
+
         for entity in self.entities_mut() {
             let updatable = entity.as_updatable_mut();
 

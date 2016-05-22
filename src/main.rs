@@ -207,8 +207,6 @@ fn main() {
     {
         let mut entities = universe.entities_mut();
         
-        use universe::entity::Void;
-        use universe::d3::entity::Sphere;
         // entities.push(EntityImpl::new(
         //         Box::new(),
         //         ));

@@ -55,12 +55,12 @@ pub trait Rotatable<P: NumVector<f32>> {
     fn set_rotation(&mut self, location: P);
 }
 
-// TODO
-// ((x-m)^2)/(a^2) + ((y-n)^2)/(b^2) = 1
-pub struct Sphere<P: NumPoint<f32>, V: NumVector<f32>> {
-    location: P, // m/n/o...
-    radii: V, // a/b/c...
-}
+// // TODO
+// // ((x-m)^2)/(a^2) + ((y-n)^2)/(b^2) = 1
+// pub struct Sphere<P: NumPoint<f32>, V: NumVector<f32>> {
+//     location: P, // m/n/o...
+//     radii: V, // a/b/c...
+// }
 
 pub struct Vacuum {
 

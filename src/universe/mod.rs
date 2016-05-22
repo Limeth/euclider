@@ -5,7 +5,10 @@ pub mod d3;
 mod entity;
 
 use std::time::Duration;
-use self::na::*;
+use self::na::Point3;
+use self::na::Vector3;
+use self::na::NumPoint;
+use self::na::NumVector;
 use self::glium::Surface;
 use self::glium::texture::Texture2d;
 use self::glium::backend::Facade;
@@ -17,27 +20,73 @@ use self::glium::BlitTarget;
 use self::glium::texture::RawImage2d;
 use self::glium::uniforms::MagnifySamplerFilter;
 use SimulationContext;
-use universe::entity::camera::Camera;
+use universe::entity::Camera;
 use universe::entity::Entity;
 use universe::entity::Locatable;
 use universe::entity::Updatable;
+use universe::entity::Traceable;
+use universe::entity::Shape;
 
 pub trait Universe {
     type P: NumPoint<f32>;
     type V: NumVector<f32>;
-    fn camera_mut(&mut self) -> &mut Camera;
-    fn camera(&self) -> &Camera;
-    fn set_camera(&mut self, camera: &Camera);
+    fn camera_mut(&mut self) -> &mut Camera<Self::P, Self::V>;
+    fn camera(&self) -> &Camera<Self::P, Self::V>;
+    fn set_camera(&mut self, camera: Box<Camera<Self::P, Self::V>>);
+    // fn set_camera(&mut self, camera: &mut Camera<Self::P, Self::V>);
+    // fn set_camera<T: Camera<Point3<f32>, Vector3<f32>>>(&mut self, camera: T);
     fn entities_mut(&mut self) -> &mut Vec<Box<Entity<Self::P, Self::V>>>;
     fn entities(&self) -> &Vec<Box<Entity<Self::P, Self::V>>>;
     fn set_entities(&mut self, entities: Vec<Box<Entity<Self::P, Self::V>>>);
-    fn trace(&self, location: &Point3<f32>, rotation: &Vector3<f32>) -> Rgb<u8>;
+
+    fn trace(&self, location: &Self::P, rotation: &Self::V) -> Option<Rgb<u8>> {
+        let mut belongs_to: Option<&Entity<Self::P, Self::V>> = None;
+
+        for entity in self.entities() {
+            let traceable = entity.as_traceable();
+            
+            if traceable.is_none() {
+                continue;
+            }
+
+            let traceable: &Traceable<Self::P, Self::V> = traceable.unwrap();
+            let shape: &Shape<Self::P, Self::V> = traceable.shape();
+            
+            if !shape.is_point_inside(location) {
+                continue;
+            }
+
+            belongs_to = Some(&**entity);
+            break;
+        }
+
+        if belongs_to.is_some() {
+            // TODO Trace from within the entity
+        }
+
+        None
+    }
 
     fn trace_screen_point(&self, screen_x: i32, screen_y: i32, screen_width: i32, screen_height: i32) -> Rgb<u8> {
         let camera = self.camera();
+        let point = camera.get_ray_point(screen_x, screen_y, screen_width, screen_height);
         let vector = camera.get_ray_vector(screen_x, screen_y, screen_width, screen_height);
 
-        self.trace(camera.location(), &vector)
+        match self.trace(&point, &vector) {
+            Some(color) => color,
+            None => {
+                let checkerboard_size = 8;
+
+                match (screen_x / checkerboard_size + screen_y / checkerboard_size) % 2 == 0 {
+                    true => Rgb {
+                        data: [0u8, 0u8, 0u8],
+                    },
+                    false => Rgb {
+                        data: [255u8, 0u8, 255u8],
+                    },
+                }
+            }
+        }
     }
 
     fn render<F: Facade, S: Surface>(&self, facade: &F, surface: &mut S, time: &Duration, context: &SimulationContext) {
@@ -67,6 +116,12 @@ pub trait Universe {
     }
 
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext) {
-        self.camera_mut().update(delta_time, context);
+        for entity in self.entities_mut() {
+            let updatable = entity.as_updatable_mut();
+
+            if updatable.is_some() {
+                updatable.unwrap().update(delta_time, context);
+            }
+        }
     }
 }

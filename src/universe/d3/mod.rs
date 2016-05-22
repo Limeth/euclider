@@ -4,19 +4,20 @@ pub mod entity;
 
 use self::image::Rgb;
 use self::na::*;
-use universe::entity::camera::Camera;
+use universe::entity::Camera;
+use universe::d3::entity::camera::Camera3;
 use universe::Universe;
 use universe::entity::Entity;
 
 pub struct Universe3D {
-    camera: Camera,
+    camera: Box<Camera<Point3<f32>, Vector3<f32>>>,
     entities: Vec<Box<Entity<Point3<f32>, Vector3<f32>>>>,
 }
 
 impl Universe3D {
     pub fn new() -> Universe3D {
         Universe3D {
-            camera: Camera::new(),
+            camera: Box::new(Camera3::new()),
             entities: Vec::new(),
         }
     }
@@ -26,26 +27,26 @@ impl Universe for Universe3D {
     type P = Point3<f32>;
     type V = Vector3<f32>;
 
-    fn trace(&self, location: &Point3<f32>, rotation: &Vector3<f32>) -> Rgb<u8> {
-        Rgb {
-            data: [
-                ((rotation.x + 1.0) * 255.0 / 2.0) as u8,
-                ((rotation.y + 1.0) * 255.0 / 2.0) as u8,
-                ((rotation.z + 1.0) * 255.0 / 2.0) as u8,
-            ],
-        }
+    // fn trace(&self, location: &Point3<f32>, rotation: &Vector3<f32>) -> Option<Rgb<u8>> {
+    //     Some(Rgb {
+    //         data: [
+    //             ((rotation.x + 1.0) * 255.0 / 2.0) as u8,
+    //             ((rotation.y + 1.0) * 255.0 / 2.0) as u8,
+    //             ((rotation.z + 1.0) * 255.0 / 2.0) as u8,
+    //         ],
+    //     })
+    // }
+
+    fn camera_mut(&mut self) -> &mut Camera<Point3<f32>, Vector3<f32>> {
+        &mut *self.camera
     }
 
-    fn camera_mut(&mut self) -> &mut Camera {
-        &mut self.camera
+    fn camera(&self) -> &Camera<Point3<f32>, Vector3<f32>> {
+        &*self.camera
     }
 
-    fn camera(&self) -> &Camera {
-        &self.camera
-    }
-
-    fn set_camera(&mut self, camera: &Camera) {
-        self.camera = *camera;
+    fn set_camera(&mut self, camera: Box<Camera<Point3<f32>, Vector3<f32>>>) {
+        self.camera = camera;
     }
 
     fn entities_mut(&mut self) -> &mut Vec<Box<Entity<Point3<f32>, Vector3<f32>>>> {

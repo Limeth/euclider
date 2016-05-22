@@ -12,10 +12,11 @@ use universe::entity::Locatable;
 use universe::entity::Rotatable;
 use universe::entity::Updatable;
 use universe::entity::Traceable;
+use universe::entity::Camera;
 use SimulationContext;
 
 #[derive(Clone, Copy, PartialEq)]
-pub struct Camera {
+pub struct Camera3 {
     location: Point3<f32>,
     rotation: Vector3<f32>,
     mouse_sensitivity: f32,
@@ -23,30 +24,15 @@ pub struct Camera {
     fov: u8,
 }
 
-impl Camera {
-    pub fn new() -> Camera {
-        Camera {
+impl Camera3 {
+    pub fn new() -> Camera3 {
+        Camera3 {
             location: na::origin(),
             rotation: Vector3::new(1f32, 0f32, 0f32),
             mouse_sensitivity: 0.01,
             speed: 1.0,
             fov: 90,
         }
-    }
-
-    // TODO: Optimize - compute the step_yaw/step_pitch variables lazily and cache them
-    pub fn get_ray_vector(&self, screen_x: i32, screen_y: i32, screen_width: i32, screen_height: i32) -> Vector3<f32> {
-        let screen_width = screen_width as f32;
-        let screen_height = screen_height as f32;
-        let fov_rad = std::f32::consts::PI * (self.fov as f32) / 180.0;
-
-        let step_angle_partial = (fov_rad / 2.0).tan() / (screen_width * screen_width + screen_height * screen_height).sqrt();
-        let step_yaw = 2.0 * (screen_width * step_angle_partial).atan() / screen_width;
-        let step_pitch = 2.0 * (screen_height * step_angle_partial).atan() / screen_height;
-        let yaw = (screen_x as f32 - screen_width / 2.0) * step_yaw;
-        let pitch = (screen_y as f32 - screen_height / 2.0) * step_pitch;
-        let quaternion = UnitQuaternion::new_with_euler_angles(0f32, yaw, pitch);
-        quaternion.rotate(&self.rotation)
     }
 
     fn update_rotation(&mut self, context: &SimulationContext) {
@@ -62,17 +48,46 @@ impl Camera {
     }
 }
 
-impl Entity<Point3<f32>, Vector3<f32>> for Camera {
-    fn as_updatable(&mut self) -> Option<&mut Updatable> {
+impl Camera<Point3<f32>, Vector3<f32>> for Camera3 {
+    fn get_ray_point(&self, screen_x: i32, screen_y: i32, screen_width: i32, screen_height: i32) -> Point3<f32> {
+        self.location
+    }
+
+    // TODO: Optimize - compute the step_yaw/step_pitch variables lazily and cache them
+    fn get_ray_vector(&self, screen_x: i32, screen_y: i32, screen_width: i32, screen_height: i32) -> Vector3<f32> {
+        let screen_width = screen_width as f32;
+        let screen_height = screen_height as f32;
+        let fov_rad = std::f32::consts::PI * (self.fov as f32) / 180.0;
+
+        let step_angle_partial = (fov_rad / 2.0).tan() / (screen_width * screen_width + screen_height * screen_height).sqrt();
+        let step_yaw = 2.0 * (screen_width * step_angle_partial).atan() / screen_width;
+        let step_pitch = 2.0 * (screen_height * step_angle_partial).atan() / screen_height;
+        let yaw = (screen_x as f32 - screen_width / 2.0) * step_yaw;
+        let pitch = (screen_y as f32 - screen_height / 2.0) * step_pitch;
+        let quaternion = UnitQuaternion::new_with_euler_angles(0f32, yaw, pitch);
+        quaternion.rotate(&self.rotation)
+    }
+}
+
+impl Entity<Point3<f32>, Vector3<f32>> for Camera3 {
+    fn as_updatable_mut(&mut self) -> Option<&mut Updatable> {
         Some(self)
     }
 
-    fn as_traceable(&mut self) -> Option<&mut Traceable<Point3<f32>, Vector3<f32>>> {
+    fn as_updatable(&self) -> Option<&Updatable> {
+        Some(self)
+    }
+
+    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<Point3<f32>, Vector3<f32>>> {
+        None
+    }
+
+    fn as_traceable(&self) -> Option<&Traceable<Point3<f32>, Vector3<f32>>> {
         None
     }
 }
 
-impl Updatable for Camera {
+impl Updatable for Camera3 {
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext) {
         self.update_rotation(context);
 
@@ -95,7 +110,7 @@ impl Updatable for Camera {
     }
 }
 
-impl Locatable<Point3<f32>> for Camera {
+impl Locatable<Point3<f32>> for Camera3 {
     fn location_mut(&mut self) -> &mut Point3<f32> {
         &mut self.location
     }
@@ -109,7 +124,7 @@ impl Locatable<Point3<f32>> for Camera {
     }
 }
 
-impl Rotatable<Vector3<f32>> for Camera {
+impl Rotatable<Vector3<f32>> for Camera3 {
     fn rotation_mut(&mut self) -> &mut Vector3<f32> {
         &mut self.rotation
     }

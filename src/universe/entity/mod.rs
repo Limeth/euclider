@@ -1,6 +1,5 @@
 extern crate nalgebra as na;
 extern crate image;
-pub mod camera;
 
 use std::time::Duration;
 use self::na::NumPoint;
@@ -9,13 +8,20 @@ use self::image::Rgba;
 use SimulationContext;
 
 pub trait Entity<P: NumPoint<f32>, V: NumVector<f32>> {
-    fn as_updatable(&mut self) -> Option<&mut Updatable>;
-    fn as_traceable(&mut self) -> Option<&mut Traceable<P, V>>;
+    fn as_updatable_mut(&mut self) -> Option<&mut Updatable>;
+    fn as_updatable(&self) -> Option<&Updatable>;
+    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<P, V>>;
+    fn as_traceable(&self) -> Option<&Traceable<P, V>>;
+}
+
+pub trait Camera<P: NumPoint<f32>, V: NumVector<f32>>: Entity<P, V> {
+    fn get_ray_point(&self, screen_x: i32, screen_y: i32, screen_width: i32, screen_height: i32) -> P;
+    fn get_ray_vector(&self, screen_x: i32, screen_y: i32, screen_width: i32, screen_height: i32) -> V;
 }
 
 pub trait Shape<P: NumPoint<f32>, V: NumVector<f32>> {
-    fn get_normal_at(&self, point: P) -> V;
-    fn is_point_inside(&self, point: P) -> bool;
+    fn get_normal_at(&self, point: &P) -> V;
+    fn is_point_inside(&self, point: &P) -> bool;
 }
 
 pub trait Material<P: NumPoint<f32>, V: NumVector<f32>> {
@@ -58,11 +64,11 @@ impl VoidShape {
 }
 
 impl<P: NumPoint<f32>, V: NumVector<f32>> Shape<P, V> for VoidShape {
-    fn get_normal_at(&self, point: P) -> V {
+    fn get_normal_at(&self, point: &P) -> V {
         na::zero()
     }
 
-    fn is_point_inside(&self, point: P) -> bool {
+    fn is_point_inside(&self, point: &P) -> bool {
         true
     }
 }
@@ -80,11 +86,19 @@ impl Void {
 }
 
 impl<P: NumPoint<f32>, V: NumVector<f32>> Entity<P, V> for Void {
-    fn as_updatable(&mut self) -> Option<&mut Updatable> {
+    fn as_updatable_mut(&mut self) -> Option<&mut Updatable> {
         None
     }
 
-    fn as_traceable(&mut self) -> Option<&mut Traceable<P, V>> {
+    fn as_updatable(&self) -> Option<&Updatable> {
+        None
+    }
+
+    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<P, V>> {
+        Some(self)
+    }
+
+    fn as_traceable(&self) -> Option<&Traceable<P, V>> {
         Some(self)
     }
 }

@@ -1,6 +1,7 @@
 extern crate nalgebra as na;
 extern crate image;
 extern crate std;
+pub mod camera;
 
 use std::collections::HashSet;
 use std::time::Duration;
@@ -38,11 +39,19 @@ impl EntityImpl {
 }
 
 impl Entity<Point3<f32>, Vector3<f32>> for EntityImpl {
-    fn as_updatable(&mut self) -> Option<&mut Updatable> {
+    fn as_updatable_mut(&mut self) -> Option<&mut Updatable> {
         None
     }
 
-    fn as_traceable(&mut self) -> Option<&mut Traceable<Point3<f32>, Vector3<f32>>> {
+    fn as_updatable(&self) -> Option<&Updatable> {
+        None
+    }
+
+    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<Point3<f32>, Vector3<f32>>> {
+        None
+    }
+
+    fn as_traceable(&self) -> Option<&Traceable<Point3<f32>, Vector3<f32>>> {
         None
     }
 }
@@ -82,12 +91,12 @@ impl Sphere {
 }
 
 impl Shape<Point3<f32>, Vector3<f32>> for Sphere {
-    fn get_normal_at(&self, point: Point3<f32>) -> Vector3<f32> {
-        let norm = point - self.location;
+    fn get_normal_at(&self, point: &Point3<f32>) -> Vector3<f32> {
+        let norm = *point - self.location;
         na::normalize(&norm)
     }
 
-    fn is_point_inside(&self, point: Point3<f32>) -> bool {
-        na::distance_squared(&self.location, &point) <= self.radius * self.radius
+    fn is_point_inside(&self, point: &Point3<f32>) -> bool {
+        na::distance_squared(&self.location, point) <= self.radius * self.radius
     }
 }

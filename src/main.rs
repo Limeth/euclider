@@ -94,8 +94,8 @@ impl<U: Universe> Simulation<U> {
 }
 
 impl<U: Universe> SimulationBuilder<U> {
-    fn universe(mut self, universe: Box<U>) -> SimulationBuilder<U> {
-        self.universe = Some(universe);
+    fn universe(mut self, universe: U) -> SimulationBuilder<U> {
+        self.universe = Some(Box::new(universe));
         self
     }
 
@@ -200,7 +200,7 @@ impl SimulationContext {
 
 fn main() {
     let simulation = Simulation::builder()
-        .universe(Box::new(Universe3D::new()))
+        .universe(Universe3D::new())
         .build();
 
     simulation.start();

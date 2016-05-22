@@ -54,20 +54,16 @@ impl Traceable<Point3<f32>, Vector3<f32>> for EntityImpl {
         }
     }
 
-    fn is_point_inside(&self, point: Point3<f32>) -> bool {
-        self.shape.is_point_inside(point)
+    fn shape(&self) -> &Shape<Point3<f32>, Vector3<f32>> {
+        self.shape.as_ref()
     }
 
-    fn shape(&self) -> &Box<Shape<Point3<f32>, Vector3<f32>>> {
-        &self.shape
+    fn material(&self) -> Option<&Material<Point3<f32>, Vector3<f32>>> {
+        self.material.as_ref().map(|x| &**x)
     }
 
-    fn material(&self) -> &Option<Box<Material<Point3<f32>, Vector3<f32>>>> {
-        &self.material
-    }
-
-    fn surface(&self) -> &Option<Box<Surface<Point3<f32>, Vector3<f32>>>> {
-        &self.surface
+    fn surface(&self) -> Option<&Surface<Point3<f32>, Vector3<f32>>> {
+        self.surface.as_ref().map(|x| &**x)
     }
 }
 

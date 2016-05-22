@@ -8,7 +8,8 @@ pub mod util;
 use std::collections::HashSet;
 use std::time::Instant;
 use std::time::Duration;
-use na::*;
+use na::Point2;
+use na::Vector2;
 use glium::DisplayBuild;
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::glutin::VirtualKeyCode;
@@ -17,7 +18,9 @@ use glium::glutin::ElementState;
 use glium::glutin::Event;
 use glium::glutin::CursorState;
 use universe::Universe;
+use universe::entity::*;
 use universe::d3::Universe3D;
+use universe::d3::entity::*;
 use util::RemoveIf;
 
 pub struct Simulation<U: Universe> {
@@ -199,8 +202,21 @@ impl SimulationContext {
 }
 
 fn main() {
+    let mut universe = Universe3D::new();
+
+    {
+        let mut entities = universe.entities_mut();
+        
+        use universe::entity::Void;
+        use universe::d3::entity::Sphere;
+        // entities.push(EntityImpl::new(
+        //         Box::new(),
+        //         ));
+        entities.push(Box::new(Void::new()));
+    }
+
     let simulation = Simulation::builder()
-        .universe(Universe3D::new())
+        .universe(universe)
         .build();
 
     simulation.start();

@@ -55,7 +55,28 @@ pub trait Rotatable<P: NumVector<f32>> {
     fn set_rotation(&mut self, location: P);
 }
 
-pub struct VoidShape {}
+// TODO
+// ((x-m)^2)/(a^2) + ((y-n)^2)/(b^2) = 1
+pub struct Sphere<P: NumPoint<f32>, V: NumVector<f32>> {
+    location: P, // m/n/o...
+    radii: V, // a/b/c...
+}
+
+pub struct Vacuum {
+
+}
+
+impl Vacuum {
+    pub fn new() -> Vacuum {
+        Vacuum {}
+    }
+}
+
+impl<P: NumPoint<f32>, V: NumVector<f32>> Material<P, V> for Vacuum {
+
+}
+
+struct VoidShape {}
 
 impl VoidShape {
     pub fn new() -> VoidShape {
@@ -73,19 +94,21 @@ impl<P: NumPoint<f32>, V: NumVector<f32>> Shape<P, V> for VoidShape {
     }
 }
 
-pub struct Void {
+pub struct Void<P: NumPoint<f32>, V: NumVector<f32>> {
     shape: Box<VoidShape>,
+    material: Box<Material<P, V>>,
 }
 
-impl Void {
-    pub fn new() -> Void {
+impl<P: NumPoint<f32>, V: NumVector<f32>> Void<P, V> {
+    pub fn new(material: Box<Material<P, V>>) -> Void<P, V> {
         Void {
             shape: Box::new(VoidShape::new()),
+            material: material,
         }
     }
 }
 
-impl<P: NumPoint<f32>, V: NumVector<f32>> Entity<P, V> for Void {
+impl<P: NumPoint<f32>, V: NumVector<f32>> Entity<P, V> for Void<P, V> {
     fn as_updatable_mut(&mut self) -> Option<&mut Updatable> {
         None
     }
@@ -103,7 +126,7 @@ impl<P: NumPoint<f32>, V: NumVector<f32>> Entity<P, V> for Void {
     }
 }
 
-impl<P: NumPoint<f32>, V: NumVector<f32>> Traceable<P, V> for Void {
+impl<P: NumPoint<f32>, V: NumVector<f32>> Traceable<P, V> for Void<P, V> {
     fn trace(&self) -> Rgba<u8> {
         // TODO
         Rgba {

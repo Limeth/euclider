@@ -2,7 +2,7 @@ extern crate nalgebra as na;
 extern crate image;
 extern crate glium;
 pub mod d3;
-mod entity;
+pub mod entity;
 
 use std::time::Duration;
 use self::na::Point3;

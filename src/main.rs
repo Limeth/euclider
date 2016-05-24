@@ -1,4 +1,5 @@
 #![feature(reflect_marker)]
+#![feature(custom_attribute)]
 
 extern crate nalgebra as na;
 extern crate glium;
@@ -65,10 +66,16 @@ impl<U: Universe> Simulation<U> {
         let start_instant = self.start_instant.unwrap();
         let time = Instant::now() - start_instant;
 
-        self.universe.render(self.facade.as_ref().unwrap(), &mut frame, &time, &self.context);
+        self.universe.render(self.facade.as_ref().unwrap(),
+                             &mut frame,
+                             &time,
+                             &self.context);
 
         match frame.finish() {
-            Err(error) => panic!("An error occured while swapping the OpenGL buffers: {:?}", error),
+            Err(error) => {
+                panic!("An error occured while swapping the OpenGL buffers: {:?}",
+                       error)
+            }
             _ => (),
         }
     }
@@ -90,9 +97,7 @@ impl<U: Universe> Simulation<U> {
     }
 
     fn builder() -> SimulationBuilder<U> {
-        SimulationBuilder {
-            universe: None,
-        }
+        SimulationBuilder { universe: None }
     }
 }
 
@@ -155,29 +160,30 @@ impl SimulationContext {
                     match state {
                         ElementState::Pressed => {
                             self.pressed_keys.insert((character, virtual_code));
-                        },
+                        }
                         ElementState::Released => {
-                            self.pressed_keys.remove_if(|tuple: &(u8, Option<VirtualKeyCode>)| {
-                                tuple.0 == character
-                            });
+                            self.pressed_keys
+                                .remove_if(|tuple: &(u8, Option<VirtualKeyCode>)| {
+                                    tuple.0 == character
+                                });
                             if virtual_code.map_or(false, |virtual_code| {
                                 virtual_code == VirtualKeyCode::Escape
                             }) {
                                 return Err(event);
                             }
-                        },
+                        }
                     };
-                },
+                }
                 Event::MouseInput(state, button) => {
                     match state {
                         ElementState::Pressed => {
                             self.pressed_mouse_buttons.insert(button);
-                        },
+                        }
                         ElementState::Released => {
                             self.pressed_mouse_buttons.remove(&button);
-                        },
+                        }
                     }
-                },
+                }
                 Event::MouseMoved(x, y) => {
                     let window = facade.get_window().unwrap();
                     let window_size = window.get_inner_size_pixels().unwrap();
@@ -189,14 +195,15 @@ impl SimulationContext {
                     self.mouse.x = x;
                     self.mouse.y = y;
 
-                    window.set_cursor_position(center_x, center_y).expect("Could not reset the cursor position.");
-                },
+                    window.set_cursor_position(center_x, center_y)
+                        .expect("Could not reset the cursor position.");
+                }
                 Event::Closed => {
                     return Err(event);
-                },
+                }
                 _ => (),
             }
-        };
+        }
         Ok(())
     }
 }

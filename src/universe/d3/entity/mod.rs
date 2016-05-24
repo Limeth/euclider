@@ -40,8 +40,8 @@ pub struct Entity3Impl {
 impl Entity3Impl {
     pub fn new(shape: Box<Shape3>,
                material: Option<Box<Material3>>,
-               surface: Option<Box<Surface3>>,
-              ) -> Entity3Impl {
+               surface: Option<Box<Surface3>>)
+               -> Entity3Impl {
         Entity3Impl {
             shape: shape,
             material: material,
@@ -70,9 +70,7 @@ impl Entity<Point3<f32>, Vector3<f32>> for Entity3Impl {
 
 impl Traceable<Point3<f32>, Vector3<f32>> for Entity3Impl {
     fn trace(&self) -> Rgba<u8> {
-        Rgba {
-            data: [0u8, 0u8, 0u8, 0u8],
-        }
+        Rgba { data: [0u8, 0u8, 0u8, 0u8] }
     }
 
     fn shape(&self) -> &Shape3 {

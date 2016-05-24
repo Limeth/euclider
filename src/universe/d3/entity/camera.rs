@@ -37,7 +37,8 @@ impl Camera3Impl {
     }
 
     fn update_rotation(&mut self, context: &SimulationContext) {
-        let delta_mouse_float: Vector2<f32> = Vector2::new(context.delta_mouse.x as f32, context.delta_mouse.y as f32);
+        let delta_mouse_float: Vector2<f32> = Vector2::new(context.delta_mouse.x as f32,
+                                                           context.delta_mouse.y as f32);
 
         if na::distance_squared(&na::origin(), delta_mouse_float.as_point()) <= 0f32 {
             return;
@@ -50,17 +51,29 @@ impl Camera3Impl {
 }
 
 impl Camera<Point3<f32>, Vector3<f32>> for Camera3Impl {
-    fn get_ray_point(&self, screen_x: i32, screen_y: i32, screen_width: i32, screen_height: i32) -> Point3<f32> {
+    fn get_ray_point(&self,
+                     screen_x: i32,
+                     screen_y: i32,
+                     screen_width: i32,
+                     screen_height: i32)
+                     -> Point3<f32> {
         self.location
     }
 
     // TODO: Optimize - compute the step_yaw/step_pitch variables lazily and cache them
-    fn get_ray_vector(&self, screen_x: i32, screen_y: i32, screen_width: i32, screen_height: i32) -> Vector3<f32> {
+    fn get_ray_vector(&self,
+                      screen_x: i32,
+                      screen_y: i32,
+                      screen_width: i32,
+                      screen_height: i32)
+                      -> Vector3<f32> {
         let screen_width = screen_width as f32;
         let screen_height = screen_height as f32;
         let fov_rad = std::f32::consts::PI * (self.fov as f32) / 180.0;
 
-        let step_angle_partial = (fov_rad / 2.0).tan() / (screen_width * screen_width + screen_height * screen_height).sqrt();
+        let step_angle_partial = (fov_rad / 2.0).tan() /
+                                 (screen_width * screen_width + screen_height * screen_height)
+            .sqrt();
         let step_yaw = 2.0 * (screen_width * step_angle_partial).atan() / screen_width;
         let step_pitch = 2.0 * (screen_height * step_angle_partial).atan() / screen_height;
         let yaw = (screen_x as f32 - screen_width / 2.0) * step_yaw;
@@ -102,7 +115,7 @@ impl Updatable for Camera3Impl {
             match pressed_key.1.unwrap() {
                 VirtualKeyCode::W => {
                     self.location = self.location + self.rotation * self.speed;
-                },
+                }
                 _ => (),
             }
         }

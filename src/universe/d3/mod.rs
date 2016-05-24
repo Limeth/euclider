@@ -69,16 +69,22 @@ impl Universe for Universe3D {
         self.entities = entities;
     }
 
-    fn intersections_mut(&mut self) -> &mut HashMap<(TypeId, TypeId), &'static Fn(Material3, Shape3) -> Option<Self::P>> {
+    fn intersections_mut
+        (&mut self)
+         -> &mut HashMap<(TypeId, TypeId), &'static Fn(Material3, Shape3) -> Option<Self::P>> {
         &mut self.intersections
     }
 
-    fn intersections(&self) -> &HashMap<(TypeId, TypeId), &'static Fn(Material3, Shape3) -> Option<Self::P>> {
+    fn intersections
+        (&self)
+         -> &HashMap<(TypeId, TypeId), &'static Fn(Material3, Shape3) -> Option<Self::P>> {
         &self.intersections
     }
 
-    fn set_intersections(&mut self, intersections: HashMap<(TypeId, TypeId), &'static Fn(Material3, Shape3) -> Option<Self::P>>) {
+    #[rustfmt_skip]
+    fn set_intersections(&mut self,
+                         intersections: HashMap<(TypeId, TypeId),
+                                         &'static Fn(Material3, Shape3) -> Option<Self::P>>) {
         self.intersections = intersections;
     }
 }
-

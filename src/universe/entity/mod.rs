@@ -17,28 +17,38 @@ pub trait Entity<P: NumPoint<f32>, V: NumVector<f32>> {
 }
 
 pub trait Camera<P: NumPoint<f32>, V: NumVector<f32>>: Entity<P, V> {
-    fn get_ray_point(&self, screen_x: i32, screen_y: i32, screen_width: i32, screen_height: i32) -> P;
-    fn get_ray_vector(&self, screen_x: i32, screen_y: i32, screen_width: i32, screen_height: i32) -> V;
+    fn get_ray_point(&self,
+                     screen_x: i32,
+                     screen_y: i32,
+                     screen_width: i32,
+                     screen_height: i32)
+                     -> P;
+    fn get_ray_vector(&self,
+                      screen_x: i32,
+                      screen_y: i32,
+                      screen_width: i32,
+                      screen_height: i32)
+                      -> V;
 }
 
 pub trait HasId {
-    fn id() -> TypeId where Self: Sized + Reflect + 'static {
+    fn id() -> TypeId
+        where Self: Sized + Reflect + 'static
+    {
         TypeId::of::<Self>()
     }
 }
 
-pub trait Shape<P: NumPoint<f32>, V: NumVector<f32>> where Self: HasId {
+pub trait Shape<P: NumPoint<f32>, V: NumVector<f32>>
+    where Self: HasId
+{
     fn get_normal_at(&self, point: &P) -> V;
     fn is_point_inside(&self, point: &P) -> bool;
 }
 
-pub trait Material<P: NumPoint<f32>, V: NumVector<f32>> where Self: HasId {
+pub trait Material<P: NumPoint<f32>, V: NumVector<f32>> where Self: HasId {}
 
-}
-
-pub trait Surface<P: NumPoint<f32>, V: NumVector<f32>> where Self: HasId {
-
-}
+pub trait Surface<P: NumPoint<f32>, V: NumVector<f32>> where Self: HasId {}
 
 pub trait Updatable {
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext);
@@ -82,9 +92,7 @@ impl Vacuum {
 
 impl HasId for Vacuum {}
 
-impl<P: NumPoint<f32>, V: NumVector<f32>> Material<P, V> for Vacuum {
-
-}
+impl<P: NumPoint<f32>, V: NumVector<f32>> Material<P, V> for Vacuum {}
 
 struct VoidShape {}
 
@@ -145,9 +153,7 @@ impl<P: NumPoint<f32>, V: NumVector<f32>> Entity<P, V> for Void<P, V> {
 impl<P: NumPoint<f32>, V: NumVector<f32>> Traceable<P, V> for Void<P, V> {
     fn trace(&self) -> Rgba<u8> {
         // TODO
-        Rgba {
-            data: [0u8, 0u8, 255u8, 255u8],
-        }
+        Rgba { data: [0u8, 0u8, 255u8, 255u8] }
     }
 
     fn shape(&self) -> &Shape<P, V> {

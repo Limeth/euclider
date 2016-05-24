@@ -7,8 +7,6 @@ pub mod entity;
 use std::time::Duration;
 use std::collections::HashMap;
 use std::any::TypeId;
-use self::na::Point3;
-use self::na::Vector3;
 use self::na::NumPoint;
 use self::na::NumVector;
 use self::glium::Surface;
@@ -25,8 +23,6 @@ use SimulationContext;
 use universe::entity::Material;
 use universe::entity::Camera;
 use universe::entity::Entity;
-use universe::entity::Locatable;
-use universe::entity::Updatable;
 use universe::entity::Traceable;
 use universe::entity::Shape;
 

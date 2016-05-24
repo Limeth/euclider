@@ -6,13 +6,9 @@ use std::collections::HashMap;
 use std::any::TypeId;
 use na::Point3;
 use na::Vector3;
-use self::image::Rgb;
 use universe::entity::Camera;
-use universe::entity::Material;
-use universe::entity::Shape;
 use universe::d3::entity::camera::Camera3Impl;
 use universe::Universe;
-use universe::entity::Entity;
 use universe::d3::entity::*;
 
 pub struct Universe3D {

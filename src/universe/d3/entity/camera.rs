@@ -5,7 +5,6 @@ extern crate std;
 use std::collections::HashSet;
 use std::time::Duration;
 use self::na::*;
-use self::image::Rgba;
 use glium::glutin::VirtualKeyCode;
 use universe::entity::Entity;
 use universe::entity::Locatable;

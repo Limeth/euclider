@@ -3,13 +3,9 @@ extern crate image;
 extern crate std;
 pub mod camera;
 
-use std::collections::HashSet;
-use std::time::Duration;
-use std::any::TypeId;
 use self::na::Point3;
 use self::na::Vector3;
 use self::image::Rgba;
-use glium::glutin::VirtualKeyCode;
 use universe::entity::HasId;
 use universe::entity::Entity;
 use universe::entity::Camera;
@@ -20,7 +16,6 @@ use universe::entity::Traceable;
 use universe::entity::Shape;
 use universe::entity::Material;
 use universe::entity::Surface;
-use SimulationContext;
 
 pub type Entity3 = Entity<Point3<f32>, Vector3<f32>>;
 pub type Camera3 = Camera<Point3<f32>, Vector3<f32>>;

@@ -21,7 +21,6 @@ use glium::glutin::CursorState;
 use universe::Universe;
 use universe::entity::*;
 use universe::d3::Universe3D;
-use universe::d3::entity::*;
 use util::RemoveIf;
 
 pub struct Simulation<U: Universe> {

@@ -10,20 +10,21 @@ use self::image::Rgb;
 use universe::entity::Camera;
 use universe::entity::Material;
 use universe::entity::Shape;
-use universe::d3::entity::camera::Camera3;
+use universe::d3::entity::camera::Camera3Impl;
 use universe::Universe;
 use universe::entity::Entity;
+use universe::d3::entity::*;
 
 pub struct Universe3D {
-    camera: Box<Camera<Point3<f32>, Vector3<f32>>>,
-    entities: Vec<Box<Entity<Point3<f32>, Vector3<f32>>>>,
-    intersections: HashMap<(TypeId, TypeId), &'static Fn(Material<Point3<f32>, Vector3<f32>>, Shape<Point3<f32>, Vector3<f32>>) -> Option<Point3<f32>>>,
+    camera: Box<Camera3>,
+    entities: Vec<Box<Entity3>>,
+    intersections: HashMap<(TypeId, TypeId), &'static Fn(Material3, Shape3) -> Option<Point3<f32>>>,
 }
 
 impl Universe3D {
     pub fn new() -> Universe3D {
         Universe3D {
-            camera: Box::new(Camera3::new()),
+            camera: Box::new(Camera3Impl::new()),
             entities: Vec::new(),
             intersections: HashMap::new(),
         }
@@ -48,35 +49,35 @@ impl Universe for Universe3D {
         &mut *self.camera
     }
 
-    fn camera(&self) -> &Camera<Point3<f32>, Vector3<f32>> {
+    fn camera(&self) -> &Camera3 {
         &*self.camera
     }
 
-    fn set_camera(&mut self, camera: Box<Camera<Point3<f32>, Vector3<f32>>>) {
+    fn set_camera(&mut self, camera: Box<Camera3>) {
         self.camera = camera;
     }
 
-    fn entities_mut(&mut self) -> &mut Vec<Box<Entity<Point3<f32>, Vector3<f32>>>> {
+    fn entities_mut(&mut self) -> &mut Vec<Box<Entity3>> {
         &mut self.entities
     }
 
-    fn entities(&self) -> &Vec<Box<Entity<Point3<f32>, Vector3<f32>>>> {
+    fn entities(&self) -> &Vec<Box<Entity3>> {
         &self.entities
     }
 
-    fn set_entities(&mut self, entities: Vec<Box<Entity<Point3<f32>, Vector3<f32>>>>) {
+    fn set_entities(&mut self, entities: Vec<Box<Entity3>>) {
         self.entities = entities;
     }
 
-    fn intersections_mut(&mut self) -> &mut HashMap<(TypeId, TypeId), &'static Fn(Material<Self::P, Self::V>, Shape<Self::P, Self::V>) -> Option<Self::P>> {
+    fn intersections_mut(&mut self) -> &mut HashMap<(TypeId, TypeId), &'static Fn(Material3, Shape3) -> Option<Self::P>> {
         &mut self.intersections
     }
 
-    fn intersections(&self) -> &HashMap<(TypeId, TypeId), &'static Fn(Material<Self::P, Self::V>, Shape<Self::P, Self::V>) -> Option<Self::P>> {
+    fn intersections(&self) -> &HashMap<(TypeId, TypeId), &'static Fn(Material3, Shape3) -> Option<Self::P>> {
         &self.intersections
     }
 
-    fn set_intersections(&mut self, intersections: HashMap<(TypeId, TypeId), &'static Fn(Material<Self::P, Self::V>, Shape<Self::P, Self::V>) -> Option<Self::P>>) {
+    fn set_intersections(&mut self, intersections: HashMap<(TypeId, TypeId), &'static Fn(Material3, Shape3) -> Option<Self::P>>) {
         self.intersections = intersections;
     }
 }

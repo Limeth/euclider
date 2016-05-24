@@ -13,10 +13,11 @@ use universe::entity::Rotatable;
 use universe::entity::Updatable;
 use universe::entity::Traceable;
 use universe::entity::Camera;
+use universe::d3::entity::*;
 use SimulationContext;
 
 #[derive(Clone, Copy, PartialEq)]
-pub struct Camera3 {
+pub struct Camera3Impl {
     location: Point3<f32>,
     rotation: Vector3<f32>,
     mouse_sensitivity: f32,
@@ -24,9 +25,9 @@ pub struct Camera3 {
     fov: u8,
 }
 
-impl Camera3 {
-    pub fn new() -> Camera3 {
-        Camera3 {
+impl Camera3Impl {
+    pub fn new() -> Camera3Impl {
+        Camera3Impl {
             location: na::origin(),
             rotation: Vector3::new(1f32, 0f32, 0f32),
             mouse_sensitivity: 0.01,
@@ -48,7 +49,7 @@ impl Camera3 {
     }
 }
 
-impl Camera<Point3<f32>, Vector3<f32>> for Camera3 {
+impl Camera<Point3<f32>, Vector3<f32>> for Camera3Impl {
     fn get_ray_point(&self, screen_x: i32, screen_y: i32, screen_width: i32, screen_height: i32) -> Point3<f32> {
         self.location
     }
@@ -69,7 +70,7 @@ impl Camera<Point3<f32>, Vector3<f32>> for Camera3 {
     }
 }
 
-impl Entity<Point3<f32>, Vector3<f32>> for Camera3 {
+impl Entity<Point3<f32>, Vector3<f32>> for Camera3Impl {
     fn as_updatable_mut(&mut self) -> Option<&mut Updatable> {
         Some(self)
     }
@@ -82,12 +83,12 @@ impl Entity<Point3<f32>, Vector3<f32>> for Camera3 {
         None
     }
 
-    fn as_traceable(&self) -> Option<&Traceable<Point3<f32>, Vector3<f32>>> {
+    fn as_traceable(&self) -> Option<&Traceable3> {
         None
     }
 }
 
-impl Updatable for Camera3 {
+impl Updatable for Camera3Impl {
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext) {
         self.update_rotation(context);
 
@@ -110,7 +111,7 @@ impl Updatable for Camera3 {
     }
 }
 
-impl Locatable<Point3<f32>> for Camera3 {
+impl Locatable<Point3<f32>> for Camera3Impl {
     fn location_mut(&mut self) -> &mut Point3<f32> {
         &mut self.location
     }
@@ -124,7 +125,7 @@ impl Locatable<Point3<f32>> for Camera3 {
     }
 }
 
-impl Rotatable<Vector3<f32>> for Camera3 {
+impl Rotatable<Vector3<f32>> for Camera3Impl {
     fn rotation_mut(&mut self) -> &mut Vector3<f32> {
         &mut self.rotation
     }

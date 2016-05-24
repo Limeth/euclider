@@ -1,4 +1,4 @@
-#![feature(core_intrinsics)]
+#![feature(reflect_marker)]
 
 extern crate nalgebra as na;
 extern crate glium;
@@ -206,11 +206,7 @@ fn main() {
 
     {
         let mut entities = universe.entities_mut();
-        
-        // entities.push(EntityImpl::new(
-        //         Box::new(),
-        //         ));
-        entities.push(Box::new(Void::new()));
+        entities.push(Box::new(Void::new_with_vacuum()));
     }
 
     let simulation = Simulation::builder()
@@ -218,13 +214,4 @@ fn main() {
         .build();
 
     simulation.start();
-}
-
-/// A function for debugging purposes
-fn print_type_of<T>(_: &T) -> () {
-    let type_name =
-        unsafe {
-            std::intrinsics::type_name::<T>()
-        };
-    println!("{}", type_name);
 }

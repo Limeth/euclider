@@ -2,9 +2,14 @@ extern crate nalgebra as na;
 extern crate image;
 pub mod entity;
 
+use std::collections::HashMap;
+use std::any::TypeId;
+use na::Point3;
+use na::Vector3;
 use self::image::Rgb;
-use self::na::*;
 use universe::entity::Camera;
+use universe::entity::Material;
+use universe::entity::Shape;
 use universe::d3::entity::camera::Camera3;
 use universe::Universe;
 use universe::entity::Entity;
@@ -12,6 +17,7 @@ use universe::entity::Entity;
 pub struct Universe3D {
     camera: Box<Camera<Point3<f32>, Vector3<f32>>>,
     entities: Vec<Box<Entity<Point3<f32>, Vector3<f32>>>>,
+    intersections: HashMap<(TypeId, TypeId), &'static Fn(Material<Point3<f32>, Vector3<f32>>, Shape<Point3<f32>, Vector3<f32>>) -> Option<Point3<f32>>>,
 }
 
 impl Universe3D {
@@ -19,6 +25,7 @@ impl Universe3D {
         Universe3D {
             camera: Box::new(Camera3::new()),
             entities: Vec::new(),
+            intersections: HashMap::new(),
         }
     }
 }
@@ -59,6 +66,18 @@ impl Universe for Universe3D {
 
     fn set_entities(&mut self, entities: Vec<Box<Entity<Point3<f32>, Vector3<f32>>>>) {
         self.entities = entities;
+    }
+
+    fn intersections_mut(&mut self) -> &mut HashMap<(TypeId, TypeId), &'static Fn(Material<Self::P, Self::V>, Shape<Self::P, Self::V>) -> Option<Self::P>> {
+        &mut self.intersections
+    }
+
+    fn intersections(&self) -> &HashMap<(TypeId, TypeId), &'static Fn(Material<Self::P, Self::V>, Shape<Self::P, Self::V>) -> Option<Self::P>> {
+        &self.intersections
+    }
+
+    fn set_intersections(&mut self, intersections: HashMap<(TypeId, TypeId), &'static Fn(Material<Self::P, Self::V>, Shape<Self::P, Self::V>) -> Option<Self::P>>) {
+        self.intersections = intersections;
     }
 }
 

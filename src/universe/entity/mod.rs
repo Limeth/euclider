@@ -1,7 +1,9 @@
 extern crate nalgebra as na;
 extern crate image;
 
+use std::marker::Reflect;
 use std::time::Duration;
+use std::any::TypeId;
 use self::na::NumPoint;
 use self::na::NumVector;
 use self::image::Rgba;
@@ -19,16 +21,22 @@ pub trait Camera<P: NumPoint<f32>, V: NumVector<f32>>: Entity<P, V> {
     fn get_ray_vector(&self, screen_x: i32, screen_y: i32, screen_width: i32, screen_height: i32) -> V;
 }
 
-pub trait Shape<P: NumPoint<f32>, V: NumVector<f32>> {
+pub trait HasId {
+    fn id() -> TypeId where Self: Sized + Reflect + 'static {
+        TypeId::of::<Self>()
+    }
+}
+
+pub trait Shape<P: NumPoint<f32>, V: NumVector<f32>> where Self: HasId {
     fn get_normal_at(&self, point: &P) -> V;
     fn is_point_inside(&self, point: &P) -> bool;
 }
 
-pub trait Material<P: NumPoint<f32>, V: NumVector<f32>> {
+pub trait Material<P: NumPoint<f32>, V: NumVector<f32>> where Self: HasId {
 
 }
 
-pub trait Surface<P: NumPoint<f32>, V: NumVector<f32>> {
+pub trait Surface<P: NumPoint<f32>, V: NumVector<f32>> where Self: HasId {
 
 }
 
@@ -72,6 +80,8 @@ impl Vacuum {
     }
 }
 
+impl HasId for Vacuum {}
+
 impl<P: NumPoint<f32>, V: NumVector<f32>> Material<P, V> for Vacuum {
 
 }
@@ -83,6 +93,8 @@ impl VoidShape {
         VoidShape {}
     }
 }
+
+impl HasId for VoidShape {}
 
 impl<P: NumPoint<f32>, V: NumVector<f32>> Shape<P, V> for VoidShape {
     fn get_normal_at(&self, point: &P) -> V {
@@ -105,6 +117,10 @@ impl<P: NumPoint<f32>, V: NumVector<f32>> Void<P, V> {
             shape: Box::new(VoidShape::new()),
             material: material,
         }
+    }
+
+    pub fn new_with_vacuum() -> Void<P, V> {
+        Self::new(Box::new(Vacuum::new()))
     }
 }
 

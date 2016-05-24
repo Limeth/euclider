@@ -5,10 +5,12 @@ pub mod camera;
 
 use std::collections::HashSet;
 use std::time::Duration;
+use std::any::TypeId;
 use self::na::Point3;
 use self::na::Vector3;
 use self::image::Rgba;
 use glium::glutin::VirtualKeyCode;
+use universe::entity::HasId;
 use universe::entity::Entity;
 use universe::entity::Locatable;
 use universe::entity::Rotatable;
@@ -98,5 +100,11 @@ impl Shape<Point3<f32>, Vector3<f32>> for Sphere {
 
     fn is_point_inside(&self, point: &Point3<f32>) -> bool {
         na::distance_squared(&self.location, point) <= self.radius * self.radius
+    }
+}
+
+impl HasId for Sphere {
+    fn id() -> TypeId {
+        TypeId::of::<Self>()
     }
 }

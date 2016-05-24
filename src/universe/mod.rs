@@ -5,6 +5,8 @@ pub mod d3;
 pub mod entity;
 
 use std::time::Duration;
+use std::collections::HashMap;
+use std::any::TypeId;
 use self::na::Point3;
 use self::na::Vector3;
 use self::na::NumPoint;
@@ -20,6 +22,7 @@ use self::glium::BlitTarget;
 use self::glium::texture::RawImage2d;
 use self::glium::uniforms::MagnifySamplerFilter;
 use SimulationContext;
+use universe::entity::Material;
 use universe::entity::Camera;
 use universe::entity::Entity;
 use universe::entity::Locatable;
@@ -30,28 +33,49 @@ use universe::entity::Shape;
 pub trait Universe {
     type P: NumPoint<f32>;
     type V: NumVector<f32>;
+    // Generics hell I might need in the future:
+    //
+    // fn camera_mut<C>(&mut self) -> &mut C where C: Camera<Self::P, Self::V>;
+    // fn camera<C>(&self) -> &C where C: Camera<Self::P, Self::V>;
+    // fn set_camera<C>(&mut self, camera: C) where C: Camera<Self::P, Self::V>;
+    // fn entities_mut<E>(&mut self) -> &mut Vec<Box<E>> where E: Entity<Self::P, Self::V>;
+    // fn entities<E>(&self) -> &Vec<Box<E>> where E: Entity<Self::P, Self::V>;
+    // fn set_entities<E>(&mut self, entities: Vec<Box<E>>) where E: Entity<Self::P, Self::V>;
+    // fn intersections_mut<F, M, S>(&mut self) -> &mut HashMap<(TypeId, TypeId), F>
+    //     where F: Fn(M, S) -> Option<Self::P>,
+    //           M: Material<Self::P, Self::V>,
+    //           S: Shape<Self::P, Self::V>;
+    // fn intersections<F, M, S>(&self) -> &HashMap<(TypeId, TypeId), F>
+    //     where F: Fn(M, S) -> Option<Self::P>,
+    //           M: Material<Self::P, Self::V>,
+    //           S: Shape<Self::P, Self::V>;
+    // fn set_intersections<F, M, S>(&mut self, intersections: &mut HashMap<(TypeId, TypeId), F>)
+    //     where F: Fn(M, S) -> Option<Self::P>,
+    //           M: Material<Self::P, Self::V>,
+    //           S: Shape<Self::P, Self::V>;
     fn camera_mut(&mut self) -> &mut Camera<Self::P, Self::V>;
     fn camera(&self) -> &Camera<Self::P, Self::V>;
     fn set_camera(&mut self, camera: Box<Camera<Self::P, Self::V>>);
-    // fn set_camera(&mut self, camera: &mut Camera<Self::P, Self::V>);
-    // fn set_camera<T: Camera<Point3<f32>, Vector3<f32>>>(&mut self, camera: T);
     fn entities_mut(&mut self) -> &mut Vec<Box<Entity<Self::P, Self::V>>>;
     fn entities(&self) -> &Vec<Box<Entity<Self::P, Self::V>>>;
     fn set_entities(&mut self, entities: Vec<Box<Entity<Self::P, Self::V>>>);
+    fn intersections_mut(&mut self) -> &mut HashMap<(TypeId, TypeId), &'static Fn(Material<Self::P, Self::V>, Shape<Self::P, Self::V>) -> Option<Self::P>>;
+    fn intersections(&self) -> &HashMap<(TypeId, TypeId), &'static Fn(Material<Self::P, Self::V>, Shape<Self::P, Self::V>) -> Option<Self::P>>;
+    fn set_intersections(&mut self, intersections: HashMap<(TypeId, TypeId), &'static Fn(Material<Self::P, Self::V>, Shape<Self::P, Self::V>) -> Option<Self::P>>);
 
     fn trace(&self, location: &Self::P, rotation: &Self::V) -> Option<Rgb<u8>> {
         let mut belongs_to: Option<&Entity<Self::P, Self::V>> = None;
 
         for entity in self.entities() {
             let traceable = entity.as_traceable();
-            
+
             if traceable.is_none() {
                 continue;
             }
 
             let traceable: &Traceable<Self::P, Self::V> = traceable.unwrap();
             let shape: &Shape<Self::P, Self::V> = traceable.shape();
-            
+
             if !shape.is_point_inside(location) {
                 continue;
             }

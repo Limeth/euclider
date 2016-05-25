@@ -14,7 +14,7 @@ use universe::d3::entity::*;
 pub struct Universe3D {
     camera: Box<Camera3>,
     entities: Vec<Box<Entity3>>,
-    intersections: HashMap<(TypeId, TypeId), &'static Fn(&Point3<f32>, &Vector3<f32>, &Material<Point3<f32>, Vector3<f32>>, &Shape<Point3<f32>, Vector3<f32>>) -> Option<Point3<f32>>>,
+    intersections: HashMap<(TypeId, TypeId), fn(&Point3<f32>, &Vector3<f32>, &Material<Point3<f32>, Vector3<f32>>, &Shape<Point3<f32>, Vector3<f32>>) -> Option<Point3<f32>>>,
 }
 
 impl Universe3D {
@@ -67,7 +67,7 @@ impl Universe for Universe3D {
 
     fn intersectors_mut(&mut self)
                          -> &mut HashMap<(TypeId, TypeId),
-                                         &'static Fn(&Self::P,
+                                         fn(&Self::P,
                                                      &Self::V,
                                                      &Material<Self::P, Self::V>,
                                                      &Shape<Self::P, Self::V>)
@@ -77,7 +77,7 @@ impl Universe for Universe3D {
 
     fn intersectors(&self)
                      -> &HashMap<(TypeId, TypeId),
-                                 &'static Fn(&Self::P,
+                                 fn(&Self::P,
                                              &Self::V,
                                              &Material<Self::P, Self::V>,
                                              &Shape<Self::P, Self::V>)
@@ -88,7 +88,7 @@ impl Universe for Universe3D {
     #[rustfmt_skip]
     fn set_intersectors(&mut self,
                          intersections: HashMap<(TypeId, TypeId),
-                                                &'static Fn(&Self::P,
+                                                fn(&Self::P,
                                                             &Self::V,
                                                             &Material<Self::P, Self::V>,
                                                             &Shape<Self::P, Self::V>)

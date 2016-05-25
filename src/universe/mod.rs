@@ -55,21 +55,21 @@ pub trait Universe {
     fn set_entities(&mut self, entities: Vec<Box<Entity<Self::P, Self::V>>>);
     fn intersectors_mut(&mut self)
                          -> &mut HashMap<(TypeId, TypeId),
-                                         &'static Fn(&Self::P,
+                                         fn(&Self::P,
                                                      &Self::V,
                                                      &Material<Self::P, Self::V>,
                                                      &Shape<Self::P, Self::V>)
                                                      -> Option<Self::P>>;
     fn intersectors(&self)
                      -> &HashMap<(TypeId, TypeId),
-                                 &'static Fn(&Self::P,
+                                 fn(&Self::P,
                                              &Self::V,
                                              &Material<Self::P, Self::V>,
                                              &Shape<Self::P, Self::V>)
                                              -> Option<Self::P>>;
     fn set_intersectors(&mut self,
                          intersections: HashMap<(TypeId, TypeId),
-                                                &'static Fn(&Self::P,
+                                                fn(&Self::P,
                                                             &Self::V,
                                                             &Material<Self::P, Self::V>,
                                                             &Shape<Self::P, Self::V>)
@@ -98,22 +98,31 @@ pub trait Universe {
 
         if belongs_to.is_some() {
             let belongs_to = belongs_to.unwrap();
-            let background = Rgb { data: [255u8, 255u8, 255u8], };
-            let color: Rgba<u8> = Rgba { data: [0u8, 0u8, 0u8, 0u8], };
-
             match belongs_to.as_traceable() {
                 Some(traceable) => {
                     let material = traceable.material();
                     let shape = traceable.shape();
                     let material_id = material.id();
                     let shape_id = shape.id();
-                    // let intersectors = self.intersectors();
-                    // let intersector = self.intersectors().get(&(material_id, shape_id));
+                    let intersector = self.intersectors().get(&(material_id, shape_id));
+
+                    match intersector {
+                        Some(intersector) => {
+                            let background = Rgb { data: [255u8, 255u8, 255u8], };
+                            let mut color: Rgba<u8> = Rgba { data: [0u8, 0u8, 0u8, 0u8], };
+
+                            match intersector(location, rotation, material, shape) {
+                                Some(_) => color.data[1] = 255u8,
+                                None => (),
+                            }
+
+                            return Some(util::overlay_color(background, color));
+                        },
+                        None => (),
+                    }
                 },
                 None => (),
             }
-
-            return Some(util::overlay_color(background, color));
         }
 
         None

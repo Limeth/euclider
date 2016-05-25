@@ -216,14 +216,23 @@ fn main() {
     {
         let mut entities = universe.entities_mut();
         entities.push(Box::new(Void::new_with_vacuum()));
+        entities.push(Box::new(Entity3Impl::new(
+                Box::new(Sphere3::new(
+                    Point3::new(4.0, 0.0, 0.0),
+                    1.0
+                )),
+                Box::new(Vacuum::new()),
+                None
+            )));
     }
 
     {
         let mut intersectors = universe.intersectors_mut();
-        const VOID: &'static Fn(&Point3<f32>, &Vector3<f32>, &Material<Point3<f32>, Vector3<f32>>, &Shape<Point3<f32>, Vector3<f32>>) -> Option<Point3<f32>> = &universe::d3::entity::intersect_void;
-        intersectors.insert((Vacuum::id_static(), Sphere3::id_static()), VOID);
-        const VACUUM_SPHERE: &'static Fn(&Point3<f32>, &Vector3<f32>, &Material<Point3<f32>, Vector3<f32>>, &Shape<Point3<f32>, Vector3<f32>>) -> Option<Point3<f32>> = &universe::d3::entity::intersect_sphere_in_vacuum;
-        intersectors.insert((Vacuum::id_static(), Sphere3::id_static()), VACUUM_SPHERE);
+        let void = universe::d3::entity::intersect_void;
+        intersectors.insert((Vacuum::id_static(), VoidShape::id_static()), void);
+        intersectors.insert((Vacuum::id_static(), Sphere3::id_static()), void);
+        let vacuum_sphere = universe::d3::entity::intersect_sphere_in_vacuum;
+        intersectors.insert((Vacuum::id_static(), Sphere3::id_static()), vacuum_sphere);
     }
 
     let simulation = Simulation::builder()

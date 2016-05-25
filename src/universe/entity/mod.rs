@@ -111,7 +111,7 @@ impl HasId for Vacuum {
 
 impl<P: NumPoint<f32>, V: NumVector<f32>> Material<P, V> for Vacuum {}
 
-struct VoidShape {}
+pub struct VoidShape {}
 
 impl VoidShape {
     pub fn new() -> VoidShape {

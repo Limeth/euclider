@@ -22,7 +22,7 @@ use self::glium::texture::RawImage2d;
 use self::glium::uniforms::MagnifySamplerFilter;
 use SimulationContext;
 use universe::entity::*;
-use util;
+use universe::entity::HasId;
 
 pub trait Universe {
     type P: NumPoint<f32>;
@@ -99,21 +99,9 @@ pub trait Universe {
         if belongs_to.is_some() {
             let belongs_to = belongs_to.unwrap();
             let background = Rgb { data: [255u8, 255u8, 255u8], };
-            let color: Rgba<u8> = Rgba { data: [0u8, 0u8, 0u8, 0u8], };
+            let color: Rgba<u8>;
+            let material_id = belongs_to.id();
 
-            match belongs_to.as_traceable() {
-                Some(traceable) => {
-                    let material = traceable.material();
-                    let shape = traceable.shape();
-                    let material_id = material.id();
-                    let shape_id = shape.id();
-                    // let intersectors = self.intersectors();
-                    // let intersector = self.intersectors().get(&(material_id, shape_id));
-                },
-                None => (),
-            }
-
-            return Some(util::overlay_color(background, color));
         }
 
         None

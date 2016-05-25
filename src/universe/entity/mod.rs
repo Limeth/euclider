@@ -33,12 +33,13 @@ pub trait Camera<P: NumPoint<f32>, V: NumVector<f32>>: Entity<P, V> {
 }
 
 pub trait HasId {
-    fn id() -> TypeId
+    fn id_static() -> TypeId
         where Self: Sized + Reflect + 'static
     {
         TypeId::of::<Self>()
     }
 
+    fn id(&self) -> TypeId;
     fn as_any(&self) -> &Any;
     fn as_any_mut(&mut self) -> &mut Any;
 }
@@ -61,7 +62,7 @@ pub trait Updatable {
 pub trait Traceable<P: NumPoint<f32>, V: NumVector<f32>> {
     fn trace(&self) -> Rgba<u8>;
     fn shape(&self) -> &Shape<P, V>;
-    fn material(&self) -> Option<&Material<P, V>>;
+    fn material(&self) -> &Material<P, V>;
     fn surface(&self) -> Option<&Surface<P, V>>;
 }
 
@@ -95,6 +96,10 @@ impl Vacuum {
 }
 
 impl HasId for Vacuum {
+    fn id(&self) -> TypeId {
+        Self::id_static()
+    }
+
     fn as_any(&self) -> &Any {
         self
     }
@@ -115,6 +120,10 @@ impl VoidShape {
 }
 
 impl HasId for VoidShape {
+    fn id(&self) -> TypeId {
+        Self::id_static()
+    }
+
     fn as_any(&self) -> &Any {
         self
     }
@@ -180,8 +189,8 @@ impl<P: NumPoint<f32>, V: NumVector<f32>> Traceable<P, V> for Void<P, V> {
         self.shape.as_ref()
     }
 
-    fn material(&self) -> Option<&Material<P, V>> {
-        None
+    fn material(&self) -> &Material<P, V> {
+        self.material.as_ref()
     }
 
     fn surface(&self) -> Option<&Surface<P, V>> {

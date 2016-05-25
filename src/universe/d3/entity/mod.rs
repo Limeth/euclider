@@ -4,6 +4,7 @@ extern crate std;
 pub mod camera;
 
 use std::any::Any;
+use std::any::TypeId;
 use self::na::Point3;
 use self::na::Vector3;
 use self::image::Rgba;
@@ -20,13 +21,13 @@ pub type Surface3 = Surface<Point3<f32>, Vector3<f32>>;
 
 pub struct Entity3Impl {
     shape: Box<Shape3>,
-    material: Option<Box<Material3>>,
+    material: Box<Material3>,
     surface: Option<Box<Surface3>>,
 }
 
 impl Entity3Impl {
     pub fn new(shape: Box<Shape3>,
-               material: Option<Box<Material3>>,
+               material: Box<Material3>,
                surface: Option<Box<Surface3>>)
                -> Entity3Impl {
         Entity3Impl {
@@ -64,8 +65,8 @@ impl Traceable<Point3<f32>, Vector3<f32>> for Entity3Impl {
         self.shape.as_ref()
     }
 
-    fn material(&self) -> Option<&Material3> {
-        self.material.as_ref().map(|x| &**x)
+    fn material(&self) -> &Material3 {
+        self.material.as_ref()
     }
 
     fn surface(&self) -> Option<&Surface3> {
@@ -88,6 +89,10 @@ impl Sphere3 {
 }
 
 impl HasId for Sphere3 {
+    fn id(&self) -> TypeId {
+        Self::id_static()
+    }
+
     fn as_any(&self) -> &Any {
         self
     }

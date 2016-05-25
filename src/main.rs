@@ -221,9 +221,9 @@ fn main() {
     {
         let mut intersectors = universe.intersectors_mut();
         const VOID: &'static Fn(&Point3<f32>, &Vector3<f32>, &Material<Point3<f32>, Vector3<f32>>, &Shape<Point3<f32>, Vector3<f32>>) -> Option<Point3<f32>> = &universe::d3::entity::intersect_void;
-        intersectors.insert((Vacuum::id(), Sphere3::id()), VOID);
+        intersectors.insert((Vacuum::id_static(), Sphere3::id_static()), VOID);
         const VACUUM_SPHERE: &'static Fn(&Point3<f32>, &Vector3<f32>, &Material<Point3<f32>, Vector3<f32>>, &Shape<Point3<f32>, Vector3<f32>>) -> Option<Point3<f32>> = &universe::d3::entity::intersect_sphere_in_vacuum;
-        intersectors.insert((Vacuum::id(), Sphere3::id()), VACUUM_SPHERE);
+        intersectors.insert((Vacuum::id_static(), Sphere3::id_static()), VACUUM_SPHERE);
     }
 
     let simulation = Simulation::builder()

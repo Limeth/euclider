@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::any::TypeId;
 use na::Point3;
 use na::Vector3;
-use universe::entity::Camera;
+use universe::entity::*;
 use universe::d3::entity::camera::Camera3Impl;
 use universe::Universe;
 use universe::d3::entity::*;
@@ -14,7 +14,7 @@ use universe::d3::entity::*;
 pub struct Universe3D {
     camera: Box<Camera3>,
     entities: Vec<Box<Entity3>>,
-    intersections: HashMap<(TypeId, TypeId), &'static Fn(Material3, Shape3) -> Option<Point3<f32>>>,
+    intersections: HashMap<(TypeId, TypeId), &'static Fn(&Point3<f32>, &Vector3<f32>, &Material<Point3<f32>, Vector3<f32>>, &Shape<Point3<f32>, Vector3<f32>>) -> Option<Point3<f32>>>,
 }
 
 impl Universe3D {
@@ -65,22 +65,34 @@ impl Universe for Universe3D {
         self.entities = entities;
     }
 
-    fn intersections_mut
-        (&mut self)
-         -> &mut HashMap<(TypeId, TypeId), &'static Fn(Material3, Shape3) -> Option<Self::P>> {
+    fn intersectors_mut(&mut self)
+                         -> &mut HashMap<(TypeId, TypeId),
+                                         &'static Fn(&Self::P,
+                                                     &Self::V,
+                                                     &Material<Self::P, Self::V>,
+                                                     &Shape<Self::P, Self::V>)
+                                                     -> Option<Self::P>> {
         &mut self.intersections
     }
 
-    fn intersections
-        (&self)
-         -> &HashMap<(TypeId, TypeId), &'static Fn(Material3, Shape3) -> Option<Self::P>> {
+    fn intersectors(&self)
+                     -> &HashMap<(TypeId, TypeId),
+                                 &'static Fn(&Self::P,
+                                             &Self::V,
+                                             &Material<Self::P, Self::V>,
+                                             &Shape<Self::P, Self::V>)
+                                             -> Option<Self::P>> {
         &self.intersections
     }
 
     #[rustfmt_skip]
-    fn set_intersections(&mut self,
+    fn set_intersectors(&mut self,
                          intersections: HashMap<(TypeId, TypeId),
-                                         &'static Fn(Material3, Shape3) -> Option<Self::P>>) {
+                                                &'static Fn(&Self::P,
+                                                            &Self::V,
+                                                            &Material<Self::P, Self::V>,
+                                                            &Shape<Self::P, Self::V>)
+                                                            -> Option<Self::P>>) {
         self.intersections = intersections;
     }
 }

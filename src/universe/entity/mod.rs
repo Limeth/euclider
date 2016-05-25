@@ -4,6 +4,7 @@ extern crate image;
 use std::marker::Reflect;
 use std::time::Duration;
 use std::any::TypeId;
+use std::any::Any;
 use self::na::NumPoint;
 use self::na::NumVector;
 use self::image::Rgba;
@@ -37,6 +38,9 @@ pub trait HasId {
     {
         TypeId::of::<Self>()
     }
+
+    fn as_any(&self) -> &Any;
+    fn as_any_mut(&mut self) -> &mut Any;
 }
 
 pub trait Shape<P: NumPoint<f32>, V: NumVector<f32>>
@@ -90,7 +94,15 @@ impl Vacuum {
     }
 }
 
-impl HasId for Vacuum {}
+impl HasId for Vacuum {
+    fn as_any(&self) -> &Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut Any {
+        self
+    }
+}
 
 impl<P: NumPoint<f32>, V: NumVector<f32>> Material<P, V> for Vacuum {}
 
@@ -102,7 +114,15 @@ impl VoidShape {
     }
 }
 
-impl HasId for VoidShape {}
+impl HasId for VoidShape {
+    fn as_any(&self) -> &Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut Any {
+        self
+    }
+}
 
 impl<P: NumPoint<f32>, V: NumVector<f32>> Shape<P, V> for VoidShape {
     fn get_normal_at(&self, point: &P) -> V {

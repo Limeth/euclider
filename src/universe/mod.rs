@@ -55,19 +55,26 @@ pub trait Universe {
     fn entities_mut(&mut self) -> &mut Vec<Box<Entity<Self::P, Self::V>>>;
     fn entities(&self) -> &Vec<Box<Entity<Self::P, Self::V>>>;
     fn set_entities(&mut self, entities: Vec<Box<Entity<Self::P, Self::V>>>);
-    fn intersections_mut(&mut self)
+    fn intersectors_mut(&mut self)
                          -> &mut HashMap<(TypeId, TypeId),
-                                         &'static Fn(Material<Self::P, Self::V>,
-                                                     Shape<Self::P, Self::V>)
+                                         &'static Fn(&Self::P,
+                                                     &Self::V,
+                                                     &Material<Self::P, Self::V>,
+                                                     &Shape<Self::P, Self::V>)
                                                      -> Option<Self::P>>;
-    fn intersections(&self)
+    fn intersectors(&self)
                      -> &HashMap<(TypeId, TypeId),
-                                 &'static Fn(Material<Self::P, Self::V>, Shape<Self::P, Self::V>)
+                                 &'static Fn(&Self::P,
+                                             &Self::V,
+                                             &Material<Self::P, Self::V>,
+                                             &Shape<Self::P, Self::V>)
                                              -> Option<Self::P>>;
-    fn set_intersections(&mut self,
+    fn set_intersectors(&mut self,
                          intersections: HashMap<(TypeId, TypeId),
-                                                &'static Fn(Material<Self::P, Self::V>,
-                                                            Shape<Self::P, Self::V>)
+                                                &'static Fn(&Self::P,
+                                                            &Self::V,
+                                                            &Material<Self::P, Self::V>,
+                                                            &Shape<Self::P, Self::V>)
                                                             -> Option<Self::P>>);
 
     fn trace(&self, location: &Self::P, rotation: &Self::V) -> Option<Rgb<u8>> {

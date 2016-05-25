@@ -3,19 +3,11 @@ extern crate image;
 extern crate std;
 pub mod camera;
 
+use std::any::Any;
 use self::na::Point3;
 use self::na::Vector3;
 use self::image::Rgba;
-use universe::entity::HasId;
-use universe::entity::Entity;
-use universe::entity::Camera;
-use universe::entity::Locatable;
-use universe::entity::Rotatable;
-use universe::entity::Updatable;
-use universe::entity::Traceable;
-use universe::entity::Shape;
-use universe::entity::Material;
-use universe::entity::Surface;
+use universe::entity::*;
 
 pub type Entity3 = Entity<Point3<f32>, Vector3<f32>>;
 pub type Camera3 = Camera<Point3<f32>, Vector3<f32>>;
@@ -81,23 +73,32 @@ impl Traceable<Point3<f32>, Vector3<f32>> for Entity3Impl {
     }
 }
 
-pub struct Sphere {
+pub struct Sphere3 {
     location: Point3<f32>,
     radius: f32,
 }
 
-impl Sphere {
-    pub fn new(location: Point3<f32>, radius: f32) -> Sphere {
-        Sphere {
+impl Sphere3 {
+    pub fn new(location: Point3<f32>, radius: f32) -> Sphere3 {
+        Sphere3 {
             location: location,
             radius: radius,
         }
     }
 }
 
-impl HasId for Sphere {}
+impl HasId for Sphere3 {
+    fn as_any(&self) -> &Any {
+        self
+    }
 
-impl Shape<Point3<f32>, Vector3<f32>> for Sphere {
+    fn as_any_mut(&mut self) -> &mut Any {
+        self
+    }
+}
+
+
+impl Shape<Point3<f32>, Vector3<f32>> for Sphere3 {
     fn get_normal_at(&self, point: &Point3<f32>) -> Vector3<f32> {
         let norm = *point - self.location;
         na::normalize(&norm)
@@ -106,4 +107,53 @@ impl Shape<Point3<f32>, Vector3<f32>> for Sphere {
     fn is_point_inside(&self, point: &Point3<f32>) -> bool {
         na::distance_squared(&self.location, point) <= self.radius * self.radius
     }
+}
+
+pub fn intersect_void(location: &Point3<f32>, direction: &Vector3<f32>, vacuum: &Material<Point3<f32>, Vector3<f32>>, sphere: &Shape<Point3<f32>, Vector3<f32>>) -> Option<Point3<f32>> {
+    None
+}
+
+pub fn intersect_sphere_in_vacuum(location: &Point3<f32>, direction: &Vector3<f32>, vacuum: &Material<Point3<f32>, Vector3<f32>>, sphere: &Shape<Point3<f32>, Vector3<f32>>) -> Option<Point3<f32>> {
+    // Unsafe cast example:
+    //let a = unsafe { &*(a as *const _ as *const Aimpl) };
+    let vacuum: &Vacuum = vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
+    let sphere: &Sphere3 = sphere.as_any().downcast_ref::<Sphere3>().unwrap();
+
+    let a = direction.x * direction.x + direction.y * direction.y + direction.z * direction.z;
+    let b = direction.x * (2.0 * location.x - sphere.location.x)
+            + direction.y * (2.0 * location.y - sphere.location.y)
+            + direction.z * (2.0 * location.z - sphere.location.z);
+    let c = location.x * (location.x - sphere.location.x)
+            + location.y * (location.y - sphere.location.y)
+            + location.z * (location.z - sphere.location.z)
+            + sphere.location.x + sphere.location.y + sphere.location.z
+            - sphere.radius * sphere.radius;
+
+    // Discriminant = b^2 - 4*a*c
+    let d = b * b - 4.0 * a * c;
+
+    if d < 0.0 {
+        return None;
+    }
+
+    let d_sqrt = d.sqrt();
+    let t: f32; // The smallest non-negative vector modifier
+    let t1 = (-b - d_sqrt) / (2.0 * a);
+
+    if t1 >= 0.0 {
+        t = t1;
+    } else {
+        let t2 = (-b + d_sqrt) / (2.0 * a);
+
+        if t2 >= 0.0 {
+            t = t2;
+        } else {
+            unreachable!();
+        }
+    }
+
+    let result_vector = *direction * t;
+    let result_point = Point3::new(location.x + result_vector.x, location.y + result_vector.y, location.z + result_vector.z);
+
+    Some(result_point)
 }

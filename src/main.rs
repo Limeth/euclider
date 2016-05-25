@@ -9,6 +9,8 @@ pub mod util;
 use std::collections::HashSet;
 use std::time::Instant;
 use std::time::Duration;
+use na::Point3;
+use na::Vector3;
 use na::Point2;
 use na::Vector2;
 use glium::DisplayBuild;
@@ -21,6 +23,7 @@ use glium::glutin::CursorState;
 use universe::Universe;
 use universe::entity::*;
 use universe::d3::Universe3D;
+use universe::d3::entity::*;
 use util::RemoveIf;
 
 pub struct Simulation<U: Universe> {
@@ -213,6 +216,14 @@ fn main() {
     {
         let mut entities = universe.entities_mut();
         entities.push(Box::new(Void::new_with_vacuum()));
+    }
+
+    {
+        let mut intersectors = universe.intersectors_mut();
+        const VOID: &'static Fn(&Point3<f32>, &Vector3<f32>, &Material<Point3<f32>, Vector3<f32>>, &Shape<Point3<f32>, Vector3<f32>>) -> Option<Point3<f32>> = &universe::d3::entity::intersect_void;
+        intersectors.insert((Vacuum::id(), Sphere3::id()), VOID);
+        const VACUUM_SPHERE: &'static Fn(&Point3<f32>, &Vector3<f32>, &Material<Point3<f32>, Vector3<f32>>, &Shape<Point3<f32>, Vector3<f32>>) -> Option<Point3<f32>> = &universe::d3::entity::intersect_sphere_in_vacuum;
+        intersectors.insert((Vacuum::id(), Sphere3::id()), VACUUM_SPHERE);
     }
 
     let simulation = Simulation::builder()

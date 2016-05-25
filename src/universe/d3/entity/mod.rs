@@ -48,11 +48,11 @@ impl Entity<Point3<f32>, Vector3<f32>> for Entity3Impl {
     }
 
     fn as_traceable_mut(&mut self) -> Option<&mut Traceable<Point3<f32>, Vector3<f32>>> {
-        None
+        Some(self)
     }
 
     fn as_traceable(&self) -> Option<&Traceable3> {
-        None
+        Some(self)
     }
 }
 
@@ -114,14 +114,15 @@ impl Shape<Point3<f32>, Vector3<f32>> for Sphere3 {
     }
 }
 
-pub fn intersect_void(location: &Point3<f32>, direction: &Vector3<f32>, vacuum: &Material<Point3<f32>, Vector3<f32>>, sphere: &Shape<Point3<f32>, Vector3<f32>>) -> Option<Point3<f32>> {
+pub fn intersect_void(location: &Point3<f32>, direction: &Vector3<f32>, material: &Material<Point3<f32>, Vector3<f32>>, void: &Shape<Point3<f32>, Vector3<f32>>) -> Option<Point3<f32>> {
+    void.as_any().downcast_ref::<VoidShape>().unwrap();
     None
 }
 
 pub fn intersect_sphere_in_vacuum(location: &Point3<f32>, direction: &Vector3<f32>, vacuum: &Material<Point3<f32>, Vector3<f32>>, sphere: &Shape<Point3<f32>, Vector3<f32>>) -> Option<Point3<f32>> {
     // Unsafe cast example:
     //let a = unsafe { &*(a as *const _ as *const Aimpl) };
-    let vacuum: &Vacuum = vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
+    vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
     let sphere: &Sphere3 = sphere.as_any().downcast_ref::<Sphere3>().unwrap();
 
     let a = direction.x * direction.x + direction.y * direction.y + direction.z * direction.z;
@@ -153,7 +154,7 @@ pub fn intersect_sphere_in_vacuum(location: &Point3<f32>, direction: &Vector3<f3
         if t2 >= 0.0 {
             t = t2;
         } else {
-            unreachable!();
+            return None; // Don't trace in the opposite direction
         }
     }
 

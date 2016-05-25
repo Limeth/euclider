@@ -215,7 +215,6 @@ fn main() {
 
     {
         let mut entities = universe.entities_mut();
-        entities.push(Box::new(Void::new_with_vacuum()));
         entities.push(Box::new(Entity3Impl::new(
                 Box::new(Sphere3::new(
                     Point3::new(4.0, 0.0, 0.0),
@@ -224,6 +223,7 @@ fn main() {
                 Box::new(Vacuum::new()),
                 None
             )));
+        entities.push(Box::new(Void::new_with_vacuum()));
     }
 
     {

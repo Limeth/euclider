@@ -96,33 +96,53 @@ pub trait Universe {
             break;
         }
 
-        if belongs_to.is_some() {
+
+
+        'render:
+        while belongs_to.is_some() {
             let belongs_to = belongs_to.unwrap();
-            match belongs_to.as_traceable() {
-                Some(traceable) => {
-                    let material = traceable.material();
-                    let shape = traceable.shape();
-                    let material_id = material.id();
-                    let shape_id = shape.id();
-                    let intersector = self.intersectors().get(&(material_id, shape_id));
+            let traceable = belongs_to.as_traceable();
 
-                    match intersector {
-                        Some(intersector) => {
-                            let background = Rgb { data: [255u8, 255u8, 255u8], };
-                            let mut color: Rgba<u8> = Rgba { data: [0u8, 0u8, 0u8, 0u8], };
-
-                            match intersector(location, rotation, material, shape) {
-                                Some(_) => color.data[1] = 255u8,
-                                None => (),
-                            }
-
-                            return Some(util::overlay_color(background, color));
-                        },
-                        None => (),
-                    }
-                },
-                None => (),
+            if traceable.is_none() {
+                break 'render;
             }
+
+            let traceable = traceable.unwrap();
+            let material = traceable.material();
+
+            for other in self.entities() {
+                let other_traceable = other.as_traceable();
+
+                if other_traceable.is_none() {
+                    continue;
+                }
+
+                let other_traceable = other_traceable.unwrap();
+                let shape = other_traceable.shape();
+                let material_id = material.id();
+                let shape_id = shape.id();
+                let intersector = self.intersectors().get(&(material_id, shape_id));
+
+                if intersector.is_none() {
+                    continue;
+                }
+
+                let intersector = intersector.unwrap();
+                let background = Rgb { data: [255u8, 255u8, 255u8], };
+                let mut color: Rgba<u8> = Rgba { data: [0u8, 0u8, 0u8, 0u8], };
+
+                match intersector(location, rotation, material, shape) {
+                    Some(_) => {
+                        color.data[1] = 255u8;
+                        color.data[3] = 255u8;
+                    },
+                    None => (),
+                }
+
+                return Some(util::overlay_color(background, color));
+            }
+
+            break 'render;
         }
 
         None

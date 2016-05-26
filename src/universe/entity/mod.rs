@@ -10,7 +10,7 @@ use self::na::NumVector;
 use self::image::Rgba;
 use SimulationContext;
 
-pub trait Entity<P: NumPoint<f32>, V: NumVector<f32>> {
+pub trait Entity<P: NumPoint<f32>, V: NumVector<f32>> where Self: Sync {
     fn as_updatable_mut(&mut self) -> Option<&mut Updatable>;
     fn as_updatable(&self) -> Option<&Updatable>;
     fn as_traceable_mut(&mut self) -> Option<&mut Traceable<P, V>>;
@@ -147,6 +147,8 @@ pub struct Void<P: NumPoint<f32>, V: NumVector<f32>> {
     shape: Box<VoidShape>,
     material: Box<Material<P, V>>,
 }
+
+unsafe impl<P: NumPoint<f32>, V: NumVector<f32>> Sync for Void<P, V> {}
 
 impl<P: NumPoint<f32>, V: NumVector<f32>> Void<P, V> {
     pub fn new(material: Box<Material<P, V>>) -> Void<P, V> {

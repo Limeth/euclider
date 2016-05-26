@@ -7,3 +7,4 @@ authors = ["Jakub Hlusička <jakub.hlusicka@email.cz>"]
 glium = "0.*"
 nalgebra = "0.*"
 image = "0.*"
+scoped_threadpool = "0.*"

@@ -24,6 +24,8 @@ pub struct Camera3Impl {
     fov: u8,
 }
 
+unsafe impl Sync for Camera3Impl {}
+
 impl Camera3Impl {
     pub fn new() -> Camera3Impl {
         Camera3Impl {

@@ -1,6 +1,8 @@
 extern crate nalgebra as na;
 extern crate image;
 extern crate glium;
+extern crate scoped_threadpool;
+extern crate std;
 pub mod d3;
 pub mod entity;
 
@@ -22,11 +24,12 @@ use self::image::GenericImage;
 use self::glium::BlitTarget;
 use self::glium::texture::RawImage2d;
 use self::glium::uniforms::MagnifySamplerFilter;
+use self::scoped_threadpool::Pool;
 use SimulationContext;
 use universe::entity::*;
 use util;
 
-pub trait Universe {
+pub trait Universe where Self: Sync {
     type P: NumPoint<f32>;
     type V: NumVector<f32>;
     // Generics hell I might need in the future:
@@ -181,22 +184,111 @@ pub trait Universe {
         let (width, height) = surface.get_dimensions();
         // let mut buffer: DynamicImage = DynamicImage::new_rgb8(width, height);
         const COLOR_DIM: usize = 3;
-        let mut data: Vec<u8> = Vec::with_capacity((width * height) as usize * COLOR_DIM);
+        let mut data: Vec<u8> = vec!(0; (width * height) as usize * COLOR_DIM);
+        let mut pool = Pool::new(4);
 
         // TODO: This loop takes a long time!
-        for y in 0..height {
-            for x in 0..width {
-                let color = self.trace_screen_point(x as i32,
-                                                    y as i32,
-                                                    width as i32,
-                                                    height as i32);
-                let index = (x + y * width) as usize;
+        pool.scoped(|scope| {
+            for (index, chunk) in &mut data.chunks_mut(COLOR_DIM).enumerate() {
+                scope.execute(move || {
+                    let x = index as u32 % width;
+                    let y = index as u32 / width;
+                    let color = self.trace_screen_point(x as i32,
+                                                        y as i32,
+                                                        width as i32,
+                                                        height as i32);
 
-                for i in 0..COLOR_DIM {
-                    data.insert(index * COLOR_DIM + i, color.data[i]);
-                }
+                    for (i, result) in chunk.iter_mut().enumerate() {
+                        *result = color.data[i];
+                    }
+                });
             }
-        }
+        });
+        // crossbeam::scope(|scope| {
+        //     for (index, chunk) in &mut data.chunks_mut(COLOR_DIM).enumerate() {
+        //         pool.scoped(|pool_scope| {
+        //             scope.spawn(move || {
+        //                 let x = index as u32 % width;
+        //                 let y = index as u32 / width;
+        //                 let color = self.trace_screen_point(x as i32,
+        //                                                     y as i32,
+        //                                                     width as i32,
+        //                                                     height as i32);
+
+        //                 for (i, result) in chunk.iter_mut().enumerate() {
+        //                     *result = color.data[i];
+        //                 }
+        //             });
+        //         });
+        //     }
+        // });
+        // crossbeam::scope(|scope| {
+        //     for (index, result) in &mut data.iter_mut().enumerate() {
+        //         let x = index as u32 % width;
+        //         let y = index as u32 / width;
+
+        //         scope.spawn(move || {
+        //             let color = self.trace_screen_point(x as i32,
+        //                                                 y as i32,
+        //                                                 width as i32,
+        //                                                 height as i32);
+
+        //             for i in 0..COLOR_DIM {
+        //                 *result = color.data[i];
+        //             }
+        //         });
+        //     }
+        // });
+        // crossbeam::scope(|scope| {
+        //     let mut_data = &mut data;
+        //     for y in 0..height {
+        //         for x in 0..width {
+        //             let index = (x + y * width) as usize;
+        //             let mut result = &mut test;//mut_data.get_mut(index).unwrap();
+
+        //             scope.spawn(move || {
+        //                 let color = self.trace_screen_point(x as i32,
+        //                                                     y as i32,
+        //                                                     width as i32,
+        //                                                     height as i32);
+
+        //                 for i in 0..COLOR_DIM {
+        //                     // data[index * COLOR_DIM + i] = color.data[i];
+        //                     *result = color.data[i];
+        //                 }
+        //             });
+        //         }
+        //     }
+        // });
+        // use std::sync::Arc;
+        // use std::thread::spawn;
+
+        // let mut guards = vec![];
+
+        // for y in 0..height {
+        //     for x in 0..width {
+        //         let index = (x + y * width) as usize;
+        //         let mut result = data.get_mut(index).unwrap();
+
+        //         let guard = std::thread::spawn(move || {
+        //             let color = self.trace_screen_point(x as i32,
+        //                                                 y as i32,
+        //                                                 width as i32,
+        //                                                 height as i32);
+
+        //             for i in 0..COLOR_DIM {
+        //                 // data[index * COLOR_DIM + i] = color.data[i];
+        //                 *result = color.data[i];
+        //             }
+        //         });
+
+        //         guards.push(guard);
+        //     }
+        // }
+
+        // for guard in guards {
+        //     guard.join().unwrap();
+        // }
 
         let image = RawImage2d {
             data: Cow::Owned(data),

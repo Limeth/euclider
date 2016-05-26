@@ -25,6 +25,8 @@ pub struct Entity3Impl {
     surface: Option<Box<Surface3>>,
 }
 
+unsafe impl Sync for Entity3Impl {}
+
 impl Entity3Impl {
     pub fn new(shape: Box<Shape3>,
                material: Box<Material3>,

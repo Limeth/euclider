@@ -78,7 +78,7 @@ impl Camera<Point3<f32>, Vector3<f32>> for Camera3Impl {
         let step_yaw = 2.0 * (screen_width * step_angle_partial).atan() / screen_width;
         let step_pitch = 2.0 * (screen_height * step_angle_partial).atan() / screen_height;
         let yaw = (screen_x as f32 - screen_width / 2.0) * step_yaw;
-        let pitch = (screen_y as f32 - screen_height / 2.0) * step_pitch;
+        let pitch = -(screen_y as f32 - screen_height / 2.0) * step_pitch;
         let quaternion = UnitQuaternion::new_with_euler_angles(0f32, yaw, pitch);
         quaternion.rotate(&self.rotation)
     }
@@ -115,8 +115,21 @@ impl Updatable for Camera3Impl {
 
             match pressed_key.1.unwrap() {
                 VirtualKeyCode::W => {
-                    self.location = self.location + self.rotation * self.speed;
-                }
+                    self.location += self.rotation * self.speed;
+                },
+                VirtualKeyCode::S => {
+                    self.location += -self.rotation * self.speed;
+                },
+                VirtualKeyCode::A => {
+                    let quaternion = UnitQuaternion::new_with_euler_angles(0.0, std::f32::consts::PI / 2.0, 0.0);
+                    let vector = quaternion.rotate(&self.rotation.clone());
+                    self.location += vector * self.speed;
+                },
+                VirtualKeyCode::D => {
+                    let quaternion = UnitQuaternion::new_with_euler_angles(0.0, -std::f32::consts::PI / 2.0, 0.0);
+                    let vector = quaternion.rotate(&self.rotation.clone());
+                    self.location += vector * self.speed;
+                },
                 _ => (),
             }
         }

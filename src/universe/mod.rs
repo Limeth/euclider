@@ -7,11 +7,13 @@ pub mod entity;
 use std::time::Duration;
 use std::collections::HashMap;
 use std::any::TypeId;
+use std::borrow::Cow;
 use self::na::NumPoint;
 use self::na::NumVector;
 use self::glium::Surface as GliumSurface;
 use self::glium::texture::Texture2d;
 use self::glium::backend::Facade;
+use self::glium::texture::ClientFormat;
 use self::image::Rgb;
 use self::image::Rgba;
 use self::image::Pixel;
@@ -177,24 +179,31 @@ pub trait Universe {
                                      time: &Duration,
                                      context: &SimulationContext) {
         let (width, height) = surface.get_dimensions();
-        let mut buffer: DynamicImage = DynamicImage::new_rgb8(width, height);
+        // let mut buffer: DynamicImage = DynamicImage::new_rgb8(width, height);
+        const COLOR_DIM: usize = 3;
+        let mut data: Vec<u8> = Vec::with_capacity((width * height) as usize * COLOR_DIM);
 
         // TODO: This loop takes a long time!
-        for x in 0..width {
-            for y in 0..height {
-                buffer.put_pixel(x,
-                                 y,
-                                 self.trace_screen_point(x as i32,
-                                                         y as i32,
-                                                         width as i32,
-                                                         height as i32)
-                                     .to_rgba())
+        for y in 0..height {
+            for x in 0..width {
+                let color = self.trace_screen_point(x as i32,
+                                                    y as i32,
+                                                    width as i32,
+                                                    height as i32);
+                let index = (x + y * width) as usize;
+
+                for i in 0..COLOR_DIM {
+                    data.insert(index * COLOR_DIM + i, color.data[i]);
+                }
             }
         }
 
-        // Convert into an OpenGL texture and draw the result
-        // TODO: This next method takes a long time!
-        let image = RawImage2d::from_raw_rgb_reversed(buffer.raw_pixels(), buffer.dimensions());
+        let image = RawImage2d {
+            data: Cow::Owned(data),
+            width: width,
+            height: height,
+            format: ClientFormat::U8U8U8,
+        };
         let texture = Texture2d::new(facade, image).unwrap();
         let image_surface = texture.as_surface();
         let blit_target = BlitTarget {

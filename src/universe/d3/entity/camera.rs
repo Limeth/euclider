@@ -69,10 +69,10 @@ impl Camera<Point3<f32>, Vector3<f32>> for Camera3Impl {
                       screen_width: i32,
                       screen_height: i32)
                       -> Vector3<f32> {
+        let rel_x = (screen_x - screen_width / 2) as f32 + (1 - screen_width % 2) as f32 / 2.0;
+        let rel_y = (screen_y - screen_height / 2) as f32 + (1 - screen_height % 2) as f32 / 2.0;
         let screen_width = screen_width as f32;
         let screen_height = screen_height as f32;
-        let rel_x = screen_x as f32 - screen_width / 2.0 + (1.0 - screen_width % 2.0) / 2.0;
-        let rel_y = screen_y as f32 - screen_height / 2.0 + (1.0 - screen_height % 2.0) / 2.0;
         let fov_rad = std::f32::consts::PI * (self.fov as f32) / 180.0;
 
         let step_angle_partial = 2.0 * (fov_rad / 2.0).tan() /

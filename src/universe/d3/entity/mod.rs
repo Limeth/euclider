@@ -127,14 +127,18 @@ pub fn intersect_sphere_in_vacuum(location: &Point3<f32>, direction: &Vector3<f3
     vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
     let sphere: &Sphere3 = sphere.as_any().downcast_ref::<Sphere3>().unwrap();
 
+    let rel_x = location.x - sphere.location.x;
+    let rel_y = location.y - sphere.location.y;
+    let rel_z = location.z - sphere.location.z;
     let a = direction.x * direction.x + direction.y * direction.y + direction.z * direction.z;
-    let b = direction.x * (2.0 * location.x - sphere.location.x)
-            + direction.y * (2.0 * location.y - sphere.location.y)
-            + direction.z * (2.0 * location.z - sphere.location.z);
-    let c = location.x * (location.x - sphere.location.x)
-            + location.y * (location.y - sphere.location.y)
-            + location.z * (location.z - sphere.location.z)
-            + sphere.location.x + sphere.location.y + sphere.location.z
+    let b = 2.0 * (
+            direction.x * rel_x
+            + direction.y * rel_y
+            + direction.z * rel_z
+        );
+    let c = rel_x * rel_x
+            + rel_y * rel_y
+            + rel_z * rel_z
             - sphere.radius * sphere.radius;
 
     // Discriminant = b^2 - 4*a*c

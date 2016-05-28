@@ -104,7 +104,6 @@ impl HasId for Sphere3 {
     }
 }
 
-
 impl Shape<Point3<f32>, Vector3<f32>> for Sphere3 {
     fn get_normal_at(&self, point: &Point3<f32>) -> Vector3<f32> {
         let norm = *point - self.location;
@@ -116,12 +115,57 @@ impl Shape<Point3<f32>, Vector3<f32>> for Sphere3 {
     }
 }
 
-pub fn intersect_void(location: &Point3<f32>, direction: &Vector3<f32>, material: &Material<Point3<f32>, Vector3<f32>>, void: &Shape<Point3<f32>, Vector3<f32>>) -> Option<Point3<f32>> {
+pub struct Test3 {}
+
+impl HasId for Test3 {
+    fn id(&self) -> TypeId {
+        Self::id_static()
+    }
+
+    fn as_any(&self) -> &Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut Any {
+        self
+    }
+}
+
+impl Shape<Point3<f32>, Vector3<f32>> for Test3 {
+    fn get_normal_at(&self, point: &Point3<f32>) -> Vector3<f32> {
+        Vector3::new(1.0, 0.0, 0.0)
+    }
+
+    fn is_point_inside(&self, point: &Point3<f32>) -> bool {
+        false
+    }
+}
+
+pub fn intersect_test(location: &Point3<f32>, direction: &Vector3<f32>, material: &Material<Point3<f32>, Vector3<f32>>, void: &Shape<Point3<f32>, Vector3<f32>>) -> Option<Intersection<Point3<f32>>> {
+    let t = (1.0 - location.x) / direction.x;
+
+    if t <= 0.0 {
+        return None;
+    }
+
+    let result = Point3::new(location.x + t * direction.x, location.y + t * direction.y, location.z + t * direction.z);
+
+    if result.y > 1.0 || result.y < 0.0 || result.z > 1.0 || result.z < 0.0 {
+        return None;
+    }
+
+    Some(Intersection {
+        point: result,
+        distance_squared: na::distance_squared(location, &result),
+    })
+}
+
+pub fn intersect_void(location: &Point3<f32>, direction: &Vector3<f32>, material: &Material<Point3<f32>, Vector3<f32>>, void: &Shape<Point3<f32>, Vector3<f32>>) -> Option<Intersection<Point3<f32>>> {
     void.as_any().downcast_ref::<VoidShape>().unwrap();
     None
 }
 
-pub fn intersect_sphere_in_vacuum(location: &Point3<f32>, direction: &Vector3<f32>, vacuum: &Material<Point3<f32>, Vector3<f32>>, sphere: &Shape<Point3<f32>, Vector3<f32>>) -> Option<Point3<f32>> {
+pub fn intersect_sphere_in_vacuum(location: &Point3<f32>, direction: &Vector3<f32>, vacuum: &Material<Point3<f32>, Vector3<f32>>, sphere: &Shape<Point3<f32>, Vector3<f32>>) -> Option<Intersection<Point3<f32>>> {
     // Unsafe cast example:
     //let a = unsafe { &*(a as *const _ as *const Aimpl) };
     vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
@@ -167,5 +211,8 @@ pub fn intersect_sphere_in_vacuum(location: &Point3<f32>, direction: &Vector3<f3
     let result_vector = *direction * t;
     let result_point = Point3::new(location.x + result_vector.x, location.y + result_vector.y, location.z + result_vector.z);
 
-    Some(result_point)
+    Some(Intersection {
+        point: result_point,
+        distance_squared: na::distance_squared(location, &result_point),
+    })
 }

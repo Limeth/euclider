@@ -32,7 +32,7 @@ impl Camera3Impl {
             location: na::origin(),
             rotation: Vector3::new(1f32, 0f32, 0f32),
             mouse_sensitivity: 0.01,
-            speed: 1.0,
+            speed: 0.1,
             fov: 90,
         }
     }
@@ -46,12 +46,13 @@ impl Camera3Impl {
         }
 
         let direction = delta_mouse_float * self.mouse_sensitivity;
-        let quaternion = UnitQuaternion::new_with_euler_angles(0f32, direction.x, direction.y);
+        let quaternion = UnitQuaternion::new_with_euler_angles(0f32, direction.y, direction.x);//, direction.y);
         self.rotation = quaternion.rotate(&self.rotation);
     }
 }
 
 impl Camera<Point3<f32>, Vector3<f32>> for Camera3Impl {
+    #[allow(unused_variables)]
     fn get_ray_point(&self,
                      screen_x: i32,
                      screen_y: i32,
@@ -70,16 +71,23 @@ impl Camera<Point3<f32>, Vector3<f32>> for Camera3Impl {
                       -> Vector3<f32> {
         let screen_width = screen_width as f32;
         let screen_height = screen_height as f32;
+        let rel_x = screen_x as f32 - screen_width / 2.0 + (1.0 - screen_width % 2.0) / 2.0;
+        let rel_y = screen_y as f32 - screen_height / 2.0 + (1.0 - screen_height % 2.0) / 2.0;
         let fov_rad = std::f32::consts::PI * (self.fov as f32) / 180.0;
 
-        let step_angle_partial = (fov_rad / 2.0).tan() /
+        let step_angle_partial = 2.0 * (fov_rad / 2.0).tan() /
                                  (screen_width * screen_width + screen_height * screen_height)
-            .sqrt();
-        let step_yaw = 2.0 * (screen_width * step_angle_partial).atan() / screen_width;
-        let step_pitch = 2.0 * (screen_height * step_angle_partial).atan() / screen_height;
-        let yaw = (screen_x as f32 - screen_width / 2.0) * step_yaw;
-        let pitch = -(screen_y as f32 - screen_height / 2.0) * step_pitch;
-        let quaternion = UnitQuaternion::new_with_euler_angles(0f32, yaw, pitch);
+                                 .sqrt();
+        let yaw = (step_angle_partial * rel_x).atan();
+        let pitch = -(step_angle_partial * rel_y).atan();
+        let quaternion = UnitQuaternion::new_with_euler_angles(0f32, pitch, yaw);
+        // TODO remove this debug
+        if screen_x == 0 && (screen_y == 0 || screen_y == screen_height as i32 - 1) {
+                // println!("step_yaw: {}; step_pitch: {}", step_yaw, step_pitch);
+                println!("yaw: {}; pitch: {}", yaw, pitch);
+                let dir = quaternion.rotate(&self.rotation);
+                println!("result_dir: <{}, {}, {}>", dir.x, dir.y, dir.z);
+        }
         quaternion.rotate(&self.rotation)
     }
 }

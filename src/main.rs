@@ -20,6 +20,7 @@ use glium::glutin::MouseButton;
 use glium::glutin::ElementState;
 use glium::glutin::Event;
 use glium::glutin::CursorState;
+use glium::glutin::MouseScrollDelta;
 use universe::Universe;
 use universe::entity::*;
 use universe::d3::Universe3D;
@@ -126,6 +127,7 @@ pub struct SimulationContext {
     pressed_mouse_buttons: HashSet<MouseButton>,
     mouse: Point2<i32>,
     delta_mouse: Vector2<i32>,
+    resolution: u32,
 }
 
 impl SimulationContext {
@@ -135,6 +137,7 @@ impl SimulationContext {
             pressed_mouse_buttons: HashSet::new(),
             mouse: na::origin(),
             delta_mouse: na::zero(),
+            resolution: 8,
         }
     }
 
@@ -175,7 +178,7 @@ impl SimulationContext {
                             }
                         }
                     };
-                }
+                },
                 Event::MouseInput(state, button) => {
                     match state {
                         ElementState::Pressed => {
@@ -185,7 +188,7 @@ impl SimulationContext {
                             self.pressed_mouse_buttons.remove(&button);
                         }
                     }
-                }
+                },
                 Event::MouseMoved(x, y) => {
                     let window = facade.get_window().unwrap();
                     let window_size = window.get_inner_size_pixels().unwrap();
@@ -199,10 +202,29 @@ impl SimulationContext {
 
                     window.set_cursor_position(center_x, center_y)
                         .expect("Could not reset the cursor position.");
-                }
+                },
+                Event::MouseWheel(mouse_scroll_delta, touch_phase) => {
+                    let up: bool;
+                    let down: bool;
+                    match mouse_scroll_delta {
+                        MouseScrollDelta::LineDelta(delta_x, delta_y) => {
+                            up = delta_y > 0.0;
+                            down = delta_y < 0.0;
+                        },
+                        MouseScrollDelta::PixelDelta(delta_x, delta_y) => {
+                            up = delta_y > 0.0;
+                            down = delta_y < 0.0;
+                        },
+                    }
+                    if up && self.resolution > 1 {
+                        self.resolution -= 1;
+                    } else if down {
+                        self.resolution += 1;
+                    }
+                },
                 Event::Closed => {
                     return Err(event);
-                }
+                },
                 _ => (),
             }
         }
@@ -217,22 +239,26 @@ fn main() {
         let mut entities = universe.entities_mut();
         entities.push(Box::new(Entity3Impl::new(
                 Box::new(Sphere3::new(
-                    Point3::new(4.0, 0.0, 0.0),
+                    Point3::new(2.0, 1.0, 0.0),
                     1.0
                 )),
                 Box::new(Vacuum::new()),
                 None
             )));
+        entities.push(Box::new(Entity3Impl::new(Box::new(Test3 {}), Box::new(Vacuum::new()), None)));
         entities.push(Box::new(Void::new_with_vacuum()));
     }
 
     {
         let mut intersectors = universe.intersectors_mut();
-        let void = universe::d3::entity::intersect_void;
-        intersectors.insert((Vacuum::id_static(), VoidShape::id_static()), void);
-        intersectors.insert((Vacuum::id_static(), Sphere3::id_static()), void);
-        let vacuum_sphere = universe::d3::entity::intersect_sphere_in_vacuum;
-        intersectors.insert((Vacuum::id_static(), Sphere3::id_static()), vacuum_sphere);
+        intersectors.insert((Vacuum::id_static(), Test3::id_static()),
+            universe::d3::entity::intersect_test);
+        intersectors.insert((Vacuum::id_static(), VoidShape::id_static()),
+            universe::d3::entity::intersect_void);
+        intersectors.insert((Vacuum::id_static(), Sphere3::id_static()),
+            universe::d3::entity::intersect_void);
+        intersectors.insert((Vacuum::id_static(), Sphere3::id_static()),
+            universe::d3::entity::intersect_sphere_in_vacuum);
     }
 
     let simulation = Simulation::builder()

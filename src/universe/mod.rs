@@ -12,6 +12,7 @@ use std::any::TypeId;
 use std::borrow::Cow;
 use self::na::NumPoint;
 use self::na::NumVector;
+use self::na::Dot;
 use self::glium::Surface as GliumSurface;
 use self::glium::texture::Texture2d;
 use self::glium::backend::Facade;
@@ -64,21 +65,21 @@ pub trait Universe where Self: Sync {
                                                      &Self::V,
                                                      &Material<Self::P, Self::V>,
                                                      &Shape<Self::P, Self::V>)
-                                                     -> Option<Self::P>>;
+                                                     -> Option<Intersection<Self::P>>>;
     fn intersectors(&self)
                      -> &HashMap<(TypeId, TypeId),
                                  fn(&Self::P,
                                              &Self::V,
                                              &Material<Self::P, Self::V>,
                                              &Shape<Self::P, Self::V>)
-                                             -> Option<Self::P>>;
+                                             -> Option<Intersection<Self::P>>>;
     fn set_intersectors(&mut self,
                          intersections: HashMap<(TypeId, TypeId),
                                                 fn(&Self::P,
                                                             &Self::V,
                                                             &Material<Self::P, Self::V>,
                                                             &Shape<Self::P, Self::V>)
-                                                            -> Option<Self::P>>);
+                                                            -> Option<Intersection<Self::P>>>);
 
     fn trace(&self, location: &Self::P, rotation: &Self::V) -> Option<Rgb<u8>> {
         let mut belongs_to: Option<&Entity<Self::P, Self::V>> = None;
@@ -105,6 +106,9 @@ pub trait Universe where Self: Sync {
 
         'render:
         while belongs_to.is_some() {
+            let background = Rgb { data: [255u8, 255u8, 255u8], };
+            let mut foreground: Option<Rgba<u8>> = None;
+            let mut foreground_distance_squared: Option<f32> = None;
             let belongs_to = belongs_to.unwrap();
             let traceable = belongs_to.as_traceable();
 
@@ -133,21 +137,36 @@ pub trait Universe where Self: Sync {
                 }
 
                 let intersector = intersector.unwrap();
-                let background = Rgb { data: [255u8, 255u8, 255u8], };
                 let mut color: Rgba<u8> = Rgba { data: [0u8, 0u8, 0u8, 0u8], };
 
                 match intersector(location, rotation, material, shape) {
-                    Some(_) => {
-                        color.data[1] = 255u8;
+                    Some(intersection) => {
+                        let normal = shape.get_normal_at(&intersection.point);
+                        // FIXME just for testing
+                        use na::Vector3;
+                        let normal = unsafe { &*(&normal as *const _ as *const Vector3<f32>) }.clone();
+                        let rotation = unsafe { &*(rotation as *const _ as *const Vector3<f32>) }.clone();
+                        // Calculate the angle using the cosine formula
+                        // |u*v| = ||u|| * ||v|| * cos(alpha)
+                        let angle = (rotation.dot(&normal).abs() / (na::distance(&na::origin(), &rotation.to_point()) * na::distance(&na::origin(), &normal.to_point()) as f32)).acos();
+                        color.data[1] = (255.0 * (1.0 - angle / std::f32::consts::FRAC_PI_2)) as u8;
                         color.data[3] = 255u8;
+
+                        if foreground_distance_squared.is_none()
+                            || foreground_distance_squared.unwrap() > intersection.distance_squared {
+                            foreground_distance_squared = Some(intersection.distance_squared);
+                            foreground = Some(color);
+                        }
                     },
                     None => (),
                 }
-
-                return Some(util::overlay_color(background, color));
             }
 
-            break 'render;
+            if foreground.is_some() {
+                return Some(util::overlay_color(background, foreground.unwrap()));
+            } else {
+                return Some(background);
+            }
         }
 
         None
@@ -162,6 +181,15 @@ pub trait Universe where Self: Sync {
         let camera = self.camera();
         let point = camera.get_ray_point(screen_x, screen_y, screen_width, screen_height);
         let vector = camera.get_ray_vector(screen_x, screen_y, screen_width, screen_height);
+
+        if (screen_x - screen_width / 2 == 0 && screen_y - screen_height / 2 == 0)
+            || (screen_x == 0 && screen_y == 0) {
+            use na::Point3;
+            use na::Vector3;
+            let point = unsafe { &*(&point as *const _ as *const Point3<f32>) };
+            let vector = unsafe { &*(&vector as *const _ as *const Vector3<f32>) };
+            println!("{}; {}:   <{}; {}; {}>", screen_x, screen_y, vector.x, vector.y, vector.z);
+        }
 
         match self.trace(&point, &vector) {
             Some(color) => color,
@@ -184,19 +212,21 @@ pub trait Universe where Self: Sync {
         let (width, height) = surface.get_dimensions();
         // let mut buffer: DynamicImage = DynamicImage::new_rgb8(width, height);
         const COLOR_DIM: usize = 3;
-        let mut data: Vec<u8> = vec!(0; (width * height) as usize * COLOR_DIM);
+        let buffer_width = width / context.resolution;
+        let buffer_height = height / context.resolution;
+        let mut data: Vec<u8> = vec!(0; (buffer_width * buffer_height) as usize * COLOR_DIM);
         let mut pool = Pool::new(4);
 
         // TODO: This loop takes a long time!
         pool.scoped(|scope| {
             for (index, chunk) in &mut data.chunks_mut(COLOR_DIM).enumerate() {
                 scope.execute(move || {
-                    let x = index as u32 % width;
-                    let y = index as u32 / width;
+                    let x = index as u32 % buffer_width;
+                    let y = index as u32 / buffer_width;
                     let color = self.trace_screen_point(x as i32,
                                                         y as i32,
-                                                        width as i32,
-                                                        height as i32);
+                                                        buffer_width as i32,
+                                                        buffer_height as i32);
 
                     for (i, result) in chunk.iter_mut().enumerate() {
                         *result = color.data[i];
@@ -204,96 +234,11 @@ pub trait Universe where Self: Sync {
                 });
             }
         });
-        // crossbeam::scope(|scope| {
-        //     for (index, chunk) in &mut data.chunks_mut(COLOR_DIM).enumerate() {
-        //         pool.scoped(|pool_scope| {
-        //             scope.spawn(move || {
-        //                 let x = index as u32 % width;
-        //                 let y = index as u32 / width;
-        //                 let color = self.trace_screen_point(x as i32,
-        //                                                     y as i32,
-        //                                                     width as i32,
-        //                                                     height as i32);
-
-        //                 for (i, result) in chunk.iter_mut().enumerate() {
-        //                     *result = color.data[i];
-        //                 }
-        //             });
-        //         });
-        //     }
-        // });
-        // crossbeam::scope(|scope| {
-        //     for (index, result) in &mut data.iter_mut().enumerate() {
-        //         let x = index as u32 % width;
-        //         let y = index as u32 / width;
-
-        //         scope.spawn(move || {
-        //             let color = self.trace_screen_point(x as i32,
-        //                                                 y as i32,
-        //                                                 width as i32,
-        //                                                 height as i32);
-
-        //             for i in 0..COLOR_DIM {
-        //                 *result = color.data[i];
-        //             }
-        //         });
-        //     }
-        // });
-        // crossbeam::scope(|scope| {
-        //     let mut_data = &mut data;
-        //     for y in 0..height {
-        //         for x in 0..width {
-        //             let index = (x + y * width) as usize;
-        //             let mut result = &mut test;//mut_data.get_mut(index).unwrap();
-
-        //             scope.spawn(move || {
-        //                 let color = self.trace_screen_point(x as i32,
-        //                                                     y as i32,
-        //                                                     width as i32,
-        //                                                     height as i32);
-
-        //                 for i in 0..COLOR_DIM {
-        //                     // data[index * COLOR_DIM + i] = color.data[i];
-        //                     *result = color.data[i];
-        //                 }
-        //             });
-        //         }
-        //     }
-        // });
-        // use std::sync::Arc;
-        // use std::thread::spawn;
-
-        // let mut guards = vec![];
-
-        // for y in 0..height {
-        //     for x in 0..width {
-        //         let index = (x + y * width) as usize;
-        //         let mut result = data.get_mut(index).unwrap();
-
-        //         let guard = std::thread::spawn(move || {
-        //             let color = self.trace_screen_point(x as i32,
-        //                                                 y as i32,
-        //                                                 width as i32,
-        //                                                 height as i32);
-
-        //             for i in 0..COLOR_DIM {
-        //                 // data[index * COLOR_DIM + i] = color.data[i];
-        //                 *result = color.data[i];
-        //             }
-        //         });
-
-        //         guards.push(guard);
-        //     }
-        // }
-
-        // for guard in guards {
-        //     guard.join().unwrap();
-        // }
 
         let image = RawImage2d {
             data: Cow::Owned(data),
-            width: width,
-            height: height,
+            width: buffer_width,
+            height: buffer_height,
             format: ClientFormat::U8U8U8,
         };
         let texture = Texture2d::new(facade, image).unwrap();

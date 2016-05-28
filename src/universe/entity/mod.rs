@@ -44,6 +44,11 @@ pub trait HasId {
     fn as_any_mut(&mut self) -> &mut Any;
 }
 
+pub struct Intersection<P: NumPoint<f32>> {
+    pub point: P,
+    pub distance_squared: f32,
+}
+
 pub trait Shape<P: NumPoint<f32>, V: NumVector<f32>>
     where Self: HasId
 {

@@ -47,7 +47,8 @@ impl<U: Universe> Simulation<U> {
             .build_glium()
             .unwrap();
 
-        facade.get_window().unwrap().set_cursor_state(CursorState::Hide);
+        facade.get_window().unwrap().set_cursor_state(CursorState::Hide)
+            .expect("Could not hide the cursor!");
 
         self.facade = Some(facade);
         self.start_instant = Some(Instant::now());
@@ -66,8 +67,9 @@ impl<U: Universe> Simulation<U> {
 
     fn render(&mut self) {
         let mut frame = self.facade.as_mut().unwrap().draw();
-        let start_instant = self.start_instant.unwrap();
-        let time = Instant::now() - start_instant;
+        let now = Instant::now();
+        let time = now - self.start_instant.unwrap();
+        self.start_instant = Some(now);
 
         self.universe.render(self.facade.as_ref().unwrap(),
                              &mut frame,

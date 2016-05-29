@@ -40,7 +40,7 @@ impl Camera3Impl {
             forward: Vector3::new(1.0, 0.0, 0.0),
             up: AXIS_Z,
             mouse_sensitivity: 0.01,
-            speed: 0.01,
+            speed: 10.0,
             fov: 90,
         }
     }

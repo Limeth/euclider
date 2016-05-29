@@ -143,7 +143,9 @@ pub trait Universe where Self: Sync {
                     Some(intersection) => {
                         let normal = shape.get_normal_at(&intersection.point);
                         // FIXME just for testing
+                        use na::Point3;
                         use na::Vector3;
+                        let location = unsafe { &*(location as *const _ as *const Point3<f32>) }.clone();
                         let normal = unsafe { &*(&normal as *const _ as *const Vector3<f32>) }.clone();
                         let rotation = unsafe { &*(rotation as *const _ as *const Vector3<f32>) }.clone();
                         // Calculate the angle using the cosine formula
@@ -151,6 +153,8 @@ pub trait Universe where Self: Sync {
                         let angle = (rotation.dot(&normal).abs() / (na::distance(&na::origin(), &rotation.to_point()) * na::distance(&na::origin(), &normal.to_point()) as f32)).acos();
                         color.data[1] = (255.0 * (1.0 - angle / std::f32::consts::FRAC_PI_2)) as u8;
                         color.data[3] = 255u8;
+
+                        // println!("origin: [{}; {}; {}]; vector: <{}; {}; {}>", location.x, location.y, location.z, rotation.x, rotation.y, rotation.z);
 
                         if foreground_distance_squared.is_none()
                             || foreground_distance_squared.unwrap() > intersection.distance_squared {
@@ -182,14 +186,14 @@ pub trait Universe where Self: Sync {
         let point = camera.get_ray_point(screen_x, screen_y, screen_width, screen_height);
         let vector = camera.get_ray_vector(screen_x, screen_y, screen_width, screen_height);
 
-        if (screen_x - screen_width / 2 == 0 && screen_y - screen_height / 2 == 0)
-            || (screen_x == 0 && screen_y == 0) {
-            use na::Point3;
-            use na::Vector3;
-            let point = unsafe { &*(&point as *const _ as *const Point3<f32>) };
-            let vector = unsafe { &*(&vector as *const _ as *const Vector3<f32>) };
-            println!("{}; {}:   <{}; {}; {}>", screen_x, screen_y, vector.x, vector.y, vector.z);
-        }
+        // if (screen_x - screen_width / 2 == 0 && screen_y - screen_height / 2 == 0)
+        //     || (screen_x == 0 && screen_y == 0) {
+        //     use na::Point3;
+        //     use na::Vector3;
+        //     let point = unsafe { &*(&point as *const _ as *const Point3<f32>) };
+        //     let vector = unsafe { &*(&vector as *const _ as *const Vector3<f32>) };
+        //     println!("{}; {}:   <{}; {}; {}>", screen_x, screen_y, vector.x, vector.y, vector.z);
+        // }
 
         match self.trace(&point, &vector) {
             Some(color) => color,

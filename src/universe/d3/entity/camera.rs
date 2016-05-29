@@ -145,11 +145,11 @@ impl Camera<Point3<f32>, Vector3<f32>> for Camera3Impl {
 }
 
 impl Entity<Point3<f32>, Vector3<f32>> for Camera3Impl {
-    fn as_updatable_mut(&mut self) -> Option<&mut Updatable> {
+    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<Point3<f32>, Vector3<f32>>> {
         Some(self)
     }
 
-    fn as_updatable(&self) -> Option<&Updatable> {
+    fn as_updatable(&self) -> Option<&Updatable3> {
         Some(self)
     }
 
@@ -162,7 +162,7 @@ impl Entity<Point3<f32>, Vector3<f32>> for Camera3Impl {
     }
 }
 
-impl Updatable for Camera3Impl {
+impl Updatable<Point3<f32>, Vector3<f32>> for Camera3Impl {
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext) {
         self.update_rotation(context);
 
@@ -196,8 +196,6 @@ impl Updatable for Camera3Impl {
                 _ => (),
             }
         }
-
-        println!("location: {}\trotation: {}\tup: {}", self.location, self.forward, self.up);
     }
 }
 

@@ -7,12 +7,13 @@ use std::any::TypeId;
 use std::any::Any;
 use self::na::NumPoint;
 use self::na::NumVector;
+use self::image::Rgb;
 use self::image::Rgba;
 use SimulationContext;
 
 pub trait Entity<P: NumPoint<f32>, V: NumVector<f32>> where Self: Sync {
-    fn as_updatable_mut(&mut self) -> Option<&mut Updatable>;
-    fn as_updatable(&self) -> Option<&Updatable>;
+    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<P, V>>;
+    fn as_updatable(&self) -> Option<&Updatable<P, V>>;
     fn as_traceable_mut(&mut self) -> Option<&mut Traceable<P, V>>;
     fn as_traceable(&self) -> Option<&Traceable<P, V>>;
 }
@@ -58,13 +59,15 @@ pub trait Shape<P: NumPoint<f32>, V: NumVector<f32>>
 
 pub trait Material<P: NumPoint<f32>, V: NumVector<f32>> where Self: HasId {}
 
-pub trait Surface<P: NumPoint<f32>, V: NumVector<f32>> where Self: HasId {}
+pub trait Surface<P: NumPoint<f32>, V: NumVector<f32>> where Self: HasId {
+    fn get_color(&self, ) -> Rgb<u8>;
+}
 
-pub trait Updatable {
+pub trait Updatable<P: NumPoint<f32>, V: NumVector<f32>>: Entity<P, V> {
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext);
 }
 
-pub trait Traceable<P: NumPoint<f32>, V: NumVector<f32>> {
+pub trait Traceable<P: NumPoint<f32>, V: NumVector<f32>>: Entity<P, V> {
     fn trace(&self) -> Rgba<u8>;
     fn shape(&self) -> &Shape<P, V>;
     fn material(&self) -> &Material<P, V>;
@@ -169,11 +172,11 @@ impl<P: NumPoint<f32>, V: NumVector<f32>> Void<P, V> {
 }
 
 impl<P: NumPoint<f32>, V: NumVector<f32>> Entity<P, V> for Void<P, V> {
-    fn as_updatable_mut(&mut self) -> Option<&mut Updatable> {
+    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<P, V>> {
         None
     }
 
-    fn as_updatable(&self) -> Option<&Updatable> {
+    fn as_updatable(&self) -> Option<&Updatable<P, V>> {
         None
     }
 

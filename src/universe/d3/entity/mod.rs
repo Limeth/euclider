@@ -12,6 +12,7 @@ use universe::entity::*;
 
 pub type Entity3 = Entity<Point3<f32>, Vector3<f32>>;
 pub type Camera3 = Camera<Point3<f32>, Vector3<f32>>;
+pub type Updatable3 = Updatable<Point3<f32>, Vector3<f32>>;
 pub type Traceable3 = Traceable<Point3<f32>, Vector3<f32>>;
 pub type Locatable3 = Locatable<Point3<f32>>;
 pub type Rotatable3 = Rotatable<Vector3<f32>>;
@@ -41,11 +42,11 @@ impl Entity3Impl {
 }
 
 impl Entity<Point3<f32>, Vector3<f32>> for Entity3Impl {
-    fn as_updatable_mut(&mut self) -> Option<&mut Updatable> {
+    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<Point3<f32>, Vector3<f32>>> {
         None
     }
 
-    fn as_updatable(&self) -> Option<&Updatable> {
+    fn as_updatable(&self) -> Option<&Updatable3> {
         None
     }
 

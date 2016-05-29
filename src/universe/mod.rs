@@ -63,22 +63,22 @@ pub trait Universe where Self: Sync {
                          -> &mut HashMap<(TypeId, TypeId),
                                          fn(&Self::P,
                                                      &Self::V,
-                                                     &Material<Self::P, Self::V>,
-                                                     &Shape<Self::P, Self::V>)
+                                                     &Material<Self::P, Self::V, Traceable<Self::P, Self::V>>,
+                                                     &Shape<Self::P, Self::V, Traceable<Self::P, Self::V>>)
                                                      -> Option<Intersection<Self::P>>>;
     fn intersectors(&self)
                      -> &HashMap<(TypeId, TypeId),
                                  fn(&Self::P,
                                              &Self::V,
-                                             &Material<Self::P, Self::V>,
-                                             &Shape<Self::P, Self::V>)
+                                             &Material<Self::P, Self::V, Traceable<Self::P, Self::V>>,
+                                             &Shape<Self::P, Self::V, Traceable<Self::P, Self::V>>)
                                              -> Option<Intersection<Self::P>>>;
     fn set_intersectors(&mut self,
                          intersections: HashMap<(TypeId, TypeId),
                                                 fn(&Self::P,
                                                             &Self::V,
-                                                            &Material<Self::P, Self::V>,
-                                                            &Shape<Self::P, Self::V>)
+                                                            &Material<Self::P, Self::V, Traceable<Self::P, Self::V>>,
+                                                            &Shape<Self::P, Self::V, Traceable<Self::P, Self::V>>)
                                                             -> Option<Intersection<Self::P>>>);
 
     fn trace(&self, location: &Self::P, rotation: &Self::V) -> Option<Rgb<u8>> {
@@ -91,10 +91,10 @@ pub trait Universe where Self: Sync {
                 continue;
             }
 
-            let traceable: &Traceable<Self::P, Self::V> = traceable.unwrap();
-            let shape: &Shape<Self::P, Self::V> = traceable.shape();
+            let traceable = traceable.unwrap();
+            let shape = traceable.shape();
 
-            if !shape.is_point_inside(location) {
+            if !shape.is_point_inside(traceable, location) {
                 continue;
             }
 

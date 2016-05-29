@@ -49,26 +49,25 @@ pub struct Intersection<P: NumPoint<f32>> {
     pub distance_squared: f32,
 }
 
-pub trait Shape<P: NumPoint<f32>, V: NumVector<f32>>
+pub trait Shape<P: NumPoint<f32>, V: NumVector<f32>, T: Traceable<P, V>>
     where Self: HasId
 {
-    fn get_normal_at(&self, point: &P) -> V;
-    fn is_point_inside(&self, point: &P) -> bool;
+    fn get_normal_at(&self, traceable: &T, point: &P) -> V;
+    fn is_point_inside(&self, traceable: &T, point: &P) -> bool;
 }
 
-pub trait Material<P: NumPoint<f32>, V: NumVector<f32>> where Self: HasId {}
+pub trait Material<P: NumPoint<f32>, V: NumVector<f32>, T: Traceable<P, V>> where Self: HasId {}
 
-pub trait Surface<P: NumPoint<f32>, V: NumVector<f32>> where Self: HasId {}
+pub trait Surface<P: NumPoint<f32>, V: NumVector<f32>, T: Traceable<P, V>> where Self: HasId {}
 
 pub trait Updatable {
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext);
 }
 
 pub trait Traceable<P: NumPoint<f32>, V: NumVector<f32>> {
-    fn trace(&self) -> Rgba<u8>;
-    fn shape(&self) -> &Shape<P, V>;
-    fn material(&self) -> &Material<P, V>;
-    fn surface(&self) -> Option<&Surface<P, V>>;
+    fn shape(&self) -> &Shape<P, V, Self> where Self: Sized;
+    fn material(&self) -> &Material<P, V, Self> where Self: Sized;
+    fn surface(&self) -> Option<&Surface<P, V, Self>> where Self: Sized;
 }
 
 pub trait Locatable<P: NumPoint<f32>> {
@@ -90,9 +89,7 @@ pub trait Rotatable<P: NumVector<f32>> {
 //     radii: V, // a/b/c...
 // }
 
-pub struct Vacuum {
-
-}
+pub struct Vacuum {}
 
 impl Vacuum {
     pub fn new() -> Vacuum {
@@ -114,7 +111,7 @@ impl HasId for Vacuum {
     }
 }
 
-impl<P: NumPoint<f32>, V: NumVector<f32>> Material<P, V> for Vacuum {}
+impl<P: NumPoint<f32>, V: NumVector<f32>, T: Traceable<P, V>> Material<P, V, T> for Vacuum {}
 
 pub struct VoidShape {}
 
@@ -138,25 +135,25 @@ impl HasId for VoidShape {
     }
 }
 
-impl<P: NumPoint<f32>, V: NumVector<f32>> Shape<P, V> for VoidShape {
-    fn get_normal_at(&self, point: &P) -> V {
+impl<P: NumPoint<f32>, V: NumVector<f32>, T: Traceable<P, V>> Shape<P, V, T> for VoidShape {
+    fn get_normal_at(&self, traceable: &T, point: &P) -> V {
         na::zero()
     }
 
-    fn is_point_inside(&self, point: &P) -> bool {
+    fn is_point_inside(&self, traceable: &T, point: &P) -> bool {
         true
     }
 }
 
 pub struct Void<P: NumPoint<f32>, V: NumVector<f32>> {
     shape: Box<VoidShape>,
-    material: Box<Material<P, V>>,
+    material: Box<Material<P, V, Void<P, V>>>,
 }
 
 unsafe impl<P: NumPoint<f32>, V: NumVector<f32>> Sync for Void<P, V> {}
 
 impl<P: NumPoint<f32>, V: NumVector<f32>> Void<P, V> {
-    pub fn new(material: Box<Material<P, V>>) -> Void<P, V> {
+    pub fn new(material: Box<Material<P, V, Void<P, V>>>) -> Void<P, V> {
         Void {
             shape: Box::new(VoidShape::new()),
             material: material,
@@ -187,20 +184,15 @@ impl<P: NumPoint<f32>, V: NumVector<f32>> Entity<P, V> for Void<P, V> {
 }
 
 impl<P: NumPoint<f32>, V: NumVector<f32>> Traceable<P, V> for Void<P, V> {
-    fn trace(&self) -> Rgba<u8> {
-        // TODO
-        Rgba { data: [0u8, 0u8, 255u8, 255u8] }
-    }
-
-    fn shape(&self) -> &Shape<P, V> {
+    fn shape(&self) -> &Shape<P, V, Self> where Self: Sized {
         self.shape.as_ref()
     }
 
-    fn material(&self) -> &Material<P, V> {
+    fn material(&self) -> &Material<P, V, Self> where Self: Sized {
         self.material.as_ref()
     }
 
-    fn surface(&self) -> Option<&Surface<P, V>> {
+    fn surface(&self) -> Option<&Surface<P, V, Self>> where Self: Sized {
         None
     }
 }

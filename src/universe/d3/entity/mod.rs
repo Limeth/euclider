@@ -15,9 +15,9 @@ pub type Camera3 = Camera<Point3<f32>, Vector3<f32>>;
 pub type Traceable3 = Traceable<Point3<f32>, Vector3<f32>>;
 pub type Locatable3 = Locatable<Point3<f32>>;
 pub type Rotatable3 = Rotatable<Vector3<f32>>;
-pub type Shape3 = Shape<Point3<f32>, Vector3<f32>>;
-pub type Material3 = Material<Point3<f32>, Vector3<f32>>;
-pub type Surface3 = Surface<Point3<f32>, Vector3<f32>>;
+pub type Shape3 = Shape<Point3<f32>, Vector3<f32>, Entity3Impl>;
+pub type Material3 = Material<Point3<f32>, Vector3<f32>, Entity3Impl>;
+pub type Surface3 = Surface<Point3<f32>, Vector3<f32>, Entity3Impl>;
 
 pub struct Entity3Impl {
     shape: Box<Shape3>,
@@ -59,11 +59,7 @@ impl Entity<Point3<f32>, Vector3<f32>> for Entity3Impl {
 }
 
 impl Traceable<Point3<f32>, Vector3<f32>> for Entity3Impl {
-    fn trace(&self) -> Rgba<u8> {
-        Rgba { data: [0u8, 0u8, 0u8, 0u8] }
-    }
-
-    fn shape(&self) -> &Shape3 {
+    fn shape(&self) -> &Shape3 where Self: Sized {
         self.shape.as_ref()
     }
 
@@ -104,13 +100,13 @@ impl HasId for Sphere3 {
     }
 }
 
-impl Shape<Point3<f32>, Vector3<f32>> for Sphere3 {
-    fn get_normal_at(&self, point: &Point3<f32>) -> Vector3<f32> {
+impl Shape<Point3<f32>, Vector3<f32>, Entity3Impl> for Sphere3 {
+    fn get_normal_at(&self, traceable: &Entity3Impl, point: &Point3<f32>) -> Vector3<f32> {
         let norm = *point - self.location;
         na::normalize(&norm)
     }
 
-    fn is_point_inside(&self, point: &Point3<f32>) -> bool {
+    fn is_point_inside(&self, traceable: &Entity3Impl, point: &Point3<f32>) -> bool {
         na::distance_squared(&self.location, point) <= self.radius * self.radius
     }
 }
@@ -131,17 +127,17 @@ impl HasId for Test3 {
     }
 }
 
-impl Shape<Point3<f32>, Vector3<f32>> for Test3 {
-    fn get_normal_at(&self, point: &Point3<f32>) -> Vector3<f32> {
+impl Shape<Point3<f32>, Vector3<f32>, Entity3Impl> for Test3 {
+    fn get_normal_at(&self, traceable: &Entity3Impl, point: &Point3<f32>) -> Vector3<f32> {
         Vector3::new(1.0, 0.0, 0.0)
     }
 
-    fn is_point_inside(&self, point: &Point3<f32>) -> bool {
+    fn is_point_inside(&self, traceable: &Entity3Impl, point: &Point3<f32>) -> bool {
         false
     }
 }
 
-pub fn intersect_test(location: &Point3<f32>, direction: &Vector3<f32>, material: &Material<Point3<f32>, Vector3<f32>>, void: &Shape<Point3<f32>, Vector3<f32>>) -> Option<Intersection<Point3<f32>>> {
+pub fn intersect_test(location: &Point3<f32>, direction: &Vector3<f32>, material: &Material<Point3<f32>, Vector3<f32>, Traceable3>, shape: &Shape<Point3<f32>, Vector3<f32>, Traceable3>) -> Option<Intersection<Point3<f32>>> {
     let t = (1.0 - location.x) / direction.x;
 
     if t <= 0.0 {
@@ -160,16 +156,16 @@ pub fn intersect_test(location: &Point3<f32>, direction: &Vector3<f32>, material
     })
 }
 
-pub fn intersect_void(location: &Point3<f32>, direction: &Vector3<f32>, material: &Material<Point3<f32>, Vector3<f32>>, void: &Shape<Point3<f32>, Vector3<f32>>) -> Option<Intersection<Point3<f32>>> {
-    void.as_any().downcast_ref::<VoidShape>().unwrap();
+pub fn intersect_void(location: &Point3<f32>, direction: &Vector3<f32>, material: &Material<Point3<f32>, Vector3<f32>, Traceable3>, shape: &Shape<Point3<f32>, Vector3<f32>, Traceable3>) -> Option<Intersection<Point3<f32>>> {
+    shape.as_any().downcast_ref::<VoidShape>().unwrap();
     None
 }
 
-pub fn intersect_sphere_in_vacuum(location: &Point3<f32>, direction: &Vector3<f32>, vacuum: &Material<Point3<f32>, Vector3<f32>>, sphere: &Shape<Point3<f32>, Vector3<f32>>) -> Option<Intersection<Point3<f32>>> {
+pub fn intersect_sphere_in_vacuum(location: &Point3<f32>, direction: &Vector3<f32>, material: &Material<Point3<f32>, Vector3<f32>, Traceable3>, shape: &Shape<Point3<f32>, Vector3<f32>, Traceable3>) -> Option<Intersection<Point3<f32>>> {
     // Unsafe cast example:
     //let a = unsafe { &*(a as *const _ as *const Aimpl) };
-    vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
-    let sphere: &Sphere3 = sphere.as_any().downcast_ref::<Sphere3>().unwrap();
+    material.as_any().downcast_ref::<Vacuum>().unwrap();
+    let sphere: &Sphere3 = shape.as_any().downcast_ref::<Sphere3>().unwrap();
 
     let rel_x = location.x - sphere.location.x;
     let rel_y = location.y - sphere.location.y;

@@ -7,6 +7,7 @@ use std::any::Any;
 use std::any::TypeId;
 use self::na::Point3;
 use self::na::Vector3;
+use self::image::Rgb;
 use self::image::Rgba;
 use universe::entity::*;
 
@@ -216,4 +217,41 @@ pub fn intersect_sphere_in_vacuum(location: &Point3<f32>, direction: &Vector3<f3
         point: result_point,
         distance_squared: na::distance_squared(location, &result_point),
     })
+}
+
+pub struct PerlinSurface3 {
+    size: f32,
+    speed: f32,
+}
+
+impl HasId for PerlinSurface3 {
+    fn id(&self) -> TypeId {
+        Self::id_static()
+    }
+
+    fn as_any(&self) -> &Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut Any {
+        self
+    }
+}
+
+impl PerlinSurface3 {
+    pub fn new(size: f32, speed: f32) -> PerlinSurface3 {
+        PerlinSurface3 {
+            size: size,
+            speed: speed,
+        }
+    }
+}
+
+impl Surface<Point3<f32>, Vector3<f32>> for PerlinSurface3 {
+    fn get_color(&self, intersection: &Intersection<Point3<f32>>, normal: &Vector3<f32>,
+                 trace: &Fn(&Traceable<Point3<f32>, Vector3<f32>>, &Point3<f32>, &Vector3<f32>) -> Rgba<u8>) -> Rgba<u8> {
+        Rgba {
+            data: [0u8, 255u8, 0u8, 200u8],
+        }
+    }
 }

@@ -81,9 +81,8 @@ pub trait Universe where Self: Sync {
                                                             &Shape<Self::P, Self::V>)
                                                             -> Option<Intersection<Self::P>>>);
     
-    fn trace(&self, belongs_to: &Traceable<Self::P, Self::V>, location: &Self::P, rotation: &Self::V) -> Option<Rgb<u8>> {
+    fn trace(&self, belongs_to: &Traceable<Self::P, Self::V>, location: &Self::P, rotation: &Self::V) -> Rgba<u8> {
         let material = belongs_to.material();
-        let background = Rgb { data: [255u8, 255u8, 255u8], };
         let mut foreground: Option<Rgba<u8>> = None;
         let mut foreground_distance_squared: Option<f32> = None;
 
@@ -105,42 +104,53 @@ pub trait Universe where Self: Sync {
             }
 
             let intersector = intersector.unwrap();
-            let mut color: Rgba<u8> = Rgba { data: [0u8, 0u8, 0u8, 0u8], };
 
             match intersector(location, rotation, material, shape) {
                 Some(intersection) => {
                     let normal = shape.get_normal_at(&intersection.point);
-                    // FIXME just for testing
-                    use na::Point3;
-                    use na::Vector3;
-                    let location = unsafe { &*(location as *const _ as *const Point3<f32>) }.clone();
-                    let normal = unsafe { &*(&normal as *const _ as *const Vector3<f32>) }.clone();
-                    let rotation = unsafe { &*(rotation as *const _ as *const Vector3<f32>) }.clone();
-                    // Calculate the angle using the cosine formula
-                    // |u*v| = ||u|| * ||v|| * cos(alpha)
-                    let angle = (rotation.dot(&normal).abs() / (na::distance(&na::origin(), &rotation.to_point()) * na::distance(&na::origin(), &normal.to_point()) as f32)).acos();
-                    color.data[1] = (255.0 * (1.0 - angle / std::f32::consts::FRAC_PI_2)) as u8;
-                    color.data[3] = 255u8;
+                    let surface = other_traceable.surface();
 
-                    // println!("origin: [{}; {}; {}]; vector: <{}; {}; {}>", location.x, location.y, location.z, rotation.x, rotation.y, rotation.z);
+                    if surface.is_none() {
+                        continue; //TODO
+                    }
+
+                    let surface = surface.unwrap();
 
                     if foreground_distance_squared.is_none()
                         || foreground_distance_squared.unwrap() > intersection.distance_squared {
+                        foreground = Some(surface.get_color(&intersection, &normal, &|traceable, location, direction| {
+                            self.trace(traceable, location, direction)
+                        }));
                         foreground_distance_squared = Some(intersection.distance_squared);
-                        foreground = Some(color);
                     }
+
+                    // // FIXME just for testing
+                    // use na::Point3;
+                    // use na::Vector3;
+                    // let location = unsafe { &*(location as *const _ as *const Point3<f32>) }.clone();
+                    // let normal = unsafe { &*(&normal as *const _ as *const Vector3<f32>) }.clone();
+                    // let rotation = unsafe { &*(rotation as *const _ as *const Vector3<f32>) }.clone();
+                    // // Calculate the angle using the cosine formula
+                    // // |u*v| = ||u|| * ||v|| * cos(alpha)
+                    // let angle = (rotation.dot(&normal).abs() / (na::distance(&na::origin(), &rotation.to_point()) * na::distance(&na::origin(), &normal.to_point()) as f32)).acos();
+                    // color.data[1] = (255.0 * (1.0 - angle / std::f32::consts::FRAC_PI_2)) as u8;
+                    // color.data[3] = 255u8;
+
+                    // // println!("origin: [{}; {}; {}]; vector: <{}; {}; {}>", location.x, location.y, location.z, rotation.x, rotation.y, rotation.z);
+
+                    // if foreground_distance_squared.is_none()
+                    //     || foreground_distance_squared.unwrap() > intersection.distance_squared {
+                    //     foreground_distance_squared = Some(intersection.distance_squared);
+                    //     foreground = Some(color);
+                    // }
                 },
                 None => (),
             }
         }
 
-        if foreground.is_some() {
-            return Some(util::overlay_color(background, foreground.unwrap()));
-        } else {
-            return Some(background);
-        }
-
-        None
+        foreground.unwrap_or(Rgba {
+            data: [0u8, 0u8, 0u8, 0u8],
+        })
     }
 
     fn trace_unknown(&self, location: &Self::P, rotation: &Self::V) -> Option<Rgb<u8>> {
@@ -165,7 +175,9 @@ pub trait Universe where Self: Sync {
         }
 
         if belongs_to.is_some() {
-            self.trace(belongs_to.unwrap(), location, rotation)
+            let background = Rgb { data: [255u8, 255u8, 255u8], };
+            let foreground = self.trace(belongs_to.unwrap(), location, rotation);
+            Some(util::overlay_color(background, foreground))
         } else {
             None
         }

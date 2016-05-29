@@ -245,9 +245,13 @@ fn main() {
                     1.0
                 )),
                 Box::new(Vacuum::new()),
-                None
+                Some(Box::new(PerlinSurface3::new(1.0, 1.0)))
             )));
-        entities.push(Box::new(Entity3Impl::new(Box::new(Test3 {}), Box::new(Vacuum::new()), None)));
+        entities.push(Box::new(Entity3Impl::new(
+                Box::new(Test3 {}),
+                Box::new(Vacuum::new()),
+                Some(Box::new(PerlinSurface3::new(0.5, 2.0)))
+            )));
         entities.push(Box::new(Void::new_with_vacuum()));
     }
 

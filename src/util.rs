@@ -41,7 +41,7 @@ pub fn overlay_color(bottom: Rgb<u8>, top: Rgba<u8>) -> Rgb<u8> {
         data.clone_from_slice(&top.data[..3]);
         Rgb { data: data, }
     } else {
-        let alpha = top.data[4] as f32 / std::u8::MAX as f32;
+        let alpha = top.data[3] as f32 / std::u8::MAX as f32;
         Rgb {
             data: [
                 (((1.0 - alpha) * (bottom.data[0] as f32 / std::u8::MAX as f32).powi(2) + alpha * (top.data[0] as f32 / std::u8::MAX as f32)).sqrt() * 255.0) as u8,

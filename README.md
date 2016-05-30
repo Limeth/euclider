@@ -8,6 +8,7 @@ A non-euclidean ray tracing prototype written in Rust.
 * Mouse - camera rotation
 * Mouse wheel - resolution adjustment
 * [`W`/`A`/`S`/`D`/`Shift`/`Control`] - camera movement
+* [`Esc`] - exit
 
 # Preview of version 0.4.0
 

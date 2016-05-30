@@ -47,6 +47,13 @@ pub struct Intersection<P: NumPoint<f32>> {
     pub distance_squared: f32,
 }
 
+pub struct TracingContext<'a, P: 'a + NumPoint<f32>, V: 'a + NumVector<f32>> {
+    pub time: &'a Duration,
+    pub intersection: &'a Intersection<P>,
+    pub normal: &'a V,
+    pub trace: &'a Fn(&Traceable<P, V>, &P, &V) -> Rgba<u8>,
+}
+
 pub trait Shape<P: NumPoint<f32>, V: NumVector<f32>>
     where Self: HasId
 {
@@ -57,7 +64,7 @@ pub trait Shape<P: NumPoint<f32>, V: NumVector<f32>>
 pub trait Material<P: NumPoint<f32>, V: NumVector<f32>> where Self: HasId {}
 
 pub trait Surface<P: NumPoint<f32>, V: NumVector<f32>> where Self: HasId {
-    fn get_color(&self, delta_time: &Duration, intersection: &Intersection<P>, normal: &V, trace: &Fn(&Traceable<P, V>, &P, &V) -> Rgba<u8>) -> Rgba<u8>;
+    fn get_color<'a>(&self, context: TracingContext<'a, P, V>) -> Rgba<u8>;
 }
 
 pub trait Updatable<P: NumPoint<f32>, V: NumVector<f32>>: Entity<P, V> {

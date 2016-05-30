@@ -263,10 +263,9 @@ impl PerlinSurface3 {
 }
 
 impl Surface<Point3<f32>, Vector3<f32>> for PerlinSurface3 {
-    fn get_color(&self, time: &Duration, intersection: &Intersection<Point3<f32>>, normal: &Vector3<f32>,
-                 trace: &Fn(&Traceable<Point3<f32>, Vector3<f32>>, &Point3<f32>, &Vector3<f32>) -> Rgba<u8>) -> Rgba<u8> {
-        let time_millis = (time.clone() * 1000).as_secs() as f32 / 1000.0;
-        let location = [intersection.point.x / self.size, intersection.point.y / self.size, intersection.point.z / self.size, time_millis * self.speed];
+    fn get_color<'a>(&self, context: TracingContext<'a, Point3<f32>, Vector3<f32>>) -> Rgba<u8> {
+        let time_millis = (context.time.clone() * 1000).as_secs() as f32 / 1000.0;
+        let location = [context.intersection.point.x / self.size, context.intersection.point.y / self.size, context.intersection.point.z / self.size, time_millis * self.speed];
         let value = perlin4(&self.seed, &location);
         Rgba {
             data: palette::Rgba::from(Hsv::new(RgbHue::from(value * 360.0), 1.0, 1.0)).to_pixel(),

@@ -109,9 +109,15 @@ pub trait Universe where Self: Sync {
 
                     if foreground_distance_squared.is_none()
                         || foreground_distance_squared.unwrap() > intersection.distance_squared {
-                        foreground = Some(surface.get_color(time, &intersection, &normal, &|traceable, location, direction| {
-                            self.trace(time, traceable, location, direction)
-                        }));
+                        let context = TracingContext {
+                            time: time,
+                            intersection: &intersection,
+                            normal: &normal,
+                            trace: &|traceable, location, direction| {
+                                self.trace(time, traceable, location, direction)
+                            },
+                        };
+                        foreground = Some(surface.get_color(context));
                         foreground_distance_squared = Some(intersection.distance_squared);
                     }
 

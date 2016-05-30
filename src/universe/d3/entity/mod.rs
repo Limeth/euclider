@@ -1,14 +1,25 @@
 extern crate nalgebra as na;
 extern crate image;
 extern crate std;
+extern crate noise;
+extern crate rand;
+extern crate palette;
 pub mod camera;
 
 use std::any::Any;
 use std::any::TypeId;
+use std::time::Duration;
+use self::rand::Rng;
+use self::rand::Rand;
 use self::na::Point3;
 use self::na::Vector3;
-use self::image::Rgb;
 use self::image::Rgba;
+use self::noise::perlin4;
+use self::noise::Seed;
+use self::palette::Rgb;
+use self::palette::Hsv;
+use self::palette::RgbHue;
+use self::palette::pixel::RgbPixel;
 use universe::entity::*;
 
 pub type Entity3 = Entity<Point3<f32>, Vector3<f32>>;
@@ -220,6 +231,7 @@ pub fn intersect_sphere_in_vacuum(location: &Point3<f32>, direction: &Vector3<f3
 }
 
 pub struct PerlinSurface3 {
+    seed: Seed,
     size: f32,
     speed: f32,
 }
@@ -239,8 +251,17 @@ impl HasId for PerlinSurface3 {
 }
 
 impl PerlinSurface3 {
-    pub fn new(size: f32, speed: f32) -> PerlinSurface3 {
+    pub fn new(seed: u32, size: f32, speed: f32) -> PerlinSurface3 {
         PerlinSurface3 {
+            seed: Seed::new(seed),
+            size: size,
+            speed: speed,
+        }
+    }
+
+    pub fn rand<R: Rng>(rng: &mut R, size: f32, speed: f32) -> PerlinSurface3 {
+        PerlinSurface3 {
+            seed: Seed::rand(rng),
             size: size,
             speed: speed,
         }
@@ -248,10 +269,13 @@ impl PerlinSurface3 {
 }
 
 impl Surface<Point3<f32>, Vector3<f32>> for PerlinSurface3 {
-    fn get_color(&self, intersection: &Intersection<Point3<f32>>, normal: &Vector3<f32>,
+    fn get_color(&self, time: &Duration, intersection: &Intersection<Point3<f32>>, normal: &Vector3<f32>,
                  trace: &Fn(&Traceable<Point3<f32>, Vector3<f32>>, &Point3<f32>, &Vector3<f32>) -> Rgba<u8>) -> Rgba<u8> {
+        let time_millis = (time.clone() * 1000).as_secs() as f32 / 1000.0;
+        let location = [intersection.point.x / self.size, intersection.point.y / self.size, intersection.point.z / self.size, time_millis * self.speed];
+        let value = perlin4(&self.seed, &location);
         Rgba {
-            data: [0u8, 255u8, 0u8, 200u8],
+            data: palette::Rgba::from(Hsv::new(RgbHue::from(value * 360.0), 1.0, 1.0)).to_pixel(),
         }
     }
 }

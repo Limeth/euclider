@@ -81,7 +81,7 @@ pub trait Universe where Self: Sync {
                                                             &Shape<Self::P, Self::V>)
                                                             -> Option<Intersection<Self::P>>>);
     
-    fn trace(&self, belongs_to: &Traceable<Self::P, Self::V>, location: &Self::P, rotation: &Self::V) -> Rgba<u8> {
+    fn trace(&self, time: &Duration, belongs_to: &Traceable<Self::P, Self::V>, location: &Self::P, rotation: &Self::V) -> Rgba<u8> {
         let material = belongs_to.material();
         let mut foreground: Option<Rgba<u8>> = None;
         let mut foreground_distance_squared: Option<f32> = None;
@@ -118,8 +118,8 @@ pub trait Universe where Self: Sync {
 
                     if foreground_distance_squared.is_none()
                         || foreground_distance_squared.unwrap() > intersection.distance_squared {
-                        foreground = Some(surface.get_color(&intersection, &normal, &|traceable, location, direction| {
-                            self.trace(traceable, location, direction)
+                        foreground = Some(surface.get_color(time, &intersection, &normal, &|traceable, location, direction| {
+                            self.trace(time, traceable, location, direction)
                         }));
                         foreground_distance_squared = Some(intersection.distance_squared);
                     }
@@ -153,7 +153,7 @@ pub trait Universe where Self: Sync {
         })
     }
 
-    fn trace_unknown(&self, location: &Self::P, rotation: &Self::V) -> Option<Rgb<u8>> {
+    fn trace_unknown(&self, time: &Duration, location: &Self::P, rotation: &Self::V) -> Option<Rgb<u8>> {
         let mut belongs_to: Option<&Traceable<Self::P, Self::V>> = None;
 
         for entity in self.entities() {
@@ -176,7 +176,7 @@ pub trait Universe where Self: Sync {
 
         if belongs_to.is_some() {
             let background = Rgb { data: [255u8, 255u8, 255u8], };
-            let foreground = self.trace(belongs_to.unwrap(), location, rotation);
+            let foreground = self.trace(time, belongs_to.unwrap(), location, rotation);
             Some(util::overlay_color(background, foreground))
         } else {
             None
@@ -184,6 +184,7 @@ pub trait Universe where Self: Sync {
     }
 
     fn trace_screen_point(&self,
+                          time: &Duration,
                           screen_x: i32,
                           screen_y: i32,
                           screen_width: i32,
@@ -202,7 +203,7 @@ pub trait Universe where Self: Sync {
         //     println!("{}; {}:   <{}; {}; {}>", screen_x, screen_y, vector.x, vector.y, vector.z);
         // }
 
-        match self.trace_unknown(&point, &vector) {
+        match self.trace_unknown(time, &point, &vector) {
             Some(color) => color,
             None => {
                 let checkerboard_size = 8;
@@ -234,7 +235,8 @@ pub trait Universe where Self: Sync {
                 scope.execute(move || {
                     let x = index as u32 % buffer_width;
                     let y = index as u32 / buffer_width;
-                    let color = self.trace_screen_point(x as i32,
+                    let color = self.trace_screen_point(time,
+                                                        x as i32,
                                                         y as i32,
                                                         buffer_width as i32,
                                                         buffer_height as i32);

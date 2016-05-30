@@ -60,7 +60,7 @@ pub trait Shape<P: NumPoint<f32>, V: NumVector<f32>>
 pub trait Material<P: NumPoint<f32>, V: NumVector<f32>> where Self: HasId {}
 
 pub trait Surface<P: NumPoint<f32>, V: NumVector<f32>> where Self: HasId {
-    fn get_color(&self, intersection: &Intersection<P>, normal: &V, trace: &Fn(&Traceable<P, V>, &P, &V) -> Rgba<u8>) -> Rgba<u8>;
+    fn get_color(&self, delta_time: &Duration, intersection: &Intersection<P>, normal: &V, trace: &Fn(&Traceable<P, V>, &P, &V) -> Rgba<u8>) -> Rgba<u8>;
 }
 
 pub trait Updatable<P: NumPoint<f32>, V: NumVector<f32>>: Entity<P, V> {

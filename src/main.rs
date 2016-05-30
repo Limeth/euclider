@@ -3,12 +3,16 @@
 
 extern crate nalgebra as na;
 extern crate glium;
+extern crate rand;
 mod universe;
 pub mod util;
 
 use std::collections::HashSet;
 use std::time::Instant;
 use std::time::Duration;
+use rand::Rng;
+use rand::Rand;
+use rand::StdRng;
 use na::Point3;
 use na::Vector3;
 use na::Point2;
@@ -69,7 +73,6 @@ impl<U: Universe> Simulation<U> {
         let mut frame = self.facade.as_mut().unwrap().draw();
         let now = Instant::now();
         let time = now - self.start_instant.unwrap();
-        self.start_instant = Some(now);
 
         self.universe.render(self.facade.as_ref().unwrap(),
                              &mut frame,
@@ -94,6 +97,8 @@ impl<U: Universe> Simulation<U> {
         } else {
             delta = now - self.last_updated_instant.unwrap();
         }
+
+        self.last_updated_instant = Some(now);
 
         let result = self.context.update(self.facade.as_mut().unwrap());
         self.universe.update(&delta, &self.context);
@@ -245,12 +250,12 @@ fn main() {
                     1.0
                 )),
                 Box::new(Vacuum::new()),
-                Some(Box::new(PerlinSurface3::new(1.0, 1.0)))
+                Some(Box::new(PerlinSurface3::rand(&mut StdRng::new().expect("Could not create a random number generator."), 1.0, 1.0)))
             )));
         entities.push(Box::new(Entity3Impl::new(
                 Box::new(Test3 {}),
                 Box::new(Vacuum::new()),
-                Some(Box::new(PerlinSurface3::new(0.5, 2.0)))
+                Some(Box::new(PerlinSurface3::rand(&mut StdRng::new().expect("Could not create a random number generator."), 0.5, 2.0)))
             )));
         entities.push(Box::new(Void::new_with_vacuum()));
     }

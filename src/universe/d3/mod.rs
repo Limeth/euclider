@@ -1,5 +1,3 @@
-extern crate nalgebra as na;
-extern crate image;
 pub mod entity;
 
 use std::collections::HashMap;

@@ -1,14 +1,11 @@
-extern crate nalgebra as na;
-extern crate image;
-
 use std::marker::Reflect;
 use std::time::Duration;
 use std::any::TypeId;
 use std::any::Any;
-use self::na::NumPoint;
-use self::na::NumVector;
-use self::image::Rgb;
-use self::image::Rgba;
+use na;
+use na::NumPoint;
+use na::NumVector;
+use image::Rgba;
 use SimulationContext;
 
 pub trait Entity<P: NumPoint<f32>, V: NumVector<f32>> where Self: Sync {

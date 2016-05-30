@@ -2,19 +2,20 @@
 #![feature(custom_attribute)]
 
 extern crate nalgebra as na;
-extern crate glium;
+extern crate scoped_threadpool;
+extern crate image;
+extern crate noise;
 extern crate rand;
+extern crate palette;
+extern crate glium;
 mod universe;
 pub mod util;
 
 use std::collections::HashSet;
 use std::time::Instant;
 use std::time::Duration;
-use rand::Rng;
-use rand::Rand;
 use rand::StdRng;
 use na::Point3;
-use na::Vector3;
 use na::Point2;
 use na::Vector2;
 use glium::DisplayBuild;

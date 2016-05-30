@@ -1,10 +1,8 @@
-extern crate nalgebra as na;
-extern crate image;
-extern crate std;
-
+use std;
 use std::collections::HashSet;
 use std::time::Duration;
-use self::na::*;
+use na;
+use na::*;
 use glium::glutin::VirtualKeyCode;
 use universe::entity::Entity;
 use universe::entity::Locatable;

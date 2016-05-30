@@ -1,25 +1,19 @@
-extern crate nalgebra as na;
-extern crate image;
-extern crate std;
-extern crate noise;
-extern crate rand;
-extern crate palette;
 pub mod camera;
 
 use std::any::Any;
 use std::any::TypeId;
 use std::time::Duration;
-use self::rand::Rng;
-use self::rand::Rand;
-use self::na::Point3;
-use self::na::Vector3;
-use self::image::Rgba;
-use self::noise::perlin4;
-use self::noise::Seed;
-use self::palette::Rgb;
-use self::palette::Hsv;
-use self::palette::RgbHue;
-use self::palette::pixel::RgbPixel;
+use rand::Rng;
+use rand::Rand;
+use na;
+use na::Point3;
+use na::Vector3;
+use image::Rgba;
+use noise::perlin4;
+use noise::Seed;
+use palette;
+use palette::Hsv;
+use palette::RgbHue;
 use universe::entity::*;
 
 pub type Entity3 = Entity<Point3<f32>, Vector3<f32>>;

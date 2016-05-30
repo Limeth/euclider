@@ -1,11 +1,9 @@
-extern crate image;
-extern crate std;
-
+use std;
 use std::collections::HashSet;
 use std::hash::Hash;
 use std::u8;
-use self::image::Rgb;
-use self::image::Rgba;
+use image::Rgb;
+use image::Rgba;
 
 pub trait RemoveIf<T, C> {
     fn remove_if<F>(&mut self, f: F) -> C where F: Fn(&T) -> bool;

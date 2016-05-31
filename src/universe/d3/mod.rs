@@ -43,6 +43,10 @@ impl Universe for Universe3D {
     //     })
     // }
 
+    fn vector_to_point(vector: &Vector3<f32>) -> Point3<f32> {
+        vector.to_point()
+    }
+
     fn camera_mut(&mut self) -> &mut Camera<Point3<f32>> {
         &mut *self.camera
     }

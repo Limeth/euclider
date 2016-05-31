@@ -44,6 +44,8 @@ pub trait Universe where Self: Sync {
     //     where F: Fn(M, S) -> Option<Self::P>,
     //           M: Material<Self::P, Self::V>,
     //           S: Shape<Self::P, Self::V>;
+    /// FIXME: Temporary method, because there is currently no way to do this in nalgebra
+    fn vector_to_point(vector: &<Self::P as PointAsVector>::Vector) -> Self::P;
     fn camera_mut(&mut self) -> &mut Camera<Self::P>;
     fn camera(&self) -> &Camera<Self::P>;
     fn set_camera(&mut self, camera: Box<Camera<Self::P>>);
@@ -114,6 +116,7 @@ pub trait Universe where Self: Sync {
                             origin_traceable: belongs_to,
                             intersection_traceable: other_traceable,
                             intersection: &intersection,
+                            vector_to_point: &Self::vector_to_point,
                             trace: &|time, traceable, location, direction| {
                                 self.trace(time, traceable, location, direction)
                             },

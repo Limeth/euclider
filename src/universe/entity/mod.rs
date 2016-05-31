@@ -9,6 +9,7 @@ use na::NumVector;
 use na::PointAsVector;
 use image::Rgba;
 use SimulationContext;
+use universe::Universe;
 
 pub trait Entity<P: NumPoint<f32>> where Self: Sync {
     fn as_updatable_mut(&mut self) -> Option<&mut Updatable<P>>;
@@ -56,6 +57,7 @@ pub struct TracingContext<'a, P: 'a + NumPoint<f32>> {
     pub origin_traceable: &'a Traceable<P>,
     pub intersection_traceable: &'a Traceable<P>,
     pub intersection: &'a Intersection<P>,
+    pub vector_to_point: &'a Fn(&<P as PointAsVector>::Vector) -> P,
     pub trace: &'a Fn(&Duration,
                       &Traceable<P>,
                       &P,
@@ -89,16 +91,16 @@ impl<P: NumPoint<f32>, A: AbstractSurface<P>> Surface<P> for A {
         if reflection_ratio == 0.0 {
             return self.get_surface_color(&context);
         } else if reflection_ratio == 1.0 {
+            let vector_to_point = context.vector_to_point;
             let reflection_direction = self.get_reflection_direction(&context);
             let trace = context.trace;
-            let a: P::Vector;
-            // let new_origin = context.intersection.location
-            //                  + reflection_direction * std::f32::EPSILON;
+            let new_origin = context.intersection.location
+                             + (vector_to_point(&reflection_direction) * std::f32::EPSILON * 8.0)
+                                .to_vector();
 
             return trace(context.time,
                          context.origin_traceable,
-                         // &new_origin,
-                         &context.intersection.location,
+                         &new_origin,
                          &reflection_direction);
         } else {
 

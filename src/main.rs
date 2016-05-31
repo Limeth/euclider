@@ -28,6 +28,8 @@ use glium::glutin::Event;
 use glium::glutin::CursorState;
 use glium::glutin::MouseScrollDelta;
 use image::Rgba;
+use palette::Hsv;
+use palette::RgbHue;
 use universe::Universe;
 use universe::entity::*;
 use universe::d3::Universe3D;
@@ -243,7 +245,7 @@ impl SimulationContext {
 }
 
 fn get_reflection_ratio_test(context: &TracingContext<Point3<f32>>) -> f32 {
-    0.9
+    0.25
 }
 
 fn get_reflection_direction_test(context: &TracingContext<Point3<f32>>) -> Vector3<f32> {
@@ -253,8 +255,15 @@ fn get_reflection_direction_test(context: &TracingContext<Point3<f32>>) -> Vecto
 }
 
 fn get_surface_color_test(context: &TracingContext<Point3<f32>>) -> Rgba<u8> {
+    let normal = context.intersection_traceable.shape().get_normal_at(&context.intersection.location);
+    const Z_AXIS: Vector3<f32> = Vector3 { x: 0.0, y: 0.0, z: 1.0, };
+    let angle = na::angle_between(&normal, &Z_AXIS);
     Rgba {
-        data: [0u8, 0u8, 0u8, 255u8],
+        data: palette::Rgba::from(Hsv::new(
+                          RgbHue::from(0.0),
+                          0.0,
+                          1.0 - angle / std::f32::consts::PI
+                          )).to_pixel(),
     }
 }
 
@@ -277,9 +286,15 @@ fn main() {
                 }))
             )));
         entities.push(Box::new(Entity3Impl::new(
-                Box::new(Test3 {}),
+                Box::new(Sphere3::new(
+                        Point3::new(2.0, -1.5, 0.0),
+                        1.25
+                        )),
                 Box::new(Vacuum::new()),
-                Some(Box::new(PerlinSurface3::rand(&mut StdRng::new().expect("Could not create a random number generator."), 0.5, 2.0)))
+                Some(Box::new(PerlinSurface3::rand(
+                            &mut StdRng::new().expect("Could not create a random number generator."),
+                            2.0,
+                            1.0)))
                 // Some(Box::new(ComposableSurface {
                 //     reflection_ratio: get_reflection_ratio_test,
                 //     reflection_direction: get_reflection_direction_test,

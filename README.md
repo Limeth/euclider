@@ -10,6 +10,11 @@ A non-euclidean ray tracing prototype written in Rust.
 * [`W`/`A`/`S`/`D`/`Shift`/`Control`] - camera movement
 * [`Esc`] - exit
 
+# Preview of version 0.5.0
+
+![Reflection](preview_2_reflection.png)
+A sphere reflecting another sphere.
+
 # Preview of version 0.4.0
 
 ![A perlin noise surface](preview_1_perlin.png)

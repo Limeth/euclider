@@ -17,6 +17,7 @@ use std::time::Duration;
 use rand::StdRng;
 use na::Point3;
 use na::Point2;
+use na::Vector3;
 use na::Vector2;
 use glium::DisplayBuild;
 use glium::backend::glutin_backend::GlutinFacade;
@@ -240,6 +241,10 @@ impl SimulationContext {
     }
 }
 
+fn get_reflection_ratio_test(context: TracingContext<Point3<f32>, Vector3<f32>>) -> f32 {
+    1.0
+}
+
 fn main() {
     let mut universe = Universe3D::new();
 
@@ -256,7 +261,10 @@ fn main() {
         entities.push(Box::new(Entity3Impl::new(
                 Box::new(Test3 {}),
                 Box::new(Vacuum::new()),
-                Some(Box::new(PerlinSurface3::rand(&mut StdRng::new().expect("Could not create a random number generator."), 0.5, 2.0)))
+                // Some(Box::new(PerlinSurface3::rand(&mut StdRng::new().expect("Could not create a random number generator."), 0.5, 2.0)))
+                Some(Box::new(ComposableSurface {
+                    reflection_ratio: get_reflection_ratio_test,
+                }))
             )));
         entities.push(Box::new(Void::new_with_vacuum()));
     }

@@ -47,6 +47,7 @@ pub struct Intersection<P: NumPoint<f32>> {
     pub distance_squared: f32,
 }
 
+#[derive(Copy, Clone)]
 pub struct TracingContext<'a, P: 'a + NumPoint<f32>, V: 'a + NumVector<f32>> {
     pub time: &'a Duration,
     pub intersection: &'a Intersection<P>,
@@ -63,8 +64,31 @@ pub trait Shape<P: NumPoint<f32>, V: NumVector<f32>>
 
 pub trait Material<P: NumPoint<f32>, V: NumVector<f32>> where Self: HasId {}
 
-pub trait Surface<P: NumPoint<f32>, V: NumVector<f32>> where Self: HasId {
+pub trait Surface<P: NumPoint<f32>, V: NumVector<f32>> {
     fn get_color<'a>(&self, context: TracingContext<'a, P, V>) -> Rgba<u8>;
+}
+
+pub trait AbstractSurface<P: NumPoint<f32>, V: NumVector<f32>> {
+    fn get_reflection_ratio(&self, context: TracingContext<P, V>) -> f32;
+}
+
+impl<P: NumPoint<f32>, V: NumVector<f32>, A: AbstractSurface<P, V>> Surface<P, V> for A {
+    fn get_color<'a>(&self, context: TracingContext<'a, P, V>) -> Rgba<u8> {
+        let reflection_ratio = self.get_reflection_ratio(context);
+        // TODO
+        Rgba { data: [0; 4] }
+    }
+}
+
+pub struct ComposableSurface<P: NumPoint<f32>, V: NumVector<f32>> {
+    pub reflection_ratio: fn(TracingContext<P, V>) -> f32,
+}
+
+impl<P: NumPoint<f32>, V: NumVector<f32>> AbstractSurface<P, V> for ComposableSurface<P, V> {
+    fn get_reflection_ratio(&self, context: TracingContext<P, V>) -> f32 {
+        let reflection_ratio = self.reflection_ratio;
+        reflection_ratio(context)
+    }
 }
 
 pub trait Updatable<P: NumPoint<f32>, V: NumVector<f32>>: Entity<P, V> {

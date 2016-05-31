@@ -1,6 +1,7 @@
 pub mod d3;
 pub mod entity;
 
+use std;
 use std::time::Duration;
 use std::collections::HashMap;
 use std::any::TypeId;
@@ -121,6 +122,13 @@ pub trait Universe where Self: Sync {
                                 self.trace(time, traceable, location, direction)
                             },
                         };
+
+                        // Avoid a stack overflow, where a ray intersects the same location
+                        // repeatedly.
+                        if intersection.distance_squared <= std::f32::EPSILON * 1.0 {
+                            continue;
+                        }
+
                         foreground = Some(surface.get_color(context));
                         foreground_distance_squared = Some(intersection.distance_squared);
                     }

@@ -243,7 +243,7 @@ impl SimulationContext {
 }
 
 fn get_reflection_ratio_test(context: &TracingContext<Point3<f32>>) -> f32 {
-    1.0
+    0.9
 }
 
 fn get_reflection_direction_test(context: &TracingContext<Point3<f32>>) -> Vector3<f32> {
@@ -254,7 +254,7 @@ fn get_reflection_direction_test(context: &TracingContext<Point3<f32>>) -> Vecto
 
 fn get_surface_color_test(context: &TracingContext<Point3<f32>>) -> Rgba<u8> {
     Rgba {
-        data: [255u8, 255u8, 0u8, 255u8],
+        data: [0u8, 0u8, 0u8, 255u8],
     }
 }
 
@@ -269,17 +269,22 @@ fn main() {
                     1.0
                 )),
                 Box::new(Vacuum::new()),
-                Some(Box::new(PerlinSurface3::rand(&mut StdRng::new().expect("Could not create a random number generator."), 1.0, 1.0)))
-            )));
-        entities.push(Box::new(Entity3Impl::new(
-                Box::new(Test3 {}),
-                Box::new(Vacuum::new()),
-                // Some(Box::new(PerlinSurface3::rand(&mut StdRng::new().expect("Could not create a random number generator."), 0.5, 2.0)))
+                // Some(Box::new(PerlinSurface3::rand(&mut StdRng::new().expect("Could not create a random number generator."), 1.0, 1.0)))
                 Some(Box::new(ComposableSurface {
                     reflection_ratio: get_reflection_ratio_test,
                     reflection_direction: get_reflection_direction_test,
                     surface_color: get_surface_color_test,
                 }))
+            )));
+        entities.push(Box::new(Entity3Impl::new(
+                Box::new(Test3 {}),
+                Box::new(Vacuum::new()),
+                Some(Box::new(PerlinSurface3::rand(&mut StdRng::new().expect("Could not create a random number generator."), 0.5, 2.0)))
+                // Some(Box::new(ComposableSurface {
+                //     reflection_ratio: get_reflection_ratio_test,
+                //     reflection_direction: get_reflection_direction_test,
+                //     surface_color: get_surface_color_test,
+                // }))
             )));
         entities.push(Box::new(Void::new_with_vacuum()));
     }

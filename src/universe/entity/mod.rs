@@ -10,6 +10,7 @@ use na::PointAsVector;
 use image::Rgba;
 use SimulationContext;
 use universe::Universe;
+use util;
 
 pub trait Entity<P: NumPoint<f32>> where Self: Sync {
     fn as_updatable_mut(&mut self) -> Option<&mut Updatable<P>>;
@@ -85,28 +86,36 @@ pub trait AbstractSurface<P: NumPoint<f32>> {
 
 impl<P: NumPoint<f32>, A: AbstractSurface<P>> Surface<P> for A {
     fn get_color<'a>(&self, context: TracingContext<'a, P>) -> Rgba<u8> {
-        let reflection_ratio = self.get_reflection_ratio(&context).min(0.0).max(1.0);
-        let reflection_color: Rgba<u8>;
-
-        if reflection_ratio == 0.0 {
-            return self.get_surface_color(&context);
-        } else if reflection_ratio == 1.0 {
-            let vector_to_point = context.vector_to_point;
+        let reflection_ratio = self.get_reflection_ratio(&context).min(1.0).max(0.0);
+        let intersection_color: Option<Rgba<u8>> = if reflection_ratio < 1.0 { Some({
+            // TODO
+            self.get_surface_color(&context)
+        }) } else { None };
+        let reflection_color: Option<Rgba<u8>> = if reflection_ratio > 0.0 { Some({
             let reflection_direction = self.get_reflection_direction(&context);
             let trace = context.trace;
-            let new_origin = context.intersection.location
-                             + (vector_to_point(&reflection_direction) * std::f32::EPSILON * 8.0)
-                                .to_vector();
+            // // Offset the new origin, so it doesn't hit the same shape over and over
+            // let vector_to_point = context.vector_to_point;
+            // let new_origin = context.intersection.location
+            //                  + (vector_to_point(&reflection_direction) * std::f32::EPSILON * 8.0)
+            //                     .to_vector();
 
-            return trace(context.time,
-                         context.origin_traceable,
-                         &new_origin,
-                         &reflection_direction);
-        } else {
+            trace(context.time,
+                  context.origin_traceable,
+                  &context.intersection.location,
+                  // &new_origin,
+                  &reflection_direction)
+        }) } else { None };
 
+        if intersection_color.is_none() {
+            return reflection_color.expect("No intersection color calculated; the reflection color should exist.");
+        } else if reflection_color.is_none() {
+            return intersection_color.expect("No reflection color calculated; the intersection color should exist.");
         }
 
-        Rgba { data: [0; 4] }
+        util::combine_color(reflection_color.unwrap(),
+                           intersection_color.unwrap(),
+                           reflection_ratio)
     }
 }
 

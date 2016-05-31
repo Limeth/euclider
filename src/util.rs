@@ -31,6 +31,21 @@ impl<T> RemoveIf<T, HashSet<T>> for HashSet<T>
     }
 }
 
+pub fn combine_color(a: Rgba<u8>, b: Rgba<u8>, a_ratio: f32) -> Rgba<u8> {
+    if a_ratio <= 0.0 {
+        b
+    } else if a_ratio >= 1.0 {
+        a
+    } else {
+        let data: Vec<u8> = a.data.iter().zip(b.data.iter()).map(|(a, b)| {
+            (*a as f32 * a_ratio + *b as f32 * (1.0 - a_ratio)) as u8
+        }).collect();
+        Rgba {
+            data: [data[0], data[1], data[2], data[3]],
+        }
+    }
+}
+
 pub fn overlay_color(bottom: Rgb<u8>, top: Rgba<u8>) -> Rgb<u8> {
     if top.data[3] == 0 {
         bottom

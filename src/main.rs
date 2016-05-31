@@ -27,6 +27,7 @@ use glium::glutin::ElementState;
 use glium::glutin::Event;
 use glium::glutin::CursorState;
 use glium::glutin::MouseScrollDelta;
+use image::Rgba;
 use universe::Universe;
 use universe::entity::*;
 use universe::d3::Universe3D;
@@ -241,8 +242,20 @@ impl SimulationContext {
     }
 }
 
-fn get_reflection_ratio_test(context: TracingContext<Point3<f32>, Vector3<f32>>) -> f32 {
+fn get_reflection_ratio_test(context: &TracingContext<Point3<f32>, Vector3<f32>>) -> f32 {
     1.0
+}
+
+fn get_reflection_direction_test(context: &TracingContext<Point3<f32>, Vector3<f32>>) -> Vector3<f32> {
+    // R = 2*(V dot N)*N - V
+    let normal = context.intersection_traceable.shape().get_normal_at(&context.intersection.location);
+    2.0 * na::dot(&context.intersection.direction, &normal) * normal - context.intersection.direction
+}
+
+fn get_surface_color_test(context: &TracingContext<Point3<f32>, Vector3<f32>>) -> Rgba<u8> {
+    Rgba {
+        data: [255u8, 255u8, 0u8, 255u8],
+    }
 }
 
 fn main() {
@@ -264,6 +277,8 @@ fn main() {
                 // Some(Box::new(PerlinSurface3::rand(&mut StdRng::new().expect("Could not create a random number generator."), 0.5, 2.0)))
                 Some(Box::new(ComposableSurface {
                     reflection_ratio: get_reflection_ratio_test,
+                    reflection_direction: get_reflection_direction_test,
+                    surface_color: get_surface_color_test,
                 }))
             )));
         entities.push(Box::new(Void::new_with_vacuum()));

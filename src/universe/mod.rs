@@ -56,21 +56,21 @@ pub trait Universe where Self: Sync {
                                                      &Self::V,
                                                      &Material<Self::P, Self::V>,
                                                      &Shape<Self::P, Self::V>)
-                                                     -> Option<Intersection<Self::P>>>;
+                                                     -> Option<Intersection<Self::P, Self::V>>>;
     fn intersectors(&self)
                      -> &HashMap<(TypeId, TypeId),
                                  fn(&Self::P,
                                              &Self::V,
                                              &Material<Self::P, Self::V>,
                                              &Shape<Self::P, Self::V>)
-                                             -> Option<Intersection<Self::P>>>;
+                                             -> Option<Intersection<Self::P, Self::V>>>;
     fn set_intersectors(&mut self,
                          intersections: HashMap<(TypeId, TypeId),
                                                 fn(&Self::P,
                                                             &Self::V,
                                                             &Material<Self::P, Self::V>,
                                                             &Shape<Self::P, Self::V>)
-                                                            -> Option<Intersection<Self::P>>>);
+                                                            -> Option<Intersection<Self::P, Self::V>>>);
     
     fn trace(&self, time: &Duration, belongs_to: &Traceable<Self::P, Self::V>, location: &Self::P, rotation: &Self::V) -> Rgba<u8> {
         let material = belongs_to.material();
@@ -98,7 +98,7 @@ pub trait Universe where Self: Sync {
 
             match intersector(location, rotation, material, shape) {
                 Some(intersection) => {
-                    let normal = shape.get_normal_at(&intersection.point);
+                    let normal = shape.get_normal_at(&intersection.location);
                     let surface = other_traceable.surface();
 
                     if surface.is_none() {
@@ -111,9 +111,10 @@ pub trait Universe where Self: Sync {
                         || foreground_distance_squared.unwrap() > intersection.distance_squared {
                         let context = TracingContext {
                             time: time,
+                            origin_traceable: belongs_to,
+                            intersection_traceable: other_traceable,
                             intersection: &intersection,
-                            normal: &normal,
-                            trace: &|traceable, location, direction| {
+                            trace: &|time, traceable, location, direction| {
                                 self.trace(time, traceable, location, direction)
                             },
                         };

@@ -12,7 +12,7 @@ use universe::d3::entity::*;
 pub struct Universe3D {
     camera: Box<Camera3>,
     entities: Vec<Box<Entity3>>,
-    intersections: HashMap<(TypeId, TypeId), fn(&Point3<f32>, &Vector3<f32>, &Material<Point3<f32>, Vector3<f32>>, &Shape<Point3<f32>, Vector3<f32>>) -> Option<Intersection<Point3<f32>>>>,
+    intersections: HashMap<(TypeId, TypeId), fn(&Point3<f32>, &Vector3<f32>, &Material<Point3<f32>, Vector3<f32>>, &Shape<Point3<f32>, Vector3<f32>>) -> Option<Intersection<Point3<f32>, Vector3<f32>>>>,
 }
 
 impl Universe3D {
@@ -69,7 +69,7 @@ impl Universe for Universe3D {
                                                      &Self::V,
                                                      &Material<Self::P, Self::V>,
                                                      &Shape<Self::P, Self::V>)
-                                                     -> Option<Intersection<Self::P>>> {
+                                                     -> Option<Intersection<Self::P, Self::V>>> {
         &mut self.intersections
     }
 
@@ -79,7 +79,7 @@ impl Universe for Universe3D {
                                              &Self::V,
                                              &Material<Self::P, Self::V>,
                                              &Shape<Self::P, Self::V>)
-                                             -> Option<Intersection<Self::P>>> {
+                                             -> Option<Intersection<Self::P, Self::V>>> {
         &self.intersections
     }
 
@@ -90,7 +90,7 @@ impl Universe for Universe3D {
                                                             &Self::V,
                                                             &Material<Self::P, Self::V>,
                                                             &Shape<Self::P, Self::V>)
-                                                            -> Option<Intersection<Self::P>>>) {
+                                                            -> Option<Intersection<Self::P, Self::V>>>) {
         self.intersections = intersections;
     }
 }

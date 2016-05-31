@@ -148,7 +148,7 @@ impl Shape<Point3<f32>, Vector3<f32>> for Test3 {
     }
 }
 
-pub fn intersect_test(location: &Point3<f32>, direction: &Vector3<f32>, material: &Material<Point3<f32>, Vector3<f32>>, void: &Shape<Point3<f32>, Vector3<f32>>) -> Option<Intersection<Point3<f32>>> {
+pub fn intersect_test(location: &Point3<f32>, direction: &Vector3<f32>, material: &Material<Point3<f32>, Vector3<f32>>, void: &Shape<Point3<f32>, Vector3<f32>>) -> Option<Intersection<Point3<f32>, Vector3<f32>>> {
     let t = (1.0 - location.x) / direction.x;
 
     if t <= 0.0 {
@@ -162,17 +162,18 @@ pub fn intersect_test(location: &Point3<f32>, direction: &Vector3<f32>, material
     }
 
     Some(Intersection {
-        point: result,
+        location: result,
+        direction: *direction,
         distance_squared: na::distance_squared(location, &result),
     })
 }
 
-pub fn intersect_void(location: &Point3<f32>, direction: &Vector3<f32>, material: &Material<Point3<f32>, Vector3<f32>>, void: &Shape<Point3<f32>, Vector3<f32>>) -> Option<Intersection<Point3<f32>>> {
+pub fn intersect_void(location: &Point3<f32>, direction: &Vector3<f32>, material: &Material<Point3<f32>, Vector3<f32>>, void: &Shape<Point3<f32>, Vector3<f32>>) -> Option<Intersection<Point3<f32>, Vector3<f32>>> {
     void.as_any().downcast_ref::<VoidShape>().unwrap();
     None
 }
 
-pub fn intersect_sphere_in_vacuum(location: &Point3<f32>, direction: &Vector3<f32>, vacuum: &Material<Point3<f32>, Vector3<f32>>, sphere: &Shape<Point3<f32>, Vector3<f32>>) -> Option<Intersection<Point3<f32>>> {
+pub fn intersect_sphere_in_vacuum(location: &Point3<f32>, direction: &Vector3<f32>, vacuum: &Material<Point3<f32>, Vector3<f32>>, sphere: &Shape<Point3<f32>, Vector3<f32>>) -> Option<Intersection<Point3<f32>, Vector3<f32>>> {
     // Unsafe cast example:
     //let a = unsafe { &*(a as *const _ as *const Aimpl) };
     vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
@@ -219,7 +220,8 @@ pub fn intersect_sphere_in_vacuum(location: &Point3<f32>, direction: &Vector3<f3
     let result_point = Point3::new(location.x + result_vector.x, location.y + result_vector.y, location.z + result_vector.z);
 
     Some(Intersection {
-        point: result_point,
+        location: result_point,
+        direction: *direction,
         distance_squared: na::distance_squared(location, &result_point),
     })
 }
@@ -265,7 +267,7 @@ impl PerlinSurface3 {
 impl Surface<Point3<f32>, Vector3<f32>> for PerlinSurface3 {
     fn get_color<'a>(&self, context: TracingContext<'a, Point3<f32>, Vector3<f32>>) -> Rgba<u8> {
         let time_millis = (context.time.clone() * 1000).as_secs() as f32 / 1000.0;
-        let location = [context.intersection.point.x / self.size, context.intersection.point.y / self.size, context.intersection.point.z / self.size, time_millis * self.speed];
+        let location = [context.intersection.location.x / self.size, context.intersection.location.y / self.size, context.intersection.location.z / self.size, time_millis * self.speed];
         let value = perlin4(&self.seed, &location);
         Rgba {
             data: palette::Rgba::from(Hsv::new(RgbHue::from(value * 360.0), 1.0, 1.0)).to_pixel(),

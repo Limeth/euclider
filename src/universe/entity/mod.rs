@@ -1,3 +1,4 @@
+use std;
 use std::marker::Reflect;
 use std::time::Duration;
 use std::any::TypeId;
@@ -42,17 +43,19 @@ pub trait HasId {
     fn as_any_mut(&mut self) -> &mut Any;
 }
 
-pub struct Intersection<P: NumPoint<f32>> {
-    pub point: P,
+pub struct Intersection<P: NumPoint<f32>, V: NumVector<f32>> {
+    pub location: P,
+    pub direction: V,
     pub distance_squared: f32,
 }
 
 #[derive(Copy, Clone)]
 pub struct TracingContext<'a, P: 'a + NumPoint<f32>, V: 'a + NumVector<f32>> {
     pub time: &'a Duration,
-    pub intersection: &'a Intersection<P>,
-    pub normal: &'a V,
-    pub trace: &'a Fn(&Traceable<P, V>, &P, &V) -> Rgba<u8>,
+    pub origin_traceable: &'a Traceable<P, V>,
+    pub intersection_traceable: &'a Traceable<P, V>,
+    pub intersection: &'a Intersection<P, V>,
+    pub trace: &'a Fn(&Duration, &Traceable<P, V>, &P, &V) -> Rgba<u8>,
 }
 
 pub trait Shape<P: NumPoint<f32>, V: NumVector<f32>>
@@ -69,25 +72,58 @@ pub trait Surface<P: NumPoint<f32>, V: NumVector<f32>> {
 }
 
 pub trait AbstractSurface<P: NumPoint<f32>, V: NumVector<f32>> {
-    fn get_reflection_ratio(&self, context: TracingContext<P, V>) -> f32;
+    fn get_reflection_ratio(&self, context: &TracingContext<P, V>) -> f32;
+    fn get_reflection_direction(&self, context: &TracingContext<P, V>) -> V;
+    fn get_surface_color(&self, context: &TracingContext<P, V>) -> Rgba<u8>;
 }
 
 impl<P: NumPoint<f32>, V: NumVector<f32>, A: AbstractSurface<P, V>> Surface<P, V> for A {
     fn get_color<'a>(&self, context: TracingContext<'a, P, V>) -> Rgba<u8> {
-        let reflection_ratio = self.get_reflection_ratio(context);
-        // TODO
+        let reflection_ratio = self.get_reflection_ratio(&context).min(0.0).max(1.0);
+        let reflection_color: Rgba<u8>;
+
+        if reflection_ratio == 0.0 {
+            return self.get_surface_color(&context);
+        } else if reflection_ratio == 1.0 {
+            let reflection_direction = self.get_reflection_direction(&context);
+            let trace = context.trace;
+            let a: P::Vector;
+            // let new_origin = context.intersection.location
+            //                  + reflection_direction * std::f32::EPSILON;
+
+            return trace(context.time,
+                         context.origin_traceable,
+                         // &new_origin,
+                         &context.intersection.location,
+                         &reflection_direction);
+        } else {
+
+        }
+
         Rgba { data: [0; 4] }
     }
 }
 
 pub struct ComposableSurface<P: NumPoint<f32>, V: NumVector<f32>> {
-    pub reflection_ratio: fn(TracingContext<P, V>) -> f32,
+    pub reflection_ratio: fn(&TracingContext<P, V>) -> f32,
+    pub reflection_direction: fn(&TracingContext<P, V>) -> V,
+    pub surface_color: fn(&TracingContext<P, V>) -> Rgba<u8>,
 }
 
 impl<P: NumPoint<f32>, V: NumVector<f32>> AbstractSurface<P, V> for ComposableSurface<P, V> {
-    fn get_reflection_ratio(&self, context: TracingContext<P, V>) -> f32 {
+    fn get_reflection_ratio(&self, context: &TracingContext<P, V>) -> f32 {
         let reflection_ratio = self.reflection_ratio;
         reflection_ratio(context)
+    }
+
+    fn get_reflection_direction(&self, context: &TracingContext<P, V>) -> V {
+        let reflection_direction = self.reflection_direction;
+        reflection_direction(context)
+    }
+
+    fn get_surface_color(&self, context: &TracingContext<P, V>) -> Rgba<u8> {
+        let surface_color = self.surface_color;
+        surface_color(context)
     }
 }
 

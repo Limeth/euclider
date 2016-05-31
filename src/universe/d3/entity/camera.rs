@@ -110,7 +110,7 @@ impl Camera3Impl {
     }
 }
 
-impl Camera<Point3<f32>, Vector3<f32>> for Camera3Impl {
+impl Camera<Point3<f32>> for Camera3Impl {
     #[allow(unused_variables)]
     fn get_ray_point(&self,
                      screen_x: i32,
@@ -142,8 +142,8 @@ impl Camera<Point3<f32>, Vector3<f32>> for Camera3Impl {
     }
 }
 
-impl Entity<Point3<f32>, Vector3<f32>> for Camera3Impl {
-    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<Point3<f32>, Vector3<f32>>> {
+impl Entity<Point3<f32>> for Camera3Impl {
+    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<Point3<f32>>> {
         Some(self)
     }
 
@@ -151,7 +151,7 @@ impl Entity<Point3<f32>, Vector3<f32>> for Camera3Impl {
         Some(self)
     }
 
-    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<Point3<f32>, Vector3<f32>>> {
+    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<Point3<f32>>> {
         None
     }
 
@@ -160,7 +160,7 @@ impl Entity<Point3<f32>, Vector3<f32>> for Camera3Impl {
     }
 }
 
-impl Updatable<Point3<f32>, Vector3<f32>> for Camera3Impl {
+impl Updatable<Point3<f32>> for Camera3Impl {
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext) {
         self.update_rotation(context);
 
@@ -211,7 +211,7 @@ impl Locatable<Point3<f32>> for Camera3Impl {
     }
 }
 
-impl Rotatable<Vector3<f32>> for Camera3Impl {
+impl Rotatable<Point3<f32>> for Camera3Impl {
     fn rotation_mut(&mut self) -> &mut Vector3<f32> {
         &mut self.forward
     }

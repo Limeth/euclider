@@ -7,6 +7,7 @@ use std::any::TypeId;
 use std::borrow::Cow;
 use na::NumPoint;
 use na::NumVector;
+use na::PointAsVector;
 use glium::Surface as GliumSurface;
 use glium::texture::Texture2d;
 use glium::backend::Facade;
@@ -23,7 +24,6 @@ use util;
 
 pub trait Universe where Self: Sync {
     type P: NumPoint<f32>;
-    type V: NumVector<f32>;
     // Generics hell I might need in the future:
     //
     // fn camera_mut<C>(&mut self) -> &mut C where C: Camera<Self::P, Self::V>;
@@ -44,35 +44,35 @@ pub trait Universe where Self: Sync {
     //     where F: Fn(M, S) -> Option<Self::P>,
     //           M: Material<Self::P, Self::V>,
     //           S: Shape<Self::P, Self::V>;
-    fn camera_mut(&mut self) -> &mut Camera<Self::P, Self::V>;
-    fn camera(&self) -> &Camera<Self::P, Self::V>;
-    fn set_camera(&mut self, camera: Box<Camera<Self::P, Self::V>>);
-    fn entities_mut(&mut self) -> &mut Vec<Box<Entity<Self::P, Self::V>>>;
-    fn entities(&self) -> &Vec<Box<Entity<Self::P, Self::V>>>;
-    fn set_entities(&mut self, entities: Vec<Box<Entity<Self::P, Self::V>>>);
+    fn camera_mut(&mut self) -> &mut Camera<Self::P>;
+    fn camera(&self) -> &Camera<Self::P>;
+    fn set_camera(&mut self, camera: Box<Camera<Self::P>>);
+    fn entities_mut(&mut self) -> &mut Vec<Box<Entity<Self::P>>>;
+    fn entities(&self) -> &Vec<Box<Entity<Self::P>>>;
+    fn set_entities(&mut self, entities: Vec<Box<Entity<Self::P>>>);
     fn intersectors_mut(&mut self)
                          -> &mut HashMap<(TypeId, TypeId),
                                          fn(&Self::P,
-                                                     &Self::V,
-                                                     &Material<Self::P, Self::V>,
-                                                     &Shape<Self::P, Self::V>)
-                                                     -> Option<Intersection<Self::P, Self::V>>>;
+                                            &<Self::P as PointAsVector>::Vector,
+                                            &Material<Self::P>,
+                                            &Shape<Self::P>)
+                                            -> Option<Intersection<Self::P>>>;
     fn intersectors(&self)
                      -> &HashMap<(TypeId, TypeId),
                                  fn(&Self::P,
-                                             &Self::V,
-                                             &Material<Self::P, Self::V>,
-                                             &Shape<Self::P, Self::V>)
-                                             -> Option<Intersection<Self::P, Self::V>>>;
+                                    &<Self::P as PointAsVector>::Vector,
+                                    &Material<Self::P>,
+                                    &Shape<Self::P>)
+                                    -> Option<Intersection<Self::P>>>;
     fn set_intersectors(&mut self,
                          intersections: HashMap<(TypeId, TypeId),
                                                 fn(&Self::P,
-                                                            &Self::V,
-                                                            &Material<Self::P, Self::V>,
-                                                            &Shape<Self::P, Self::V>)
-                                                            -> Option<Intersection<Self::P, Self::V>>>);
+                                                   &<Self::P as PointAsVector>::Vector,
+                                                   &Material<Self::P>,
+                                                   &Shape<Self::P>)
+                                                   -> Option<Intersection<Self::P>>>);
     
-    fn trace(&self, time: &Duration, belongs_to: &Traceable<Self::P, Self::V>, location: &Self::P, rotation: &Self::V) -> Rgba<u8> {
+    fn trace(&self, time: &Duration, belongs_to: &Traceable<Self::P>, location: &Self::P, rotation: &<Self::P as PointAsVector>::Vector) -> Rgba<u8> {
         let material = belongs_to.material();
         let mut foreground: Option<Rgba<u8>> = None;
         let mut foreground_distance_squared: Option<f32> = None;
@@ -151,8 +151,8 @@ pub trait Universe where Self: Sync {
         })
     }
 
-    fn trace_unknown(&self, time: &Duration, location: &Self::P, rotation: &Self::V) -> Option<Rgb<u8>> {
-        let mut belongs_to: Option<&Traceable<Self::P, Self::V>> = None;
+    fn trace_unknown(&self, time: &Duration, location: &Self::P, rotation: &<Self::P as PointAsVector>::Vector) -> Option<Rgb<u8>> {
+        let mut belongs_to: Option<&Traceable<Self::P>> = None;
 
         for entity in self.entities() {
             let traceable = entity.as_traceable();
@@ -161,8 +161,8 @@ pub trait Universe where Self: Sync {
                 continue;
             }
 
-            let traceable: &Traceable<Self::P, Self::V> = traceable.unwrap();
-            let shape: &Shape<Self::P, Self::V> = traceable.shape();
+            let traceable: &Traceable<Self::P> = traceable.unwrap();
+            let shape: &Shape<Self::P> = traceable.shape();
 
             if !shape.is_point_inside(location) {
                 continue;

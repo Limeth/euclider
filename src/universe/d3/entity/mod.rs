@@ -16,15 +16,15 @@ use palette::Hsv;
 use palette::RgbHue;
 use universe::entity::*;
 
-pub type Entity3 = Entity<Point3<f32>, Vector3<f32>>;
-pub type Camera3 = Camera<Point3<f32>, Vector3<f32>>;
-pub type Updatable3 = Updatable<Point3<f32>, Vector3<f32>>;
-pub type Traceable3 = Traceable<Point3<f32>, Vector3<f32>>;
+pub type Entity3 = Entity<Point3<f32>>;
+pub type Camera3 = Camera<Point3<f32>>;
+pub type Updatable3 = Updatable<Point3<f32>>;
+pub type Traceable3 = Traceable<Point3<f32>>;
 pub type Locatable3 = Locatable<Point3<f32>>;
-pub type Rotatable3 = Rotatable<Vector3<f32>>;
-pub type Shape3 = Shape<Point3<f32>, Vector3<f32>>;
-pub type Material3 = Material<Point3<f32>, Vector3<f32>>;
-pub type Surface3 = Surface<Point3<f32>, Vector3<f32>>;
+pub type Rotatable3 = Rotatable<Point3<f32>>;
+pub type Shape3 = Shape<Point3<f32>>;
+pub type Material3 = Material<Point3<f32>>;
+pub type Surface3 = Surface<Point3<f32>>;
 
 pub struct Entity3Impl {
     shape: Box<Shape3>,
@@ -47,8 +47,8 @@ impl Entity3Impl {
     }
 }
 
-impl Entity<Point3<f32>, Vector3<f32>> for Entity3Impl {
-    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<Point3<f32>, Vector3<f32>>> {
+impl Entity<Point3<f32>> for Entity3Impl {
+    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<Point3<f32>>> {
         None
     }
 
@@ -56,7 +56,7 @@ impl Entity<Point3<f32>, Vector3<f32>> for Entity3Impl {
         None
     }
 
-    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<Point3<f32>, Vector3<f32>>> {
+    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<Point3<f32>>> {
         Some(self)
     }
 
@@ -65,7 +65,7 @@ impl Entity<Point3<f32>, Vector3<f32>> for Entity3Impl {
     }
 }
 
-impl Traceable<Point3<f32>, Vector3<f32>> for Entity3Impl {
+impl Traceable<Point3<f32>> for Entity3Impl {
     fn trace(&self) -> Rgba<u8> {
         Rgba { data: [0u8, 0u8, 0u8, 0u8] }
     }
@@ -111,7 +111,7 @@ impl HasId for Sphere3 {
     }
 }
 
-impl Shape<Point3<f32>, Vector3<f32>> for Sphere3 {
+impl Shape<Point3<f32>> for Sphere3 {
     fn get_normal_at(&self, point: &Point3<f32>) -> Vector3<f32> {
         let norm = *point - self.location;
         na::normalize(&norm)
@@ -138,7 +138,7 @@ impl HasId for Test3 {
     }
 }
 
-impl Shape<Point3<f32>, Vector3<f32>> for Test3 {
+impl Shape<Point3<f32>> for Test3 {
     fn get_normal_at(&self, point: &Point3<f32>) -> Vector3<f32> {
         Vector3::new(1.0, 0.0, 0.0)
     }
@@ -148,7 +148,10 @@ impl Shape<Point3<f32>, Vector3<f32>> for Test3 {
     }
 }
 
-pub fn intersect_test(location: &Point3<f32>, direction: &Vector3<f32>, material: &Material<Point3<f32>, Vector3<f32>>, void: &Shape<Point3<f32>, Vector3<f32>>) -> Option<Intersection<Point3<f32>, Vector3<f32>>> {
+pub fn intersect_test(location: &Point3<f32>,
+                      direction: &Vector3<f32>,
+                      material: &Material<Point3<f32>>,
+                      void: &Shape<Point3<f32>>) -> Option<Intersection<Point3<f32>>> {
     let t = (1.0 - location.x) / direction.x;
 
     if t <= 0.0 {
@@ -168,12 +171,12 @@ pub fn intersect_test(location: &Point3<f32>, direction: &Vector3<f32>, material
     })
 }
 
-pub fn intersect_void(location: &Point3<f32>, direction: &Vector3<f32>, material: &Material<Point3<f32>, Vector3<f32>>, void: &Shape<Point3<f32>, Vector3<f32>>) -> Option<Intersection<Point3<f32>, Vector3<f32>>> {
+pub fn intersect_void(location: &Point3<f32>, direction: &Vector3<f32>, material: &Material<Point3<f32>>, void: &Shape<Point3<f32>>) -> Option<Intersection<Point3<f32>>> {
     void.as_any().downcast_ref::<VoidShape>().unwrap();
     None
 }
 
-pub fn intersect_sphere_in_vacuum(location: &Point3<f32>, direction: &Vector3<f32>, vacuum: &Material<Point3<f32>, Vector3<f32>>, sphere: &Shape<Point3<f32>, Vector3<f32>>) -> Option<Intersection<Point3<f32>, Vector3<f32>>> {
+pub fn intersect_sphere_in_vacuum(location: &Point3<f32>, direction: &Vector3<f32>, vacuum: &Material<Point3<f32>>, sphere: &Shape<Point3<f32>>) -> Option<Intersection<Point3<f32>>> {
     // Unsafe cast example:
     //let a = unsafe { &*(a as *const _ as *const Aimpl) };
     vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
@@ -264,8 +267,8 @@ impl PerlinSurface3 {
     }
 }
 
-impl Surface<Point3<f32>, Vector3<f32>> for PerlinSurface3 {
-    fn get_color<'a>(&self, context: TracingContext<'a, Point3<f32>, Vector3<f32>>) -> Rgba<u8> {
+impl Surface<Point3<f32>> for PerlinSurface3 {
+    fn get_color<'a>(&self, context: TracingContext<'a, Point3<f32>>) -> Rgba<u8> {
         let time_millis = (context.time.clone() * 1000).as_secs() as f32 / 1000.0;
         let location = [context.intersection.location.x / self.size, context.intersection.location.y / self.size, context.intersection.location.z / self.size, time_millis * self.speed];
         let value = perlin4(&self.seed, &location);

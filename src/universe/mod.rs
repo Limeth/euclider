@@ -7,7 +7,6 @@ use std::collections::HashMap;
 use std::any::TypeId;
 use std::borrow::Cow;
 use na::NumPoint;
-use na::NumVector;
 use na::PointAsVector;
 use glium::Surface as GliumSurface;
 use glium::texture::Texture2d;
@@ -46,13 +45,14 @@ pub trait Universe where Self: Sync {
     //           M: Material<Self::P, Self::V>,
     //           S: Shape<Self::P, Self::V>;
     /// FIXME: Temporary method, because there is currently no way to do this in nalgebra
-    fn vector_to_point(vector: &<Self::P as PointAsVector>::Vector) -> Self::P;
+    fn nalgebra_operations(&self) -> &NalgebraOperations<Self::P>;
     fn camera_mut(&mut self) -> &mut Camera<Self::P>;
     fn camera(&self) -> &Camera<Self::P>;
     fn set_camera(&mut self, camera: Box<Camera<Self::P>>);
     fn entities_mut(&mut self) -> &mut Vec<Box<Entity<Self::P>>>;
     fn entities(&self) -> &Vec<Box<Entity<Self::P>>>;
     fn set_entities(&mut self, entities: Vec<Box<Entity<Self::P>>>);
+    /// Calculates the intersection of the shape (second) in the material (first)
     fn intersectors_mut(&mut self)
                          -> &mut HashMap<(TypeId, TypeId),
                                          fn(&Self::P,
@@ -74,6 +74,25 @@ pub trait Universe where Self: Sync {
                                                    &Material<Self::P>,
                                                    &Shape<Self::P>)
                                                    -> Option<Intersection<Self::P>>>);
+    /// Stores the behavior of a ray passing from the first material to the second
+    fn transitions_mut(&mut self)
+                         -> &mut HashMap<(TypeId, TypeId),
+                                         fn(&Material<Self::P>,
+                                            &Material<Self::P>,
+                                            &TracingContext<Self::P>
+                                            ) -> Rgba<u8>>;
+    fn transitions(&self)
+                         -> &HashMap<(TypeId, TypeId),
+                                         fn(&Material<Self::P>,
+                                            &Material<Self::P>,
+                                            &TracingContext<Self::P>
+                                            ) -> Rgba<u8>>;
+    fn set_transitions(&mut self,
+                         transitions: HashMap<(TypeId, TypeId),
+                                         fn(&Material<Self::P>,
+                                            &Material<Self::P>,
+                                            &TracingContext<Self::P>
+                                            ) -> Rgba<u8>>);
     
     fn trace(&self, time: &Duration, belongs_to: &Traceable<Self::P>, location: &Self::P, rotation: &<Self::P as PointAsVector>::Vector) -> Rgba<u8> {
         let material = belongs_to.material();
@@ -117,7 +136,8 @@ pub trait Universe where Self: Sync {
                             origin_traceable: belongs_to,
                             intersection_traceable: other_traceable,
                             intersection: &intersection,
-                            vector_to_point: &Self::vector_to_point,
+                            nalgebra_operations: self.nalgebra_operations(),
+                            transitions: self.transitions(),
                             trace: &|time, traceable, location, direction| {
                                 self.trace(time, traceable, location, direction)
                             },
@@ -286,4 +306,10 @@ pub trait Universe where Self: Sync {
             }
         }
     }
+}
+
+pub trait NalgebraOperations<P: NumPoint<f32>> {
+    fn to_point(&self, vector: &<P as PointAsVector>::Vector) -> P;
+    fn dot(&self, first: &<P as PointAsVector>::Vector, second: &<P as PointAsVector>::Vector) -> f32;
+    fn angle_between(&self, first: &<P as PointAsVector>::Vector, second: &<P as PointAsVector>::Vector) -> f32;
 }

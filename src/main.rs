@@ -1,6 +1,7 @@
 #![feature(reflect_marker)]
 #![feature(custom_attribute)]
 
+extern crate core;
 extern crate nalgebra as na;
 extern crate scoped_threadpool;
 extern crate image;
@@ -250,7 +251,12 @@ fn get_reflection_ratio_test(context: &TracingContext<Point3<f32>>) -> f32 {
 
 fn get_reflection_direction_test(context: &TracingContext<Point3<f32>>) -> Vector3<f32> {
     // R = 2*(V dot N)*N - V
-    let normal = context.intersection_traceable.shape().get_normal_at(&context.intersection.location);
+    let mut normal = context.intersection_traceable.shape().get_normal_at(&context.intersection.location);
+
+    if na::angle_between(&context.intersection.direction, &normal) > std::f32::consts::FRAC_PI_2 {
+        normal = -normal;
+    }
+
     -2.0 * na::dot(&context.intersection.direction, &normal) * normal + context.intersection.direction
 }
 
@@ -258,13 +264,25 @@ fn get_surface_color_test(context: &TracingContext<Point3<f32>>) -> Rgba<u8> {
     let normal = context.intersection_traceable.shape().get_normal_at(&context.intersection.location);
     const Z_AXIS: Vector3<f32> = Vector3 { x: 0.0, y: 0.0, z: 1.0, };
     let angle = na::angle_between(&normal, &Z_AXIS);
-    Rgba {
+    let mut result = Rgba {
         data: palette::Rgba::from(Hsv::new(
                           RgbHue::from(0.0),
                           0.0,
                           1.0 - angle / std::f32::consts::PI
                           )).to_pixel(),
-    }
+    };
+    result.data[3] = 127;
+    result
+}
+
+fn transition_vacuum_vacuum(from: &Material<Point3<f32>>,
+                            to: &Material<Point3<f32>>,
+                            context: &TracingContext<Point3<f32>>) -> Rgba<u8> {
+    let trace = context.trace;
+    trace(context.time,
+          context.intersection_traceable,
+          &context.intersection.location,
+          &context.intersection.direction)
 }
 
 fn main() {
@@ -314,6 +332,12 @@ fn main() {
             universe::d3::entity::intersect_void);
         intersectors.insert((Vacuum::id_static(), Sphere3::id_static()),
             universe::d3::entity::intersect_sphere_in_vacuum);
+    }
+
+    {
+        let mut transitions = universe.transitions_mut();
+        transitions.insert((Vacuum::id_static(), Vacuum::id_static()),
+            transition_vacuum_vacuum);
     }
 
     let simulation = Simulation::builder()

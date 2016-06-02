@@ -2,22 +2,30 @@ pub mod entity;
 
 use std::collections::HashMap;
 use std::any::TypeId;
+use na;
+use na::PointAsVector;
 use na::Point3;
 use na::Vector3;
-use na::PointAsVector;
+use image::Rgba;
 use universe::entity::*;
 use universe::d3::entity::camera::Camera3Impl;
 use universe::Universe;
+use universe::NalgebraOperations;
 use universe::d3::entity::*;
 
 pub struct Universe3D {
     camera: Box<Camera3>,
     entities: Vec<Box<Entity3>>,
+    operations: NalgebraOperations3,
     intersections: HashMap<(TypeId, TypeId), fn(&Point3<f32>,
                                                 &Vector3<f32>,
                                                 &Material<Point3<f32>>,
                                                 &Shape<Point3<f32>>)
                                         -> Option<Intersection<Point3<f32>>>>,
+    transitions: HashMap<(TypeId, TypeId), fn(&Material<Point3<f32>>,
+                                              &Material<Point3<f32>>,
+                                              &TracingContext<Point3<f32>>
+                                              ) -> Rgba<u8>>,
 }
 
 impl Universe3D {
@@ -25,7 +33,9 @@ impl Universe3D {
         Universe3D {
             camera: Box::new(Camera3Impl::new()),
             entities: Vec::new(),
+            operations: NalgebraOperations3 {},
             intersections: HashMap::new(),
+            transitions: HashMap::new(),
         }
     }
 }
@@ -43,8 +53,8 @@ impl Universe for Universe3D {
     //     })
     // }
 
-    fn vector_to_point(vector: &Vector3<f32>) -> Point3<f32> {
-        vector.to_point()
+    fn nalgebra_operations(&self) -> &NalgebraOperations<Point3<f32>> {
+        &self.operations
     }
 
     fn camera_mut(&mut self) -> &mut Camera<Point3<f32>> {
@@ -100,5 +110,48 @@ impl Universe for Universe3D {
                                                             &Shape<Self::P>)
                                                             -> Option<Intersection<Self::P>>>) {
         self.intersections = intersections;
+    }
+
+    fn transitions_mut(&mut self)
+                         -> &mut HashMap<(TypeId, TypeId),
+                                         fn(&Material<Self::P>,
+                                            &Material<Self::P>,
+                                            &TracingContext<Self::P>
+                                            ) -> Rgba<u8>> {
+         &mut self.transitions
+    }
+
+    fn transitions(&self)
+                         -> &HashMap<(TypeId, TypeId),
+                                         fn(&Material<Self::P>,
+                                            &Material<Self::P>,
+                                            &TracingContext<Self::P>
+                                            ) -> Rgba<u8>> {
+        &self.transitions
+    }
+    fn set_transitions(&mut self,
+                         transitions: HashMap<(TypeId, TypeId),
+                                         fn(&Material<Self::P>,
+                                            &Material<Self::P>,
+                                            &TracingContext<Self::P>
+                                            ) -> Rgba<u8>>) {
+        self.transitions = transitions
+    }
+}
+
+#[derive(Copy, Clone)]
+struct NalgebraOperations3 {}
+
+impl NalgebraOperations<Point3<f32>> for NalgebraOperations3 {
+    fn to_point(&self, vector: &Vector3<f32>) -> Point3<f32> {
+        vector.to_point()
+    }
+
+    fn dot(&self, first: &Vector3<f32>, second: &Vector3<f32>) -> f32 {
+        na::dot(first, second)
+    }
+
+    fn angle_between(&self, first: &Vector3<f32>, second: &Vector3<f32>) -> f32 {
+        na::angle_between(first, second)
     }
 }

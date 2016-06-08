@@ -6,6 +6,7 @@ use std::time::Duration;
 use rand::Rng;
 use rand::Rand;
 use na;
+use na::BaseFloat;
 use na::Point3;
 use na::Vector3;
 use image::Rgba;
@@ -16,29 +17,35 @@ use palette::Hsv;
 use palette::RgbHue;
 use universe::entity::*;
 
-pub type Entity3 = Entity<Point3<f32>>;
-pub type Camera3 = Camera<Point3<f32>>;
-pub type Updatable3 = Updatable<Point3<f32>>;
-pub type Traceable3 = Traceable<Point3<f32>>;
-pub type Locatable3 = Locatable<Point3<f32>>;
-pub type Rotatable3 = Rotatable<Point3<f32>>;
-pub type Shape3 = Shape<Point3<f32>>;
-pub type Material3 = Material<Point3<f32>>;
-pub type Surface3 = Surface<Point3<f32>>;
+pub const AXIS_Z: Vector3<f32> = Vector3 {
+    x: 0.0,
+    y: 0.0,
+    z: 1.0,
+};
 
-pub struct Entity3Impl {
-    shape: Box<Shape3>,
-    material: Box<Material3>,
-    surface: Option<Box<Surface3>>,
+pub type Entity3<F> = Entity<F, Point3<F>>;
+pub type Camera3<F> = Camera<F, Point3<F>>;
+pub type Updatable3<F> = Updatable<F, Point3<F>>;
+pub type Traceable3<F> = Traceable<F, Point3<F>>;
+pub type Locatable3<F> = Locatable<F, Point3<F>>;
+pub type Rotatable3<F> = Rotatable<F, Point3<F>>;
+pub type Shape3<F> = Shape<F, Point3<F>>;
+pub type Material3<F> = Material<F, Point3<F>>;
+pub type Surface3<F> = Surface<F, Point3<F>>;
+
+pub struct Entity3Impl<F: BaseFloat> {
+    shape: Box<Shape3<F>>,
+    material: Box<Material3<F>>,
+    surface: Option<Box<Surface3<F>>>,
 }
 
-unsafe impl Sync for Entity3Impl {}
+unsafe impl<F: BaseFloat> Sync for Entity3Impl<F> {}
 
-impl Entity3Impl {
-    pub fn new(shape: Box<Shape3>,
-               material: Box<Material3>,
-               surface: Option<Box<Surface3>>)
-               -> Entity3Impl {
+impl<F: BaseFloat> Entity3Impl<F> {
+    pub fn new(shape: Box<Shape3<F>>,
+               material: Box<Material3<F>>,
+               surface: Option<Box<Surface3<F>>>)
+               -> Entity3Impl<F> {
         Entity3Impl {
             shape: shape,
             material: material,
@@ -47,49 +54,49 @@ impl Entity3Impl {
     }
 }
 
-impl Entity<Point3<f32>> for Entity3Impl {
-    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<Point3<f32>>> {
+impl<F: BaseFloat> Entity<F, Point3<F>> for Entity3Impl<F> {
+    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<F, Point3<F>>> {
         None
     }
 
-    fn as_updatable(&self) -> Option<&Updatable3> {
+    fn as_updatable(&self) -> Option<&Updatable3<F>> {
         None
     }
 
-    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<Point3<f32>>> {
+    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<F, Point3<F>>> {
         Some(self)
     }
 
-    fn as_traceable(&self) -> Option<&Traceable3> {
+    fn as_traceable(&self) -> Option<&Traceable3<F>> {
         Some(self)
     }
 }
 
-impl Traceable<Point3<f32>> for Entity3Impl {
+impl<F: BaseFloat> Traceable<F, Point3<F>> for Entity3Impl<F> {
     fn trace(&self) -> Rgba<u8> {
         Rgba { data: [0u8, 0u8, 0u8, 0u8] }
     }
 
-    fn shape(&self) -> &Shape3 {
+    fn shape(&self) -> &Shape3<F> {
         self.shape.as_ref()
     }
 
-    fn material(&self) -> &Material3 {
+    fn material(&self) -> &Material3<F> {
         self.material.as_ref()
     }
 
-    fn surface(&self) -> Option<&Surface3> {
+    fn surface(&self) -> Option<&Surface3<F>> {
         self.surface.as_ref().map(|x| &**x)
     }
 }
 
-pub struct Sphere3 {
-    location: Point3<f32>,
-    radius: f32,
+pub struct Sphere3<F: BaseFloat> {
+    location: Point3<F>,
+    radius: F,
 }
 
-impl Sphere3 {
-    pub fn new(location: Point3<f32>, radius: f32) -> Sphere3 {
+impl<F: BaseFloat> Sphere3<F> {
+    pub fn new(location: Point3<F>, radius: F) -> Sphere3<F> {
         Sphere3 {
             location: location,
             radius: radius,
@@ -97,7 +104,7 @@ impl Sphere3 {
     }
 }
 
-impl HasId for Sphere3 {
+impl<F: BaseFloat> HasId for Sphere3<F> {
     fn id(&self) -> TypeId {
         Self::id_static()
     }
@@ -111,13 +118,13 @@ impl HasId for Sphere3 {
     }
 }
 
-impl Shape<Point3<f32>> for Sphere3 {
-    fn get_normal_at(&self, point: &Point3<f32>) -> Vector3<f32> {
+impl<F: BaseFloat> Shape<F, Point3<F>> for Sphere3<F> {
+    fn get_normal_at(&self, point: &Point3<F>) -> Vector3<F> {
         let norm = *point - self.location;
         na::normalize(&norm)
     }
 
-    fn is_point_inside(&self, point: &Point3<f32>) -> bool {
+    fn is_point_inside(&self, point: &Point3<F>) -> bool {
         na::distance_squared(&self.location, point) <= self.radius * self.radius
     }
 }
@@ -138,20 +145,20 @@ impl HasId for Test3 {
     }
 }
 
-impl Shape<Point3<f32>> for Test3 {
-    fn get_normal_at(&self, point: &Point3<f32>) -> Vector3<f32> {
+impl<F: BaseFloat> Shape<F, Point3<F>> for Test3 {
+    fn get_normal_at(&self, point: &Point3<F>) -> Vector3<F> {
         Vector3::new(1.0, 0.0, 0.0)
     }
 
-    fn is_point_inside(&self, point: &Point3<f32>) -> bool {
+    fn is_point_inside(&self, point: &Point3<F>) -> bool {
         false
     }
 }
 
-pub fn intersect_test(location: &Point3<f32>,
-                      direction: &Vector3<f32>,
-                      material: &Material<Point3<f32>>,
-                      void: &Shape<Point3<f32>>) -> Option<Intersection<Point3<f32>>> {
+pub fn intersect_test<F: BaseFloat>(location: &Point3<F>,
+                      direction: &Vector3<F>,
+                      material: &Material<F, Point3<F>>,
+                      void: &Shape<F, Point3<F>>) -> Option<Intersection<F, Point3<F>>> {
     let t = (1.0 - location.x) / direction.x;
 
     if t <= 0.0 {
@@ -171,12 +178,20 @@ pub fn intersect_test(location: &Point3<f32>,
     })
 }
 
-pub fn intersect_void(location: &Point3<f32>, direction: &Vector3<f32>, material: &Material<Point3<f32>>, void: &Shape<Point3<f32>>) -> Option<Intersection<Point3<f32>>> {
+pub fn intersect_void<F: BaseFloat>(location: &Point3<F>,
+                                    direction: &Vector3<F>,
+                                    material: &Material<F, Point3<F>>,
+                                    void: &Shape<F, Point3<F>>)
+                                    -> Option<Intersection<F, Point3<F>>> {
     void.as_any().downcast_ref::<VoidShape>().unwrap();
     None
 }
 
-pub fn intersect_sphere_in_vacuum(location: &Point3<f32>, direction: &Vector3<f32>, vacuum: &Material<Point3<f32>>, sphere: &Shape<Point3<f32>>) -> Option<Intersection<Point3<f32>>> {
+pub fn intersect_sphere_in_vacuum<F: BaseFloat>(location: &Point3<F>,
+                                                direction: &Vector3<F>,
+                                                vacuum: &Material<F, Point3<F>>,
+                                                sphere: &Shape<F, Point3<F>>)
+                                                -> Option<Intersection<F, Point3<F>>> {
     // Unsafe cast example:
     //let a = unsafe { &*(a as *const _ as *const Aimpl) };
     vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
@@ -204,7 +219,7 @@ pub fn intersect_sphere_in_vacuum(location: &Point3<f32>, direction: &Vector3<f3
     }
 
     let d_sqrt = d.sqrt();
-    let t: f32; // The smallest non-negative vector modifier
+    let t: F; // The smallest non-negative vector modifier
     let t1 = (-b - d_sqrt) / (2.0 * a);
 
     if t1 >= 0.0 {
@@ -229,13 +244,13 @@ pub fn intersect_sphere_in_vacuum(location: &Point3<f32>, direction: &Vector3<f3
     })
 }
 
-pub struct PerlinSurface3 {
+pub struct PerlinSurface3<F: BaseFloat> {
     seed: Seed,
-    size: f32,
-    speed: f32,
+    size: F,
+    speed: F,
 }
 
-impl HasId for PerlinSurface3 {
+impl<F: BaseFloat> HasId for PerlinSurface3<F> {
     fn id(&self) -> TypeId {
         Self::id_static()
     }
@@ -249,8 +264,8 @@ impl HasId for PerlinSurface3 {
     }
 }
 
-impl PerlinSurface3 {
-    pub fn new(seed: u32, size: f32, speed: f32) -> PerlinSurface3 {
+impl<F: BaseFloat> PerlinSurface3<F> {
+    pub fn new(seed: u32, size: F, speed: F) -> PerlinSurface3<F> {
         PerlinSurface3 {
             seed: Seed::new(seed),
             size: size,
@@ -258,7 +273,7 @@ impl PerlinSurface3 {
         }
     }
 
-    pub fn rand<R: Rng>(rng: &mut R, size: f32, speed: f32) -> PerlinSurface3 {
+    pub fn rand<R: Rng>(rng: &mut R, size: F, speed: F) -> PerlinSurface3<F> {
         PerlinSurface3 {
             seed: Seed::rand(rng),
             size: size,
@@ -267,9 +282,9 @@ impl PerlinSurface3 {
     }
 }
 
-impl Surface<Point3<f32>> for PerlinSurface3 {
-    fn get_color<'a>(&self, context: TracingContext<'a, Point3<f32>>) -> Rgba<u8> {
-        let time_millis = (context.time.clone() * 1000).as_secs() as f32 / 1000.0;
+impl<F: BaseFloat> Surface<F, Point3<F>> for PerlinSurface3<F> {
+    fn get_color<'a>(&self, context: TracingContext<'a, F, Point3<F>>) -> Rgba<u8> {
+        let time_millis = (context.time.clone() * 1000).as_secs() as F / 1000.0;
         let location = [context.intersection.location.x / self.size, context.intersection.location.y / self.size, context.intersection.location.z / self.size, time_millis * self.speed];
         let value = perlin4(&self.seed, &location);
         Rgba {

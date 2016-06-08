@@ -9,13 +9,16 @@ extern crate noise;
 extern crate rand;
 extern crate palette;
 extern crate glium;
+extern crate num;
 mod universe;
 pub mod util;
 
 use std::collections::HashSet;
 use std::time::Instant;
 use std::time::Duration;
+use std::marker::PhantomData;
 use rand::StdRng;
+use na::BaseFloat;
 use na::Point3;
 use na::Point2;
 use na::Vector3;
@@ -37,19 +40,21 @@ use universe::d3::Universe3D;
 use universe::d3::entity::*;
 use util::RemoveIf;
 
-pub struct Simulation<U: Universe> {
+pub struct Simulation<F: BaseFloat, U: Universe<F>> {
     universe: Box<U>,
     facade: Option<GlutinFacade>,
     start_instant: Option<Instant>,
     last_updated_instant: Option<Instant>,
     context: SimulationContext,
+    float_precision: PhantomData<F>,
 }
 
-struct SimulationBuilder<U: Universe> {
+struct SimulationBuilder<F: BaseFloat, U: Universe<F>> {
     universe: Option<Box<U>>,
+    float_precision: PhantomData<F>,
 }
 
-impl<U: Universe> Simulation<U> {
+impl<F: BaseFloat, U: Universe<F>> Simulation<F, U> {
     fn start(mut self) {
         let facade: GlutinFacade = glium::glutin::WindowBuilder::new()
             .with_dimensions(1024, 768)
@@ -112,18 +117,18 @@ impl<U: Universe> Simulation<U> {
         result
     }
 
-    fn builder() -> SimulationBuilder<U> {
+    fn builder() -> SimulationBuilder<F, U> {
         SimulationBuilder { universe: None }
     }
 }
 
-impl<U: Universe> SimulationBuilder<U> {
-    fn universe(mut self, universe: U) -> SimulationBuilder<U> {
+impl<F: BaseFloat, U: Universe<F>> SimulationBuilder<F, U> {
+    fn universe(mut self, universe: U) -> SimulationBuilder<F, U> {
         self.universe = Some(Box::new(universe));
         self
     }
 
-    fn build(self) -> Simulation<U> {
+    fn build(self) -> Simulation<F, U> {
         Simulation {
             universe: self.universe.unwrap(),
             facade: None,
@@ -245,39 +250,38 @@ impl SimulationContext {
     }
 }
 
-fn get_reflection_ratio_test(context: &TracingContext<Point3<f32>>) -> f32 {
+fn get_reflection_ratio_test<F: BaseFloat>(context: &TracingContext<F, Point3<F>>) -> F {
     0.25
 }
 
-fn get_reflection_direction_test(context: &TracingContext<Point3<f32>>) -> Vector3<f32> {
+fn get_reflection_direction_test<F: BaseFloat>(context: &TracingContext<F, Point3<F>>) -> Vector3<F> {
     // R = 2*(V dot N)*N - V
     let mut normal = context.intersection_traceable.shape().get_normal_at(&context.intersection.location);
 
-    if na::angle_between(&context.intersection.direction, &normal) > std::f32::consts::FRAC_PI_2 {
+    if na::angle_between(&context.intersection.direction, &normal) > std::f64::consts::FRAC_PI_2 as F {
         normal = -normal;
     }
 
     -2.0 * na::dot(&context.intersection.direction, &normal) * normal + context.intersection.direction
 }
 
-fn get_surface_color_test(context: &TracingContext<Point3<f32>>) -> Rgba<u8> {
+fn get_surface_color_test<F: BaseFloat>(context: &TracingContext<F, Point3<F>>) -> Rgba<u8> {
     let normal = context.intersection_traceable.shape().get_normal_at(&context.intersection.location);
-    const Z_AXIS: Vector3<f32> = Vector3 { x: 0.0, y: 0.0, z: 1.0, };
-    let angle = na::angle_between(&normal, &Z_AXIS);
+    let angle = na::angle_between(&normal, &universe::d3::entity::AXIS_Z);
     let mut result = Rgba {
         data: palette::Rgba::from(Hsv::new(
                           RgbHue::from(0.0),
                           0.0,
-                          1.0 - angle / std::f32::consts::PI
+                          1.0 - angle / std::f64::consts::PI as F
                           )).to_pixel(),
     };
     result.data[3] = 127;
     result
 }
 
-fn transition_vacuum_vacuum(from: &Material<Point3<f32>>,
-                            to: &Material<Point3<f32>>,
-                            context: &TracingContext<Point3<f32>>) -> Rgba<u8> {
+fn transition_vacuum_vacuum<F: BaseFloat>(from: &Material<F, Point3<F>>,
+                                    to: &Material<F, Point3<F>>,
+                                    context: &TracingContext<F, Point3<F>>) -> Rgba<u8> {
     let trace = context.trace;
     trace(context.time,
           context.intersection_traceable,

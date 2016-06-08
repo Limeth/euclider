@@ -6,8 +6,11 @@ use std::time::Duration;
 use std::collections::HashMap;
 use std::any::TypeId;
 use std::borrow::Cow;
+use na::BaseFloat;
 use na::NumPoint;
+use na::FloatPoint;
 use na::PointAsVector;
+use num::Float;
 use glium::Surface as GliumSurface;
 use glium::texture::Texture2d;
 use glium::backend::Facade;
@@ -22,8 +25,8 @@ use SimulationContext;
 use universe::entity::*;
 use util;
 
-pub trait Universe where Self: Sync {
-    type P: NumPoint<f32>;
+pub trait Universe<F: BaseFloat> where Self: Sync {
+    type P: NumPoint<F>;
     // Generics hell I might need in the future:
     //
     // fn camera_mut<C>(&mut self) -> &mut C where C: Camera<Self::P, Self::V>;
@@ -33,71 +36,71 @@ pub trait Universe where Self: Sync {
     // fn entities<E>(&self) -> &Vec<Box<E>> where E: Entity<Self::P, Self::V>;
     // fn set_entities<E>(&mut self, entities: Vec<Box<E>>) where E: Entity<Self::P, Self::V>;
     // fn intersections_mut<F, M, S>(&mut self) -> &mut HashMap<(TypeId, TypeId), F>
-    //     where F: Fn(M, S) -> Option<Self::P>,
+    //     where F: Fn(M, S) -> Option<F, Self::P>,
     //           M: Material<Self::P, Self::V>,
     //           S: Shape<Self::P, Self::V>;
     // fn intersections<F, M, S>(&self) -> &HashMap<(TypeId, TypeId), F>
-    //     where F: Fn(M, S) -> Option<Self::P>,
+    //     where F: Fn(M, S) -> Option<F, Self::P>,
     //           M: Material<Self::P, Self::V>,
     //           S: Shape<Self::P, Self::V>;
     // fn set_intersections<F, M, S>(&mut self, intersections: &mut HashMap<(TypeId, TypeId), F>)
-    //     where F: Fn(M, S) -> Option<Self::P>,
+    //     where F: Fn(M, S) -> Option<F, Self::P>,
     //           M: Material<Self::P, Self::V>,
     //           S: Shape<Self::P, Self::V>;
     /// FIXME: Temporary method, because there is currently no way to do this in nalgebra
-    fn nalgebra_operations(&self) -> &NalgebraOperations<Self::P>;
-    fn camera_mut(&mut self) -> &mut Camera<Self::P>;
-    fn camera(&self) -> &Camera<Self::P>;
-    fn set_camera(&mut self, camera: Box<Camera<Self::P>>);
-    fn entities_mut(&mut self) -> &mut Vec<Box<Entity<Self::P>>>;
-    fn entities(&self) -> &Vec<Box<Entity<Self::P>>>;
-    fn set_entities(&mut self, entities: Vec<Box<Entity<Self::P>>>);
+    fn nalgebra_operations(&self) -> &NalgebraOperations<F, Self::P>;
+    fn camera_mut(&mut self) -> &mut Camera<F, Self::P>;
+    fn camera(&self) -> &Camera<F, Self::P>;
+    fn set_camera(&mut self, camera: Box<Camera<F, Self::P>>);
+    fn entities_mut(&mut self) -> &mut Vec<Box<Entity<F, Self::P>>>;
+    fn entities(&self) -> &Vec<Box<Entity<F, Self::P>>>;
+    fn set_entities(&mut self, entities: Vec<Box<Entity<F, Self::P>>>);
     /// Calculates the intersection of the shape (second) in the material (first)
     fn intersectors_mut(&mut self)
                          -> &mut HashMap<(TypeId, TypeId),
                                          fn(&Self::P,
                                             &<Self::P as PointAsVector>::Vector,
-                                            &Material<Self::P>,
-                                            &Shape<Self::P>)
-                                            -> Option<Intersection<Self::P>>>;
+                                            &Material<F, Self::P>,
+                                            &Shape<F, Self::P>)
+                                            -> Option<Intersection<F, Self::P>>>;
     fn intersectors(&self)
                      -> &HashMap<(TypeId, TypeId),
                                  fn(&Self::P,
                                     &<Self::P as PointAsVector>::Vector,
-                                    &Material<Self::P>,
-                                    &Shape<Self::P>)
-                                    -> Option<Intersection<Self::P>>>;
+                                    &Material<F, Self::P>,
+                                    &Shape<F, Self::P>)
+                                    -> Option<Intersection<F, Self::P>>>;
     fn set_intersectors(&mut self,
                          intersections: HashMap<(TypeId, TypeId),
                                                 fn(&Self::P,
                                                    &<Self::P as PointAsVector>::Vector,
-                                                   &Material<Self::P>,
-                                                   &Shape<Self::P>)
-                                                   -> Option<Intersection<Self::P>>>);
+                                                   &Material<F, Self::P>,
+                                                   &Shape<F, Self::P>)
+                                                   -> Option<Intersection<F, Self::P>>>);
     /// Stores the behavior of a ray passing from the first material to the second
     fn transitions_mut(&mut self)
                          -> &mut HashMap<(TypeId, TypeId),
-                                         fn(&Material<Self::P>,
-                                            &Material<Self::P>,
-                                            &TracingContext<Self::P>
+                                         fn(&Material<F, Self::P>,
+                                            &Material<F, Self::P>,
+                                            &TracingContext<F, Self::P>
                                             ) -> Rgba<u8>>;
     fn transitions(&self)
                          -> &HashMap<(TypeId, TypeId),
-                                         fn(&Material<Self::P>,
-                                            &Material<Self::P>,
-                                            &TracingContext<Self::P>
+                                         fn(&Material<F, Self::P>,
+                                            &Material<F, Self::P>,
+                                            &TracingContext<F, Self::P>
                                             ) -> Rgba<u8>>;
     fn set_transitions(&mut self,
                          transitions: HashMap<(TypeId, TypeId),
-                                         fn(&Material<Self::P>,
-                                            &Material<Self::P>,
-                                            &TracingContext<Self::P>
+                                         fn(&Material<F, Self::P>,
+                                            &Material<F, Self::P>,
+                                            &TracingContext<F, Self::P>
                                             ) -> Rgba<u8>>);
-    
-    fn trace(&self, time: &Duration, belongs_to: &Traceable<Self::P>, location: &Self::P, rotation: &<Self::P as PointAsVector>::Vector) -> Rgba<u8> {
+
+    fn trace(&self, time: &Duration, belongs_to: &Traceable<F, Self::P>, location: &Self::P, rotation: &<Self::P as PointAsVector>::Vector) -> Rgba<u8> {
         let material = belongs_to.material();
         let mut foreground: Option<Rgba<u8>> = None;
-        let mut foreground_distance_squared: Option<f32> = None;
+        let mut foreground_distance_squared: Option<F> = None;
 
         for other in self.entities() {
             let other_traceable = other.as_traceable();
@@ -145,7 +148,7 @@ pub trait Universe where Self: Sync {
 
                         // Avoid a stack overflow, where a ray intersects the same location
                         // repeatedly.
-                        if intersection.distance_squared <= std::f32::EPSILON * 1.0 {
+                        if intersection.distance_squared <= std::f64::EPSILON as F * 1.0 {
                             continue;
                         }
 
@@ -156,13 +159,13 @@ pub trait Universe where Self: Sync {
                     // // FIXME just for testing
                     // use na::Point3;
                     // use na::Vector3;
-                    // let location = unsafe { &*(location as *const _ as *const Point3<f32>) }.clone();
-                    // let normal = unsafe { &*(&normal as *const _ as *const Vector3<f32>) }.clone();
-                    // let rotation = unsafe { &*(rotation as *const _ as *const Vector3<f32>) }.clone();
+                    // let location = unsafe { &*(location as *const _ as *const Point3<F>) }.clone();
+                    // let normal = unsafe { &*(&normal as *const _ as *const Vector3<F>) }.clone();
+                    // let rotation = unsafe { &*(rotation as *const _ as *const Vector3<F>) }.clone();
                     // // Calculate the angle using the cosine formula
                     // // |u*v| = ||u|| * ||v|| * cos(alpha)
-                    // let angle = (rotation.dot(&normal).abs() / (na::distance(&na::origin(), &rotation.to_point()) * na::distance(&na::origin(), &normal.to_point()) as f32)).acos();
-                    // color.data[1] = (255.0 * (1.0 - angle / std::f32::consts::FRAC_PI_2)) as u8;
+                    // let angle = (rotation.dot(&normal).abs() / (na::distance(&na::origin(), &rotation.to_point()) * na::distance(&na::origin(), &normal.to_point()) as F)).acos();
+                    // color.data[1] = (255.0 * (1.0 - angle / std::F::consts::FRAC_PI_2)) as u8;
                     // color.data[3] = 255u8;
 
                     // // println!("origin: [{}; {}; {}]; vector: <{}; {}; {}>", location.x, location.y, location.z, rotation.x, rotation.y, rotation.z);
@@ -183,7 +186,7 @@ pub trait Universe where Self: Sync {
     }
 
     fn trace_unknown(&self, time: &Duration, location: &Self::P, rotation: &<Self::P as PointAsVector>::Vector) -> Option<Rgb<u8>> {
-        let mut belongs_to: Option<&Traceable<Self::P>> = None;
+        let mut belongs_to: Option<&Traceable<F, Self::P>> = None;
 
         for entity in self.entities() {
             let traceable = entity.as_traceable();
@@ -192,8 +195,8 @@ pub trait Universe where Self: Sync {
                 continue;
             }
 
-            let traceable: &Traceable<Self::P> = traceable.unwrap();
-            let shape: &Shape<Self::P> = traceable.shape();
+            let traceable: &Traceable<F, Self::P> = traceable.unwrap();
+            let shape: &Shape<F, Self::P> = traceable.shape();
 
             if !shape.is_point_inside(location) {
                 continue;
@@ -227,8 +230,8 @@ pub trait Universe where Self: Sync {
         //     || (screen_x == 0 && screen_y == 0) {
         //     use na::Point3;
         //     use na::Vector3;
-        //     let point = unsafe { &*(&point as *const _ as *const Point3<f32>) };
-        //     let vector = unsafe { &*(&vector as *const _ as *const Vector3<f32>) };
+        //     let point = unsafe { &*(&point as *const _ as *const Point3<F>) };
+        //     let vector = unsafe { &*(&vector as *const _ as *const Vector3<F>) };
         //     println!("{}; {}:   <{}; {}; {}>", screen_x, screen_y, vector.x, vector.y, vector.z);
         // }
 
@@ -308,8 +311,8 @@ pub trait Universe where Self: Sync {
     }
 }
 
-pub trait NalgebraOperations<P: NumPoint<f32>> {
+pub trait NalgebraOperations<F: BaseFloat, P: NumPoint<F>> {
     fn to_point(&self, vector: &<P as PointAsVector>::Vector) -> P;
-    fn dot(&self, first: &<P as PointAsVector>::Vector, second: &<P as PointAsVector>::Vector) -> f32;
-    fn angle_between(&self, first: &<P as PointAsVector>::Vector, second: &<P as PointAsVector>::Vector) -> f32;
+    fn dot(&self, first: &<P as PointAsVector>::Vector, second: &<P as PointAsVector>::Vector) -> F;
+    fn angle_between(&self, first: &<P as PointAsVector>::Vector, second: &<P as PointAsVector>::Vector) -> F;
 }

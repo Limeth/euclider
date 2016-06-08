@@ -161,7 +161,7 @@ pub trait AbstractSurface<P: NumPoint<f32>> {
 }
 
 impl<P: NumPoint<f32>, A: AbstractSurface<P>> Surface<P> for A {
-    fn get_color<'a>(&self, context: TracingContext<'a, P>) -> Rgba<u8> {
+    fn get_color(&self, context: TracingContext<P>) -> Rgba<u8> {
         let reflection_ratio = self.get_reflection_ratio(&context).min(1.0).max(0.0);
         let intersection_color: Option<Rgba<u8>> = self.get_intersection_color(reflection_ratio, &context);
         let reflection_color: Option<Rgba<u8>> = self.get_reflection_color(reflection_ratio, &context);

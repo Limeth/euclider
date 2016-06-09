@@ -13,26 +13,20 @@ use universe::entity::Camera;
 use universe::d3::entity::*;
 use SimulationContext;
 
-const AXIS_Z: Vector3<f32> = Vector3 {
-    x: 0.0,
-    y: 0.0,
-    z: 1.0,
-};
-
 #[derive(Clone, Copy, PartialEq)]
-pub struct Camera3Impl {
-    location: Point3<f32>,
-    forward: Vector3<f32>,
-    up: Vector3<f32>,
-    mouse_sensitivity: f32,
-    speed: f32,
+pub struct Camera3Impl<F: BaseFloat> {
+    location: Point3<F>,
+    forward: Vector3<F>,
+    up: Vector3<F>,
+    mouse_sensitivity: F,
+    speed: F,
     fov: u8,
 }
 
-unsafe impl Sync for Camera3Impl {}
+unsafe impl<F: BaseFloat> Sync for Camera3Impl<F> {}
 
-impl Camera3Impl {
-    pub fn new() -> Camera3Impl {
+impl<F: BaseFloat> Camera3Impl<F> {
+    pub fn new() -> Camera3Impl<F> {
         Camera3Impl {
             location: na::origin(),
             forward: Vector3::new(1.0, 0.0, 0.0),
@@ -44,10 +38,10 @@ impl Camera3Impl {
     }
 
     fn update_rotation(&mut self, context: &SimulationContext) {
-        let delta_mouse_float: Vector2<f32> = Vector2::new(context.delta_mouse.x as f32,
-                                                           context.delta_mouse.y as f32);
+        let delta_mouse_float: Vector2<F> = Vector2::new(context.delta_mouse.x as F,
+                                                           context.delta_mouse.y as F);
 
-        if na::distance_squared(&na::origin(), delta_mouse_float.as_point()) <= 0f32 {
+        if na::distance_squared(&na::origin(), delta_mouse_float.as_point()) <= 0.0 {
             return;
         }
 
@@ -57,20 +51,20 @@ impl Camera3Impl {
         self.rotate_y(-direction.y);
     }
 
-    fn rotate_x_static(forward: &mut Vector3<f32>, up: &mut Vector3<f32>, angle: f32) {
+    fn rotate_x_static(forward: &mut Vector3<F>, up: &mut Vector3<F>, angle: F) {
         let axis_h = na::cross(forward, &AXIS_Z).normalize();
         let quaternion = UnitQuaternion::new(AXIS_Z * angle);
         *forward = quaternion.rotate(forward).normalize();
         *up = na::cross(&axis_h, forward).normalize();
     }
 
-    fn rotate_y_static(forward: &mut Vector3<f32>, up: &mut Vector3<f32>, angle: f32, snap: bool) {
+    fn rotate_y_static(forward: &mut Vector3<F>, up: &mut Vector3<F>, angle: F, snap: bool) {
         let axis_h = na::cross(forward, &AXIS_Z).normalize();
 
         if snap && false {
             let result_angle = (na::dot(&forward.clone(), &AXIS_Z)
                                 / (na::distance(&na::origin(), &forward.to_point())
-                                   * na::distance(&na::origin(), &AXIS_Z.to_point()) as f32)).acos();
+                                   * na::distance(&na::origin(), &AXIS_Z.to_point()) as F)).acos();
 
             println!("dot: {}", na::dot(&forward.clone(), &AXIS_Z).abs());
             println!("{} < {}", result_angle, angle);
@@ -80,8 +74,8 @@ impl Camera3Impl {
                 *forward = AXIS_Z;
                 *up = na::cross(&axis_h, forward).normalize();
                 return;
-            } else if result_angle - std::f32::consts::PI > angle {
-                // angle = result_angle - std::f32::consts::PI;
+            } else if result_angle - std::f64::consts::PI as F > angle {
+                // angle = result_angle - std::F::consts::PI;
                 *forward = -AXIS_Z;
                 *up = na::cross(&axis_h, forward).normalize();
                 return;
@@ -93,31 +87,31 @@ impl Camera3Impl {
         *up = na::cross(&axis_h, forward).normalize();
     }
 
-    fn rotate_x(&mut self, angle: f32) {
+    fn rotate_x(&mut self, angle: F) {
         Camera3Impl::rotate_x_static(&mut self.forward, &mut self.up, angle);
     }
 
-    fn rotate_y(&mut self, angle: f32) {
+    fn rotate_y(&mut self, angle: F) {
         Camera3Impl::rotate_y_static(&mut self.forward, &mut self.up, angle, true);
     }
 
-    fn get_right(&self) -> Vector3<f32> {
+    fn get_right(&self) -> Vector3<F> {
         na::cross(&self.up, &self.forward).normalize()
     }
 
-    fn get_left(&self) -> Vector3<f32> {
+    fn get_left(&self) -> Vector3<F> {
         na::cross(&self.forward, &self.up).normalize()
     }
 }
 
-impl Camera<Point3<f32>> for Camera3Impl {
+impl<F: BaseFloat> Camera<F, Point3<F>> for Camera3Impl<F> {
     #[allow(unused_variables)]
     fn get_ray_point(&self,
                      screen_x: i32,
                      screen_y: i32,
                      screen_width: i32,
                      screen_height: i32)
-                     -> Point3<f32> {
+                     -> Point3<F> {
         self.location
     }
 
@@ -126,13 +120,13 @@ impl Camera<Point3<f32>> for Camera3Impl {
                       screen_y: i32,
                       screen_width: i32,
                       screen_height: i32)
-                      -> Vector3<f32> {
-        let rel_x = (screen_x - screen_width / 2) as f32 + (1 - screen_width % 2) as f32 / 2.0;
-        let rel_y = (screen_y - screen_height / 2) as f32 + (1 - screen_height % 2) as f32 / 2.0;
-        let screen_width = screen_width as f32;
-        let screen_height = screen_height as f32;
+                      -> Vector3<F> {
+        let rel_x = (screen_x - screen_width / 2) as F + (1 - screen_width % 2) as F / 2.0;
+        let rel_y = (screen_y - screen_height / 2) as F + (1 - screen_height % 2) as F / 2.0;
+        let screen_width = screen_width as F;
+        let screen_height = screen_height as F;
         let right = self.get_right();
-        let fov_rad = std::f32::consts::PI * (self.fov as f32) / 180.0;
+        let fov_rad = std::f64::consts::PI as F * (self.fov as F) / 180.0;
         let distance_from_screen_center = (screen_width * screen_width + screen_height * screen_height).sqrt()
             / (2.0 * (fov_rad / 2.0).tan());
         let screen_center_point_3d = self.location + self.forward * distance_from_screen_center;
@@ -142,30 +136,30 @@ impl Camera<Point3<f32>> for Camera3Impl {
     }
 }
 
-impl Entity<Point3<f32>> for Camera3Impl {
-    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<Point3<f32>>> {
+impl<F: BaseFloat> Entity<F, Point3<F>> for Camera3Impl<F> {
+    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<F, Point3<F>>> {
         Some(self)
     }
 
-    fn as_updatable(&self) -> Option<&Updatable3> {
+    fn as_updatable(&self) -> Option<&Updatable3<F>> {
         Some(self)
     }
 
-    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<Point3<f32>>> {
+    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<F, Point3<F>>> {
         None
     }
 
-    fn as_traceable(&self) -> Option<&Traceable3> {
+    fn as_traceable(&self) -> Option<&Traceable3<F>> {
         None
     }
 }
 
-impl Updatable<Point3<f32>> for Camera3Impl {
+impl<F: BaseFloat> Updatable<F, Point3<F>> for Camera3Impl<F> {
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext) {
         self.update_rotation(context);
 
         let pressed_keys: &HashSet<(u8, Option<VirtualKeyCode>)> = context.pressed_keys();
-        let delta_millis = (delta_time.clone() * 1000u32).as_secs() as f32 / 1000.0;
+        let delta_millis = (delta_time.clone() * 1000u32).as_secs() as F / 1000.0;
 
         for pressed_key in pressed_keys {
             if pressed_key.1.is_none() {
@@ -197,30 +191,30 @@ impl Updatable<Point3<f32>> for Camera3Impl {
     }
 }
 
-impl Locatable<Point3<f32>> for Camera3Impl {
-    fn location_mut(&mut self) -> &mut Point3<f32> {
+impl<F: BaseFloat> Locatable<F, Point3<F>> for Camera3Impl<F> {
+    fn location_mut(&mut self) -> &mut Point3<F> {
         &mut self.location
     }
 
-    fn location(&self) -> &Point3<f32> {
+    fn location(&self) -> &Point3<F> {
         &self.location
     }
 
-    fn set_location(&mut self, location: Point3<f32>) {
+    fn set_location(&mut self, location: Point3<F>) {
         self.location = location;
     }
 }
 
-impl Rotatable<Point3<f32>> for Camera3Impl {
-    fn rotation_mut(&mut self) -> &mut Vector3<f32> {
+impl<F: BaseFloat> Rotatable<F, Point3<F>> for Camera3Impl<F> {
+    fn rotation_mut(&mut self) -> &mut Vector3<F> {
         &mut self.forward
     }
 
-    fn rotation(&self) -> &Vector3<f32> {
+    fn rotation(&self) -> &Vector3<F> {
         &self.forward
     }
 
-    fn set_rotation(&mut self, rotation: Vector3<f32>) {
+    fn set_rotation(&mut self, rotation: Vector3<F>) {
         self.forward = rotation;
     }
 }

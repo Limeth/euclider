@@ -376,11 +376,11 @@ impl HasId for Plane3 {
 }
 
 impl<F: BaseFloat> Shape<F, Point3<F>> for Plane3 {
-    fn get_normal_at(&self, point: &Point3<f32>) -> Vector3<f32> {
+    fn get_normal_at(&self, point: &Point3<F>) -> Vector3<F> {
         self.normal
     }
 
-    fn is_point_inside(&self, point: &Point3<f32>) -> bool {
+    fn is_point_inside(&self, point: &Point3<F>) -> bool {
         false
     }
 }
@@ -414,11 +414,11 @@ impl HasId for HalfSpace3 {
 }
 
 impl<F: BaseFloat> Shape<F, Point3<F>> for HalfSpace3 {
-    fn get_normal_at(&self, point: &Point3<f32>) -> Vector3<f32> {
+    fn get_normal_at(&self, point: &Point3<F>) -> Vector3<F> {
         self.plane.get_normal_at(point)
     }
 
-    fn is_point_inside(&self, point: &Point3<f32>) -> bool {
+    fn is_point_inside(&self, point: &Point3<F>) -> bool {
         // A*x + B*y + C*z + D = 0
         // ~~~~~~~~~~~~~~~ dot
         let identifier = na::dot(&self.plane.normal, point.as_vector()) + self.plane.constant;

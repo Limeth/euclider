@@ -1,16 +1,13 @@
 pub mod d3;
 pub mod entity;
 
-use std;
 use std::time::Duration;
 use std::collections::HashMap;
 use std::any::TypeId;
 use std::borrow::Cow;
-use na::BaseFloat;
 use na::NumPoint;
-use na::FloatPoint;
 use na::PointAsVector;
-use num::Float;
+use num::traits::NumCast;
 use glium::Surface as GliumSurface;
 use glium::texture::Texture2d;
 use glium::backend::Facade;
@@ -24,8 +21,10 @@ use scoped_threadpool::Pool;
 use SimulationContext;
 use universe::entity::*;
 use util;
+use util::CustomFloat;
+use util::Consts;
 
-pub trait Universe<F: BaseFloat> where Self: Sync {
+pub trait Universe<F: CustomFloat> where Self: Sync {
     type P: NumPoint<F>;
     // Generics hell I might need in the future:
     //
@@ -148,7 +147,8 @@ pub trait Universe<F: BaseFloat> where Self: Sync {
 
                         // Avoid a stack overflow, where a ray intersects the same location
                         // repeatedly.
-                        if intersection.distance_squared <= std::f64::EPSILON as F * 1.0 {
+                        if intersection.distance_squared
+                            <= <F as Consts>::epsilon() * <F as NumCast>::from(1000.0).unwrap() {
                             continue;
                         }
 
@@ -209,7 +209,7 @@ pub trait Universe<F: BaseFloat> where Self: Sync {
         if belongs_to.is_some() {
             let background = Rgb { data: [255u8, 255u8, 255u8], };
             let foreground = self.trace(time, belongs_to.unwrap(), location, rotation);
-            Some(util::overlay_color(background, foreground))
+            Some(util::overlay_color::<F>(background, foreground))
         } else {
             None
         }
@@ -311,7 +311,7 @@ pub trait Universe<F: BaseFloat> where Self: Sync {
     }
 }
 
-pub trait NalgebraOperations<F: BaseFloat, P: NumPoint<F>> {
+pub trait NalgebraOperations<F: CustomFloat, P: NumPoint<F>> {
     fn to_point(&self, vector: &<P as PointAsVector>::Vector) -> P;
     fn dot(&self, first: &<P as PointAsVector>::Vector, second: &<P as PointAsVector>::Vector) -> F;
     fn angle_between(&self, first: &<P as PointAsVector>::Vector, second: &<P as PointAsVector>::Vector) -> F;

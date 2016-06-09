@@ -1,5 +1,7 @@
 #![feature(reflect_marker)]
 #![feature(custom_attribute)]
+#![feature(const_fn)]
+#![feature(zero_one)]
 
 extern crate core;
 extern crate nalgebra as na;
@@ -18,7 +20,7 @@ use std::time::Instant;
 use std::time::Duration;
 use std::marker::PhantomData;
 use rand::StdRng;
-use na::BaseFloat;
+use na::Cast;
 use na::Point3;
 use na::Point2;
 use na::Vector3;
@@ -39,8 +41,12 @@ use universe::entity::*;
 use universe::d3::Universe3D;
 use universe::d3::entity::*;
 use util::RemoveIf;
+use util::CustomFloat;
+use na::BaseFloat;
+use num::traits::NumCast;
+use num::One;
 
-pub struct Simulation<F: BaseFloat, U: Universe<F>> {
+pub struct Simulation<F: CustomFloat, U: Universe<F>> {
     universe: Box<U>,
     facade: Option<GlutinFacade>,
     start_instant: Option<Instant>,
@@ -49,12 +55,12 @@ pub struct Simulation<F: BaseFloat, U: Universe<F>> {
     float_precision: PhantomData<F>,
 }
 
-struct SimulationBuilder<F: BaseFloat, U: Universe<F>> {
+struct SimulationBuilder<F: CustomFloat, U: Universe<F>> {
     universe: Option<Box<U>>,
     float_precision: PhantomData<F>,
 }
 
-impl<F: BaseFloat, U: Universe<F>> Simulation<F, U> {
+impl<F: CustomFloat, U: Universe<F>> Simulation<F, U> {
     fn start(mut self) {
         let facade: GlutinFacade = glium::glutin::WindowBuilder::new()
             .with_dimensions(1024, 768)
@@ -118,11 +124,14 @@ impl<F: BaseFloat, U: Universe<F>> Simulation<F, U> {
     }
 
     fn builder() -> SimulationBuilder<F, U> {
-        SimulationBuilder { universe: None }
+        SimulationBuilder {
+            universe: None,
+            float_precision: PhantomData,
+        }
     }
 }
 
-impl<F: BaseFloat, U: Universe<F>> SimulationBuilder<F, U> {
+impl<F: CustomFloat, U: Universe<F>> SimulationBuilder<F, U> {
     fn universe(mut self, universe: U) -> SimulationBuilder<F, U> {
         self.universe = Some(Box::new(universe));
         self
@@ -135,6 +144,7 @@ impl<F: BaseFloat, U: Universe<F>> SimulationBuilder<F, U> {
             start_instant: None,
             last_updated_instant: None,
             context: SimulationContext::new(),
+            float_precision: PhantomData,
         }
     }
 }
@@ -250,36 +260,36 @@ impl SimulationContext {
     }
 }
 
-fn get_reflection_ratio_test<F: BaseFloat>(context: &TracingContext<F, Point3<F>>) -> F {
-    0.25
+fn get_reflection_ratio_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>>) -> F {
+    Cast::from(0.25)
 }
 
-fn get_reflection_direction_test<F: BaseFloat>(context: &TracingContext<F, Point3<F>>) -> Vector3<F> {
+fn get_reflection_direction_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>>) -> Vector3<F> {
     // R = 2*(V dot N)*N - V
     let mut normal = context.intersection_traceable.shape().get_normal_at(&context.intersection.location);
 
-    if na::angle_between(&context.intersection.direction, &normal) > std::f64::consts::FRAC_PI_2 as F {
+    if na::angle_between(&context.intersection.direction, &normal) > BaseFloat::frac_pi_2() {
         normal = -normal;
     }
 
-    -2.0 * na::dot(&context.intersection.direction, &normal) * normal + context.intersection.direction
+    normal * <F as NumCast>::from(-2.0).unwrap() * na::dot(&context.intersection.direction, &normal) + context.intersection.direction
 }
 
-fn get_surface_color_test<F: BaseFloat>(context: &TracingContext<F, Point3<F>>) -> Rgba<u8> {
+fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>>) -> Rgba<u8> {
     let normal = context.intersection_traceable.shape().get_normal_at(&context.intersection.location);
-    let angle = na::angle_between(&normal, &universe::d3::entity::AXIS_Z);
+    let angle: F = na::angle_between(&normal, &universe::d3::entity::AXIS_Z());
     let mut result = Rgba {
         data: palette::Rgba::from(Hsv::new(
                           RgbHue::from(0.0),
                           0.0,
-                          1.0 - angle / std::f64::consts::PI as F
+                          <f32 as NumCast>::from(<F as One>::one() - angle / <F as BaseFloat>::pi()).unwrap()
                           )).to_pixel(),
     };
     result.data[3] = 127;
     result
 }
 
-fn transition_vacuum_vacuum<F: BaseFloat>(from: &Material<F, Point3<F>>,
+fn transition_vacuum_vacuum<F: CustomFloat>(from: &Material<F, Point3<F>>,
                                     to: &Material<F, Point3<F>>,
                                     context: &TracingContext<F, Point3<F>>) -> Rgba<u8> {
     let trace = context.trace;
@@ -290,7 +300,7 @@ fn transition_vacuum_vacuum<F: BaseFloat>(from: &Material<F, Point3<F>>,
 }
 
 fn main() {
-    let mut universe = Universe3D::new();
+    let mut universe: Universe3D<f64> = Universe3D::new();
 
     {
         let mut entities = universe.entities_mut();
@@ -349,13 +359,13 @@ fn main() {
             universe::d3::entity::intersect_test);
         intersectors.insert((Vacuum::id_static(), VoidShape::id_static()),
             universe::d3::entity::intersect_void);
-        intersectors.insert((Vacuum::id_static(), Sphere3::id_static()),
+        intersectors.insert((Vacuum::id_static(), Sphere3::<f64>::id_static()),
             universe::d3::entity::intersect_void);
-        intersectors.insert((Vacuum::id_static(), Sphere3::id_static()),
+        intersectors.insert((Vacuum::id_static(), Sphere3::<f64>::id_static()),
             universe::d3::entity::intersect_sphere_in_vacuum);
-        intersectors.insert((Vacuum::id_static(), Plane3::id_static()),
+        intersectors.insert((Vacuum::id_static(), Plane3::<f64>::id_static()),
             universe::d3::entity::intersect_plane_in_vacuum);
-        intersectors.insert((Vacuum::id_static(), HalfSpace3::id_static()),
+        intersectors.insert((Vacuum::id_static(), HalfSpace3::<f64>::id_static()),
             universe::d3::entity::intersect_halfspace_in_vacuum);
     }
 

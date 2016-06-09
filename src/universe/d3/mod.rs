@@ -3,7 +3,6 @@ pub mod entity;
 use std::collections::HashMap;
 use std::any::TypeId;
 use na;
-use na::BaseFloat;
 use na::PointAsVector;
 use na::Point3;
 use na::Vector3;
@@ -13,8 +12,9 @@ use universe::d3::entity::camera::Camera3Impl;
 use universe::Universe;
 use universe::NalgebraOperations;
 use universe::d3::entity::*;
+use util::CustomFloat;
 
-pub struct Universe3D<F: BaseFloat> {
+pub struct Universe3D<F: CustomFloat> {
     camera: Box<Camera3<F>>,
     entities: Vec<Box<Entity3<F>>>,
     operations: NalgebraOperations3,
@@ -29,7 +29,7 @@ pub struct Universe3D<F: BaseFloat> {
                                               ) -> Rgba<u8>>,
 }
 
-impl<F: BaseFloat> Universe3D<F> {
+impl<F: CustomFloat> Universe3D<F> {
     pub fn new() -> Universe3D<F> {
         Universe3D {
             camera: Box::new(Camera3Impl::new()),
@@ -41,7 +41,7 @@ impl<F: BaseFloat> Universe3D<F> {
     }
 }
 
-impl<F: BaseFloat> Universe<F> for Universe3D<F> {
+impl<F: CustomFloat> Universe<F> for Universe3D<F> {
     type P = Point3<F>;
 
     // fn trace(&self, location: &Point3<F>, rotation: &Vector3<F>) -> Option<Rgb<u8>> {
@@ -143,7 +143,7 @@ impl<F: BaseFloat> Universe<F> for Universe3D<F> {
 #[derive(Copy, Clone)]
 struct NalgebraOperations3;
 
-impl<F: BaseFloat> NalgebraOperations<F, Point3<F>> for NalgebraOperations3 {
+impl<F: CustomFloat> NalgebraOperations<F, Point3<F>> for NalgebraOperations3 {
     fn to_point(&self, vector: &Vector3<F>) -> Point3<F> {
         vector.to_point()
     }

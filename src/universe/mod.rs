@@ -248,8 +248,8 @@ pub trait Universe<F: BaseFloat> where Self: Sync {
         }
     }
 
-    fn render<F: Facade, S: GliumSurface>(&self,
-                                     facade: &F,
+    fn render<E: Facade, S: GliumSurface>(&self,
+                                     facade: &E,
                                      surface: &mut S,
                                      time: &Duration,
                                      context: &SimulationContext) {

@@ -41,10 +41,12 @@ impl<F: CustomFloat> Camera3Impl<F> {
     }
 
     fn update_rotation(&mut self, context: &SimulationContext) {
-        let delta_mouse_float: Vector2<F> = Vector2::new(<F as NumCast>::from(context.delta_mouse.x).unwrap(),
-                                                         <F as NumCast>::from(context.delta_mouse.y).unwrap());
+        let delta_mouse_float: Vector2<F> =
+            Vector2::new(<F as NumCast>::from(context.delta_mouse.x).unwrap(),
+                         <F as NumCast>::from(context.delta_mouse.y).unwrap());
 
-        if na::distance_squared(&na::origin(), delta_mouse_float.as_point()) <= <F as Zero>::zero() {
+        if na::distance_squared(&na::origin(), delta_mouse_float.as_point()) <=
+           <F as Zero>::zero() {
             return;
         }
 
@@ -65,9 +67,10 @@ impl<F: CustomFloat> Camera3Impl<F> {
         let axis_h = na::cross(forward, &AXIS_Z()).normalize();
 
         if snap && false {
-            let result_angle = (na::dot(&forward.clone(), &AXIS_Z())
-                                / (na::distance(&na::origin(), &forward.to_point())
-                                   * na::distance(&na::origin(), &AXIS_Z().to_point()))).acos();
+            let result_angle = (na::dot(&forward.clone(), &AXIS_Z()) /
+                                (na::distance(&na::origin(), &forward.to_point()) *
+                                 na::distance(&na::origin(), &AXIS_Z().to_point())))
+                .acos();
 
             println!("dot: {}", na::dot(&forward.clone(), &AXIS_Z()).abs());
             println!("{} < {}", result_angle, angle);
@@ -124,14 +127,18 @@ impl<F: CustomFloat> Camera<F, Point3<F>> for Camera3Impl<F> {
                       screen_width: i32,
                       screen_height: i32)
                       -> Vector3<F> {
-        let rel_x: F = <F as NumCast>::from(screen_x - screen_width / 2).unwrap() + <F as NumCast>::from(1 - screen_width % 2).unwrap() / Cast::from(2.0);
-        let rel_y: F = <F as NumCast>::from(screen_y - screen_height / 2).unwrap() + <F as NumCast>::from(1 - screen_height % 2).unwrap() / Cast::from(2.0);
+        let rel_x: F = <F as NumCast>::from(screen_x - screen_width / 2).unwrap() +
+                       <F as NumCast>::from(1 - screen_width % 2).unwrap() / Cast::from(2.0);
+        let rel_y: F = <F as NumCast>::from(screen_y - screen_height / 2).unwrap() +
+                       <F as NumCast>::from(1 - screen_height % 2).unwrap() / Cast::from(2.0);
         let screen_width: F = <F as NumCast>::from(screen_width).unwrap();
         let screen_height: F = <F as NumCast>::from(screen_height).unwrap();
         let right = self.get_right();
-        let fov_rad: F = <F as BaseFloat>::pi() * <F as NumCast>::from(self.fov).unwrap() / Cast::from(180.0);
-        let distance_from_screen_center: F = (screen_width * screen_width + screen_height * screen_height).sqrt()
-            / (<F as NumCast>::from(2.0).unwrap() * (fov_rad / Cast::from(2.0)).tan());
+        let fov_rad: F = <F as BaseFloat>::pi() * <F as NumCast>::from(self.fov).unwrap() /
+                         Cast::from(180.0);
+        let distance_from_screen_center: F =
+            (screen_width * screen_width + screen_height * screen_height).sqrt() /
+            (<F as NumCast>::from(2.0).unwrap() * (fov_rad / Cast::from(2.0)).tan());
         let screen_center_point_3d = self.location + self.forward * distance_from_screen_center;
         let screen_point_3d = screen_center_point_3d + (self.up * rel_y) + (right * rel_x);
 
@@ -162,7 +169,8 @@ impl<F: CustomFloat> Updatable<F, Point3<F>> for Camera3Impl<F> {
         self.update_rotation(context);
 
         let pressed_keys: &HashSet<(u8, Option<VirtualKeyCode>)> = context.pressed_keys();
-        let delta_millis = <F as NumCast>::from((delta_time.clone() * 1000u32).as_secs()).unwrap() / Cast::from(1000.0);
+        let delta_millis = <F as NumCast>::from((delta_time.clone() * 1000u32).as_secs())
+            .unwrap() / Cast::from(1000.0);
 
         for pressed_key in pressed_keys {
             if pressed_key.1.is_none() {
@@ -172,22 +180,22 @@ impl<F: CustomFloat> Updatable<F, Point3<F>> for Camera3Impl<F> {
             match pressed_key.1.unwrap() {
                 VirtualKeyCode::W => {
                     self.location += self.forward * self.speed * delta_millis;
-                },
+                }
                 VirtualKeyCode::S => {
                     self.location += -self.forward * self.speed * delta_millis;
-                },
+                }
                 VirtualKeyCode::A => {
                     self.location += self.get_left() * self.speed * delta_millis;
-                },
+                }
                 VirtualKeyCode::D => {
                     self.location += self.get_right() * self.speed * delta_millis;
-                },
+                }
                 VirtualKeyCode::LControl => {
                     self.location += -AXIS_Z() * self.speed * delta_millis;
-                },
+                }
                 VirtualKeyCode::LShift => {
                     self.location += AXIS_Z() * self.speed * delta_millis;
-                },
+                }
                 _ => (),
             }
         }

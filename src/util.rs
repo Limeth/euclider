@@ -67,14 +67,17 @@ pub fn combine_color<F: CustomFloat>(a: Rgba<u8>, b: Rgba<u8>, a_ratio: F) -> Rg
     } else if a_ratio >= Cast::from(1.0) {
         a
     } else {
-        let data: Vec<u8> = a.data.iter().zip(b.data.iter()).map(|(a, b)| {
-            <u8 as NumCast>::from(
-                <F as NumCast>::from(*a).unwrap() * a_ratio + <F as NumCast>::from(*b).unwrap() * (<F as NumCast>::from(1.0).unwrap() - a_ratio)
-            ).unwrap()
-        }).collect();
-        Rgba {
-            data: [data[0], data[1], data[2], data[3]],
-        }
+        let data: Vec<u8> = a.data
+            .iter()
+            .zip(b.data.iter())
+            .map(|(a, b)| {
+                <u8 as NumCast>::from(<F as NumCast>::from(*a).unwrap() * a_ratio +
+                                      <F as NumCast>::from(*b).unwrap() *
+                                      (<F as NumCast>::from(1.0).unwrap() - a_ratio))
+                    .unwrap()
+            })
+            .collect();
+        Rgba { data: [data[0], data[1], data[2], data[3]] }
     }
 }
 
@@ -84,16 +87,38 @@ pub fn overlay_color<F: CustomFloat>(bottom: Rgb<u8>, top: Rgba<u8>) -> Rgb<u8> 
     } else if top.data[3] == std::u8::MAX {
         let mut data = [0; 3];
         data.clone_from_slice(&top.data[..3]);
-        Rgb { data: data, }
+        Rgb { data: data }
     } else {
         let u8_max_f: F = NumCast::from(std::u8::MAX).unwrap();
         let alpha: F = <F as NumCast>::from(top.data[3]).unwrap() / u8_max_f;
         Rgb {
-            data: [
-                <u8 as NumCast>::from((<F as NumCast>::from(<F as One>::one() - alpha).unwrap() * (<F as NumCast>::from(bottom.data[0]).unwrap() / u8_max_f).powi(2) + alpha * (<F as NumCast>::from(top.data[0]).unwrap() / u8_max_f)).sqrt() * <F as NumCast>::from(255.0).unwrap()).unwrap(),
-                <u8 as NumCast>::from((<F as NumCast>::from(<F as One>::one() - alpha).unwrap() * (<F as NumCast>::from(bottom.data[1]).unwrap() / u8_max_f).powi(2) + alpha * (<F as NumCast>::from(top.data[1]).unwrap() / u8_max_f)).sqrt() * <F as NumCast>::from(255.0).unwrap()).unwrap(),
-                <u8 as NumCast>::from((<F as NumCast>::from(<F as One>::one() - alpha).unwrap() * (<F as NumCast>::from(bottom.data[2]).unwrap() / u8_max_f).powi(2) + alpha * (<F as NumCast>::from(top.data[2]).unwrap() / u8_max_f)).sqrt() * <F as NumCast>::from(255.0).unwrap()).unwrap(),
-            ]
+            data: [<u8 as NumCast>::from((<F as NumCast>::from(<F as One>::one() - alpha).unwrap() *
+                                          (<F as NumCast>::from(bottom.data[0]).unwrap() /
+                                           u8_max_f)
+                               .powi(2) +
+                                          alpha *
+                                          (<F as NumCast>::from(top.data[0]).unwrap() / u8_max_f))
+                           .sqrt() *
+                                         <F as NumCast>::from(255.0).unwrap())
+                       .unwrap(),
+                   <u8 as NumCast>::from((<F as NumCast>::from(<F as One>::one() - alpha).unwrap() *
+                                          (<F as NumCast>::from(bottom.data[1]).unwrap() /
+                                           u8_max_f)
+                               .powi(2) +
+                                          alpha *
+                                          (<F as NumCast>::from(top.data[1]).unwrap() / u8_max_f))
+                           .sqrt() *
+                                         <F as NumCast>::from(255.0).unwrap())
+                       .unwrap(),
+                   <u8 as NumCast>::from((<F as NumCast>::from(<F as One>::one() - alpha).unwrap() *
+                                          (<F as NumCast>::from(bottom.data[2]).unwrap() /
+                                           u8_max_f)
+                               .powi(2) +
+                                          alpha *
+                                          (<F as NumCast>::from(top.data[2]).unwrap() / u8_max_f))
+                           .sqrt() *
+                                         <F as NumCast>::from(255.0).unwrap())
+                       .unwrap()],
         }
     }
 }

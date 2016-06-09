@@ -22,7 +22,7 @@ use universe::entity::*;
 use util::CustomFloat;
 
 #[allow(non_snake_case)]
-pub /*const*/ fn AXIS_Z<F: CustomFloat>() -> Vector3<F> {
+pub fn AXIS_Z<F: CustomFloat>() -> Vector3<F> {
     Vector3 {
         x: <F as Zero>::zero(),
         y: <F as Zero>::zero(),
@@ -163,18 +163,22 @@ impl<F: CustomFloat> Shape<F, Point3<F>> for Test3 {
 }
 
 pub fn intersect_test<F: CustomFloat>(location: &Point3<F>,
-                      direction: &Vector3<F>,
-                      material: &Material<F, Point3<F>>,
-                      void: &Shape<F, Point3<F>>) -> Option<Intersection<F, Point3<F>>> {
+                                      direction: &Vector3<F>,
+                                      material: &Material<F, Point3<F>>,
+                                      void: &Shape<F, Point3<F>>)
+                                      -> Option<Intersection<F, Point3<F>>> {
     let t: F = (<F as One>::one() - location.x) / direction.x;
 
     if t <= <F as Zero>::zero() {
         return None;
     }
 
-    let result = Point3::new(location.x + t * direction.x, location.y + t * direction.y, location.z + t * direction.z);
+    let result = Point3::new(location.x + t * direction.x,
+                             location.y + t * direction.y,
+                             location.z + t * direction.z);
 
-    if result.y > <F as One>::one() || result.y < <F as Zero>::zero() || result.z > <F as One>::one() || result.z < <F as Zero>::zero() {
+    if result.y > <F as One>::one() || result.y < <F as Zero>::zero() ||
+       result.z > <F as One>::one() || result.z < <F as Zero>::zero() {
         return None;
     }
 
@@ -187,21 +191,21 @@ pub fn intersect_test<F: CustomFloat>(location: &Point3<F>,
 }
 
 pub fn intersect_void<F: CustomFloat>(location: &Point3<F>,
-                                    direction: &Vector3<F>,
-                                    material: &Material<F, Point3<F>>,
-                                    void: &Shape<F, Point3<F>>)
-                                    -> Option<Intersection<F, Point3<F>>> {
+                                      direction: &Vector3<F>,
+                                      material: &Material<F, Point3<F>>,
+                                      void: &Shape<F, Point3<F>>)
+                                      -> Option<Intersection<F, Point3<F>>> {
     void.as_any().downcast_ref::<VoidShape>().unwrap();
     None
 }
 
 pub fn intersect_sphere_in_vacuum<F: CustomFloat>(location: &Point3<F>,
-                                                direction: &Vector3<F>,
-                                                vacuum: &Material<F, Point3<F>>,
-                                                sphere: &Shape<F, Point3<F>>)
-                                                -> Option<Intersection<F, Point3<F>>> {
+                                                  direction: &Vector3<F>,
+                                                  vacuum: &Material<F, Point3<F>>,
+                                                  sphere: &Shape<F, Point3<F>>)
+                                                  -> Option<Intersection<F, Point3<F>>> {
     // Unsafe cast example:
-    //let a = unsafe { &*(a as *const _ as *const Aimpl) };
+    // let a = unsafe { &*(a as *const _ as *const Aimpl) };
     vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
     let sphere: &Sphere3<F> = sphere.as_any().downcast_ref::<Sphere3<F>>().unwrap();
 
@@ -209,15 +213,9 @@ pub fn intersect_sphere_in_vacuum<F: CustomFloat>(location: &Point3<F>,
     let rel_y: F = location.y - sphere.location.y;
     let rel_z: F = location.z - sphere.location.z;
     let a: F = direction.x * direction.x + direction.y * direction.y + direction.z * direction.z;
-    let b: F = <F as NumCast>::from(2.0).unwrap() * (
-            direction.x * rel_x
-            + direction.y * rel_y
-            + direction.z * rel_z
-        );
-    let c: F = rel_x * rel_x
-            + rel_y * rel_y
-            + rel_z * rel_z
-            - sphere.radius * sphere.radius;
+    let b: F = <F as NumCast>::from(2.0).unwrap() *
+               (direction.x * rel_x + direction.y * rel_y + direction.z * rel_z);
+    let c: F = rel_x * rel_x + rel_y * rel_y + rel_z * rel_z - sphere.radius * sphere.radius;
 
     // Discriminant = b^2 - 4*a*c
     let d: F = b * b - <F as NumCast>::from(4.0).unwrap() * a * c;
@@ -243,7 +241,9 @@ pub fn intersect_sphere_in_vacuum<F: CustomFloat>(location: &Point3<F>,
     }
 
     let result_vector = *direction * t;
-    let result_point = Point3::new(location.x + result_vector.x, location.y + result_vector.y, location.z + result_vector.z);
+    let result_point = Point3::new(location.x + result_vector.x,
+                                   location.y + result_vector.y,
+                                   location.z + result_vector.z);
 
     Some(Intersection {
         location: result_point,
@@ -254,24 +254,26 @@ pub fn intersect_sphere_in_vacuum<F: CustomFloat>(location: &Point3<F>,
 }
 
 pub fn intersect_plane_in_vacuum<F: CustomFloat>(location: &Point3<F>,
-                                  direction: &Vector3<F>,
-                                  vacuum: &Material<F, Point3<F>>,
-                                  shape: &Shape<F, Point3<F>>)
-    -> Option<Intersection<F, Point3<F>>> {
+                                                 direction: &Vector3<F>,
+                                                 vacuum: &Material<F, Point3<F>>,
+                                                 shape: &Shape<F, Point3<F>>)
+                                                 -> Option<Intersection<F, Point3<F>>> {
     vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
     let plane: &Plane3<F> = shape.as_any().downcast_ref::<Plane3<F>>().unwrap();
-    
+
     // A*x + B*y + C*z + D = 0
 
-    let t: F = -(na::dot(&plane.normal, location.as_vector()) + plane.constant)
-        / na::dot(&plane.normal, direction);
+    let t: F = -(na::dot(&plane.normal, location.as_vector()) + plane.constant) /
+               na::dot(&plane.normal, direction);
 
     if t < Cast::from(0.0) {
         return None;
     }
 
     let result_vector = *direction * t;
-    let result_point = Point3::new(location.x + result_vector.x, location.y + result_vector.y, location.z + result_vector.z);
+    let result_point = Point3::new(location.x + result_vector.x,
+                                   location.y + result_vector.y,
+                                   location.z + result_vector.z);
 
     Some(Intersection {
         location: result_point,
@@ -282,10 +284,10 @@ pub fn intersect_plane_in_vacuum<F: CustomFloat>(location: &Point3<F>,
 }
 
 pub fn intersect_halfspace_in_vacuum<F: CustomFloat>(location: &Point3<F>,
-                                  direction: &Vector3<F>,
-                                  vacuum: &Material<F, Point3<F>>,
-                                  shape: &Shape<F, Point3<F>>)
-    -> Option<Intersection<F, Point3<F>>> {
+                                                     direction: &Vector3<F>,
+                                                     vacuum: &Material<F, Point3<F>>,
+                                                     shape: &Shape<F, Point3<F>>)
+                                                     -> Option<Intersection<F, Point3<F>>> {
     vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
     let halfspace: &HalfSpace3<F> = shape.as_any().downcast_ref::<HalfSpace3<F>>().unwrap();
 
@@ -333,10 +335,16 @@ impl<F: CustomFloat> PerlinSurface3<F> {
 impl<F: CustomFloat> Surface<F, Point3<F>> for PerlinSurface3<F> {
     fn get_color<'a>(&self, context: TracingContext<'a, F, Point3<F>>) -> Rgba<u8> {
         let time_millis: F = Cast::from((context.time.clone() * 1000).as_secs() as f64 / 1000.0);
-        let location = [context.intersection.location.x / self.size, context.intersection.location.y / self.size, context.intersection.location.z / self.size, time_millis * self.speed];
+        let location = [context.intersection.location.x / self.size,
+                        context.intersection.location.y / self.size,
+                        context.intersection.location.z / self.size,
+                        time_millis * self.speed];
         let value = perlin4(&self.seed, &location);
         Rgba {
-            data: palette::Rgba::from(Hsv::new(RgbHue::from(value * Cast::from(360.0)), Cast::from(1.0), Cast::from(1.0))).to_pixel(),
+            data: palette::Rgba::from(Hsv::new(RgbHue::from(value * Cast::from(360.0)),
+                                               Cast::from(1.0),
+                                               Cast::from(1.0)))
+                .to_pixel(),
         }
     }
 }
@@ -347,9 +355,7 @@ pub struct Plane3<F: CustomFloat> {
 }
 
 impl<F: CustomFloat> Plane3<F> {
-    pub fn new(point: &Point3<F>,
-           vector_a: &Vector3<F>,
-           vector_b: &Vector3<F>) -> Plane3<F> {
+    pub fn new(point: &Point3<F>, vector_a: &Vector3<F>, vector_b: &Vector3<F>) -> Plane3<F> {
         // A*x + B*y + C*z + D = 0
         let normal = na::cross(vector_a, vector_b);
 

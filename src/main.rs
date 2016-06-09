@@ -68,7 +68,9 @@ impl<F: CustomFloat, U: Universe<F>> Simulation<F, U> {
             .build_glium()
             .unwrap();
 
-        facade.get_window().unwrap().set_cursor_state(CursorState::Hide)
+        facade.get_window()
+            .unwrap()
+            .set_cursor_state(CursorState::Hide)
             .expect("Could not hide the cursor!");
 
         self.facade = Some(facade);
@@ -206,7 +208,7 @@ impl SimulationContext {
                             }
                         }
                     };
-                },
+                }
                 Event::MouseInput(state, button) => {
                     match state {
                         ElementState::Pressed => {
@@ -216,7 +218,7 @@ impl SimulationContext {
                             self.pressed_mouse_buttons.remove(&button);
                         }
                     }
-                },
+                }
                 Event::MouseMoved(x, y) => {
                     let window = facade.get_window().unwrap();
                     let window_size = window.get_inner_size_pixels().unwrap();
@@ -230,7 +232,7 @@ impl SimulationContext {
 
                     window.set_cursor_position(center_x, center_y)
                         .expect("Could not reset the cursor position.");
-                },
+                }
                 Event::MouseWheel(mouse_scroll_delta, touch_phase) => {
                     let up: bool;
                     let down: bool;
@@ -238,21 +240,21 @@ impl SimulationContext {
                         MouseScrollDelta::LineDelta(delta_x, delta_y) => {
                             up = delta_y > 0.0;
                             down = delta_y < 0.0;
-                        },
+                        }
                         MouseScrollDelta::PixelDelta(delta_x, delta_y) => {
                             up = delta_y > 0.0;
                             down = delta_y < 0.0;
-                        },
+                        }
                     }
                     if up && self.resolution > 1 {
                         self.resolution -= 1;
                     } else if down {
                         self.resolution += 1;
                     }
-                },
+                }
                 Event::Closed => {
                     return Err(event);
-                },
+                }
                 _ => (),
             }
         }
@@ -264,19 +266,23 @@ fn get_reflection_ratio_test<F: CustomFloat>(context: &TracingContext<F, Point3<
     Cast::from(0.25)
 }
 
-fn get_reflection_direction_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>>) -> Vector3<F> {
+fn get_reflection_direction_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>>)
+                                                 -> Vector3<F> {
     // R = 2*(V dot N)*N - V
-    let mut normal = context.intersection_traceable.shape().get_normal_at(&context.intersection.location);
+    let mut normal =
+        context.intersection_traceable.shape().get_normal_at(&context.intersection.location);
 
     if na::angle_between(&context.intersection.direction, &normal) > BaseFloat::frac_pi_2() {
         normal = -normal;
     }
 
-    normal * <F as NumCast>::from(-2.0).unwrap() * na::dot(&context.intersection.direction, &normal) + context.intersection.direction
+    normal * <F as NumCast>::from(-2.0).unwrap() *
+    na::dot(&context.intersection.direction, &normal) + context.intersection.direction
 }
 
 fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>>) -> Rgba<u8> {
-    let normal = context.intersection_traceable.shape().get_normal_at(&context.intersection.location);
+    let normal =
+        context.intersection_traceable.shape().get_normal_at(&context.intersection.location);
     let angle: F = na::angle_between(&normal, &universe::d3::entity::AXIS_Z());
     let mut result = Rgba {
         data: palette::Rgba::from(Hsv::new(
@@ -290,8 +296,9 @@ fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>>
 }
 
 fn transition_vacuum_vacuum<F: CustomFloat>(from: &Material<F, Point3<F>>,
-                                    to: &Material<F, Point3<F>>,
-                                    context: &TracingContext<F, Point3<F>>) -> Rgba<u8> {
+                                            to: &Material<F, Point3<F>>,
+                                            context: &TracingContext<F, Point3<F>>)
+                                            -> Rgba<u8> {
     let trace = context.trace;
     trace(context.time,
           context.intersection_traceable,
@@ -356,23 +363,23 @@ fn main() {
     {
         let mut intersectors = universe.intersectors_mut();
         intersectors.insert((Vacuum::id_static(), Test3::id_static()),
-            universe::d3::entity::intersect_test);
+                            universe::d3::entity::intersect_test);
         intersectors.insert((Vacuum::id_static(), VoidShape::id_static()),
-            universe::d3::entity::intersect_void);
+                            universe::d3::entity::intersect_void);
         intersectors.insert((Vacuum::id_static(), Sphere3::<f64>::id_static()),
-            universe::d3::entity::intersect_void);
+                            universe::d3::entity::intersect_void);
         intersectors.insert((Vacuum::id_static(), Sphere3::<f64>::id_static()),
-            universe::d3::entity::intersect_sphere_in_vacuum);
+                            universe::d3::entity::intersect_sphere_in_vacuum);
         intersectors.insert((Vacuum::id_static(), Plane3::<f64>::id_static()),
-            universe::d3::entity::intersect_plane_in_vacuum);
+                            universe::d3::entity::intersect_plane_in_vacuum);
         intersectors.insert((Vacuum::id_static(), HalfSpace3::<f64>::id_static()),
-            universe::d3::entity::intersect_halfspace_in_vacuum);
+                            universe::d3::entity::intersect_halfspace_in_vacuum);
     }
 
     {
         let mut transitions = universe.transitions_mut();
         transitions.insert((Vacuum::id_static(), Vacuum::id_static()),
-            transition_vacuum_vacuum);
+                           transition_vacuum_vacuum);
     }
 
     let simulation = Simulation::builder()

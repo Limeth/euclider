@@ -1,4 +1,5 @@
-use std; use std::marker::PhantomData;
+use std;
+use std::marker::PhantomData;
 use std::fmt;
 use std::fmt::Debug;
 use std::marker::Reflect;
@@ -18,7 +19,9 @@ use universe::NalgebraOperations;
 use util;
 use util::CustomFloat;
 
-pub trait Entity<F: CustomFloat, P: NumPoint<F>> where Self: Sync {
+pub trait Entity<F: CustomFloat, P: NumPoint<F>>
+    where Self: Sync
+{
     fn as_updatable_mut(&mut self) -> Option<&mut Updatable<F, P>>;
     fn as_updatable(&self) -> Option<&Updatable<F, P>>;
     fn as_traceable_mut(&mut self) -> Option<&mut Traceable<F, P>>;
@@ -67,14 +70,13 @@ pub struct TracingContext<'a, F: 'a + CustomFloat, P: 'a + NumPoint<F>> {
     pub intersection: &'a Intersection<F, P>,
     pub nalgebra_operations: &'a NalgebraOperations<F, P>,
     pub transitions: &'a HashMap<(TypeId, TypeId),
-                                     fn(&Material<F, P>,
-                                        &Material<F, P>,
-                                        &TracingContext<F, P>
-                                        ) -> Rgba<u8>>,
+                                 fn(&Material<F, P>, &Material<F, P>, &TracingContext<F, P>)
+                                    -> Rgba<u8>>,
     pub trace: &'a Fn(&Duration,
                       &Traceable<F, P>,
                       &P,
-                      &<P as PointAsVector>::Vector) -> Rgba<u8>,
+                      &<P as PointAsVector>::Vector)
+                      -> Rgba<u8>,
 }
 
 pub trait Shape<F: CustomFloat, P: NumPoint<F>>
@@ -209,7 +211,9 @@ impl<F: CustomFloat, P: NumPoint<F>> ComposableSurface<F, P> {
         reflection_ratio(context)
     }
 
-    fn get_reflection_direction(&self, context: &TracingContext<F, P>) -> <P as PointAsVector>::Vector {
+    fn get_reflection_direction(&self,
+                                context: &TracingContext<F, P>)
+                                -> <P as PointAsVector>::Vector {
         let reflection_direction = self.reflection_direction;
         reflection_direction(context)
     }
@@ -219,7 +223,10 @@ impl<F: CustomFloat, P: NumPoint<F>> ComposableSurface<F, P> {
         surface_color(context)
     }
 
-    fn get_intersection_color(&self, reflection_ratio: F, context: &TracingContext<F, P>) -> Option<Rgba<u8>> {
+    fn get_intersection_color(&self,
+                              reflection_ratio: F,
+                              context: &TracingContext<F, P>)
+                              -> Option<Rgba<u8>> {
         if reflection_ratio >= <F as NumCast>::from(1.0).unwrap() {
             return None;
         }
@@ -233,41 +240,42 @@ impl<F: CustomFloat, P: NumPoint<F>> ComposableSurface<F, P> {
             } else {
                 let origin_material = context.origin_traceable.material();
                 let intersection_material = context.intersection_traceable.material();
-                let transition = context.transitions.get(&(origin_material.id(),
-                                                           intersection_material.id()))
-                                                    .expect(&format!("No transition found from material {:?} to material {:?}. Make sure to register one.", origin_material, intersection_material));
-                let transition_color = transition(origin_material,
-                                                  intersection_material,
-                                                  &context);
+                let transition = context.transitions
+                    .get(&(origin_material.id(), intersection_material.id()))
+                    .expect(&format!("No transition found from material {:?} to material {:?}. \
+                                      Make sure to register one.",
+                                     origin_material,
+                                     intersection_material));
+                let transition_color = transition(origin_material, intersection_material, &context);
                 let surface_palette: palette::Rgba<F> = palette::Rgba::new_u8(surface_color[0],
-                                                                                surface_color[1],
-                                                                                surface_color[2],
-                                                                                surface_color[3]);
+                                                                              surface_color[1],
+                                                                              surface_color[2],
+                                                                              surface_color[3]);
                 let transition_palette = palette::Rgba::new_u8(transition_color[0],
                                                                transition_color[1],
                                                                transition_color[2],
                                                                transition_color[3]);
                 let result = surface_palette.plus(transition_palette).to_pixel();
 
-                Rgba {
-                    data: result
-                }
+                Rgba { data: result }
             }
         })
     }
 
-    fn get_reflection_color(&self, reflection_ratio: F, context: &TracingContext<F, P>) -> Option<Rgba<u8>> {
+    fn get_reflection_color(&self,
+                            reflection_ratio: F,
+                            context: &TracingContext<F, P>)
+                            -> Option<Rgba<u8>> {
         if reflection_ratio <= <F as NumCast>::from(0.0).unwrap() {
             return None;
         }
 
-        let normal = context.intersection_traceable.shape().get_normal_at(&context.intersection.location);
+        let normal =
+            context.intersection_traceable.shape().get_normal_at(&context.intersection.location);
 
         // Is the directional vector pointing away from the shape, or is it going inside?
-        if context.nalgebra_operations.dot(
-            &context.intersection.direction,
-            &normal
-            ) > <F as NumCast>::from(0.0).unwrap() {
+        if context.nalgebra_operations.dot(&context.intersection.direction, &normal) >
+           <F as NumCast>::from(0.0).unwrap() {
             return None;
         } else {
             let reflection_direction = self.get_reflection_direction(&context);
@@ -279,19 +287,23 @@ impl<F: CustomFloat, P: NumPoint<F>> ComposableSurface<F, P> {
             //                     .to_vector();
 
             return Some(trace(context.time,
-                  context.origin_traceable,
-                  &context.intersection.location,
-                  // &new_origin,
-                  &reflection_direction));
+                              context.origin_traceable,
+                              &context.intersection.location,
+                              // &new_origin,
+                              &reflection_direction));
         }
     }
 }
 
 impl<F: CustomFloat, P: NumPoint<F>> Surface<F, P> for ComposableSurface<F, P> {
     fn get_color(&self, context: TracingContext<F, P>) -> Rgba<u8> {
-        let reflection_ratio = self.get_reflection_ratio(&context).min(<F as NumCast>::from(1.0).unwrap()).max(<F as NumCast>::from(0.0).unwrap());
-        let intersection_color: Option<Rgba<u8>> = self.get_intersection_color(reflection_ratio, &context);
-        let reflection_color: Option<Rgba<u8>> = self.get_reflection_color(reflection_ratio, &context);
+        let reflection_ratio = self.get_reflection_ratio(&context)
+            .min(<F as NumCast>::from(1.0).unwrap())
+            .max(<F as NumCast>::from(0.0).unwrap());
+        let intersection_color: Option<Rgba<u8>> =
+            self.get_intersection_color(reflection_ratio, &context);
+        let reflection_color: Option<Rgba<u8>> =
+            self.get_reflection_color(reflection_ratio, &context);
         if intersection_color.is_none() {
             return reflection_color.expect("No intersection color calculated; the reflection color should exist.");
         } else if reflection_color.is_none() {
@@ -299,8 +311,8 @@ impl<F: CustomFloat, P: NumPoint<F>> Surface<F, P> for ComposableSurface<F, P> {
         }
 
         util::combine_color(reflection_color.unwrap(),
-                           intersection_color.unwrap(),
-                           reflection_ratio)
+                            intersection_color.unwrap(),
+                            reflection_ratio)
     }
 }
 

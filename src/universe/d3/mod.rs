@@ -18,15 +18,17 @@ pub struct Universe3D<F: CustomFloat> {
     camera: Box<Camera3<F>>,
     entities: Vec<Box<Entity3<F>>>,
     operations: NalgebraOperations3,
-    intersections: HashMap<(TypeId, TypeId), fn(&Point3<F>,
-                                                &Vector3<F>,
-                                                &Material<F, Point3<F>>,
-                                                &Shape<F, Point3<F>>)
-                                        -> Option<Intersection<F, Point3<F>>>>,
-    transitions: HashMap<(TypeId, TypeId), fn(&Material<F, Point3<F>>,
-                                              &Material<F, Point3<F>>,
-                                              &TracingContext<F, Point3<F>>
-                                              ) -> Rgba<u8>>,
+    intersections: HashMap<(TypeId, TypeId),
+                           fn(&Point3<F>,
+                              &Vector3<F>,
+                              &Material<F, Point3<F>>,
+                              &Shape<F, Point3<F>>)
+                              -> Option<Intersection<F, Point3<F>>>>,
+    transitions: HashMap<(TypeId, TypeId),
+                         fn(&Material<F, Point3<F>>,
+                            &Material<F, Point3<F>>,
+                            &TracingContext<F, Point3<F>>)
+                            -> Rgba<u8>>,
 }
 
 impl<F: CustomFloat> Universe3D<F> {
@@ -93,12 +95,12 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
     }
 
     fn intersectors(&self)
-                     -> &HashMap<(TypeId, TypeId),
-                                 fn(&Self::P,
-                                             &<Self::P as PointAsVector>::Vector,
-                                             &Material<F, Self::P>,
-                                             &Shape<F, Self::P>)
-                                             -> Option<Intersection<F, Self::P>>> {
+                    -> &HashMap<(TypeId, TypeId),
+                                fn(&Self::P,
+                                   &<Self::P as PointAsVector>::Vector,
+                                   &Material<F, Self::P>,
+                                   &Shape<F, Self::P>)
+                                   -> Option<Intersection<F, Self::P>>> {
         &self.intersections
     }
 
@@ -114,28 +116,28 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
     }
 
     fn transitions_mut(&mut self)
-                         -> &mut HashMap<(TypeId, TypeId),
-                                         fn(&Material<F, Self::P>,
-                                            &Material<F, Self::P>,
-                                            &TracingContext<F, Self::P>
-                                            ) -> Rgba<u8>> {
-         &mut self.transitions
+                       -> &mut HashMap<(TypeId, TypeId),
+                                       fn(&Material<F, Self::P>,
+                                          &Material<F, Self::P>,
+                                          &TracingContext<F, Self::P>)
+                                          -> Rgba<u8>> {
+        &mut self.transitions
     }
 
     fn transitions(&self)
-                         -> &HashMap<(TypeId, TypeId),
-                                         fn(&Material<F, Self::P>,
-                                            &Material<F, Self::P>,
-                                            &TracingContext<F, Self::P>
-                                            ) -> Rgba<u8>> {
+                   -> &HashMap<(TypeId, TypeId),
+                               fn(&Material<F, Self::P>,
+                                  &Material<F, Self::P>,
+                                  &TracingContext<F, Self::P>)
+                                  -> Rgba<u8>> {
         &self.transitions
     }
     fn set_transitions(&mut self,
-                         transitions: HashMap<(TypeId, TypeId),
-                                         fn(&Material<F, Self::P>,
-                                            &Material<F, Self::P>,
-                                            &TracingContext<F, Self::P>
-                                            ) -> Rgba<u8>>) {
+                       transitions: HashMap<(TypeId, TypeId),
+                                            fn(&Material<F, Self::P>,
+                                               &Material<F, Self::P>,
+                                               &TracingContext<F, Self::P>)
+                                               -> Rgba<u8>>) {
         self.transitions = transitions
     }
 }

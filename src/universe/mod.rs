@@ -24,7 +24,9 @@ use util;
 use util::CustomFloat;
 use util::Consts;
 
-pub trait Universe<F: CustomFloat> where Self: Sync {
+pub trait Universe<F: CustomFloat>
+    where Self: Sync
+{
     type P: NumPoint<F>;
     // Generics hell I might need in the future:
     //
@@ -63,12 +65,12 @@ pub trait Universe<F: CustomFloat> where Self: Sync {
                                             &Shape<F, Self::P>)
                                             -> Option<Intersection<F, Self::P>>>;
     fn intersectors(&self)
-                     -> &HashMap<(TypeId, TypeId),
-                                 fn(&Self::P,
-                                    &<Self::P as PointAsVector>::Vector,
-                                    &Material<F, Self::P>,
-                                    &Shape<F, Self::P>)
-                                    -> Option<Intersection<F, Self::P>>>;
+                    -> &HashMap<(TypeId, TypeId),
+                                fn(&Self::P,
+                                   &<Self::P as PointAsVector>::Vector,
+                                   &Material<F, Self::P>,
+                                   &Shape<F, Self::P>)
+                                   -> Option<Intersection<F, Self::P>>>;
     fn set_intersectors(&mut self,
                          intersections: HashMap<(TypeId, TypeId),
                                                 fn(&Self::P,
@@ -78,25 +80,30 @@ pub trait Universe<F: CustomFloat> where Self: Sync {
                                                    -> Option<Intersection<F, Self::P>>>);
     /// Stores the behavior of a ray passing from the first material to the second
     fn transitions_mut(&mut self)
-                         -> &mut HashMap<(TypeId, TypeId),
-                                         fn(&Material<F, Self::P>,
-                                            &Material<F, Self::P>,
-                                            &TracingContext<F, Self::P>
-                                            ) -> Rgba<u8>>;
+                       -> &mut HashMap<(TypeId, TypeId),
+                                       fn(&Material<F, Self::P>,
+                                          &Material<F, Self::P>,
+                                          &TracingContext<F, Self::P>)
+                                          -> Rgba<u8>>;
     fn transitions(&self)
-                         -> &HashMap<(TypeId, TypeId),
-                                         fn(&Material<F, Self::P>,
-                                            &Material<F, Self::P>,
-                                            &TracingContext<F, Self::P>
-                                            ) -> Rgba<u8>>;
+                   -> &HashMap<(TypeId, TypeId),
+                               fn(&Material<F, Self::P>,
+                                  &Material<F, Self::P>,
+                                  &TracingContext<F, Self::P>)
+                                  -> Rgba<u8>>;
     fn set_transitions(&mut self,
-                         transitions: HashMap<(TypeId, TypeId),
-                                         fn(&Material<F, Self::P>,
-                                            &Material<F, Self::P>,
-                                            &TracingContext<F, Self::P>
-                                            ) -> Rgba<u8>>);
+                       transitions: HashMap<(TypeId, TypeId),
+                                            fn(&Material<F, Self::P>,
+                                               &Material<F, Self::P>,
+                                               &TracingContext<F, Self::P>)
+                                               -> Rgba<u8>>);
 
-    fn trace(&self, time: &Duration, belongs_to: &Traceable<F, Self::P>, location: &Self::P, rotation: &<Self::P as PointAsVector>::Vector) -> Rgba<u8> {
+    fn trace(&self,
+             time: &Duration,
+             belongs_to: &Traceable<F, Self::P>,
+             location: &Self::P,
+             rotation: &<Self::P as PointAsVector>::Vector)
+             -> Rgba<u8> {
         let material = belongs_to.material();
         let mut foreground: Option<Rgba<u8>> = None;
         let mut foreground_distance_squared: Option<F> = None;
@@ -131,8 +138,8 @@ pub trait Universe<F: CustomFloat> where Self: Sync {
 
                     let surface = surface.unwrap();
 
-                    if foreground_distance_squared.is_none()
-                        || foreground_distance_squared.unwrap() > intersection.distance_squared {
+                    if foreground_distance_squared.is_none() ||
+                       foreground_distance_squared.unwrap() > intersection.distance_squared {
                         let context = TracingContext {
                             time: time,
                             origin_traceable: belongs_to,
@@ -147,8 +154,8 @@ pub trait Universe<F: CustomFloat> where Self: Sync {
 
                         // Avoid a stack overflow, where a ray intersects the same location
                         // repeatedly.
-                        if intersection.distance_squared
-                            <= <F as Consts>::epsilon() * <F as NumCast>::from(1000.0).unwrap() {
+                        if intersection.distance_squared <=
+                           <F as Consts>::epsilon() * <F as NumCast>::from(1000.0).unwrap() {
                             continue;
                         }
 
@@ -175,17 +182,19 @@ pub trait Universe<F: CustomFloat> where Self: Sync {
                     //     foreground_distance_squared = Some(intersection.distance_squared);
                     //     foreground = Some(color);
                     // }
-                },
+                }
                 None => (),
             }
         }
 
-        foreground.unwrap_or(Rgba {
-            data: [0u8, 0u8, 0u8, 0u8],
-        })
+        foreground.unwrap_or(Rgba { data: [0u8, 0u8, 0u8, 0u8] })
     }
 
-    fn trace_unknown(&self, time: &Duration, location: &Self::P, rotation: &<Self::P as PointAsVector>::Vector) -> Option<Rgb<u8>> {
+    fn trace_unknown(&self,
+                     time: &Duration,
+                     location: &Self::P,
+                     rotation: &<Self::P as PointAsVector>::Vector)
+                     -> Option<Rgb<u8>> {
         let mut belongs_to: Option<&Traceable<F, Self::P>> = None;
 
         for entity in self.entities() {
@@ -207,7 +216,7 @@ pub trait Universe<F: CustomFloat> where Self: Sync {
         }
 
         if belongs_to.is_some() {
-            let background = Rgb { data: [255u8, 255u8, 255u8], };
+            let background = Rgb { data: [255u8, 255u8, 255u8] };
             let foreground = self.trace(time, belongs_to.unwrap(), location, rotation);
             Some(util::overlay_color::<F>(background, foreground))
         } else {
@@ -249,10 +258,10 @@ pub trait Universe<F: CustomFloat> where Self: Sync {
     }
 
     fn render<E: Facade, S: GliumSurface>(&self,
-                                     facade: &E,
-                                     surface: &mut S,
-                                     time: &Duration,
-                                     context: &SimulationContext) {
+                                          facade: &E,
+                                          surface: &mut S,
+                                          time: &Duration,
+                                          context: &SimulationContext) {
         let (width, height) = surface.get_dimensions();
         // let mut buffer: DynamicImage = DynamicImage::new_rgb8(width, height);
         const COLOR_DIM: usize = 3;
@@ -313,6 +322,12 @@ pub trait Universe<F: CustomFloat> where Self: Sync {
 
 pub trait NalgebraOperations<F: CustomFloat, P: NumPoint<F>> {
     fn to_point(&self, vector: &<P as PointAsVector>::Vector) -> P;
-    fn dot(&self, first: &<P as PointAsVector>::Vector, second: &<P as PointAsVector>::Vector) -> F;
-    fn angle_between(&self, first: &<P as PointAsVector>::Vector, second: &<P as PointAsVector>::Vector) -> F;
+    fn dot(&self,
+           first: &<P as PointAsVector>::Vector,
+           second: &<P as PointAsVector>::Vector)
+           -> F;
+    fn angle_between(&self,
+                     first: &<P as PointAsVector>::Vector,
+                     second: &<P as PointAsVector>::Vector)
+                     -> F;
 }

@@ -323,6 +323,23 @@ fn main() {
                 //     surface_color: get_surface_color_test,
                 // }))
             )));
+        entities.push(Box::new(Entity3Impl::new(
+                        Box::new(HalfSpace3::new(
+                            Plane3::from_equation(0.0, 0.0, 0.0, -1.0),
+                            // Plane3::new(
+                            //     &Point3::new(0.0, 0.0, 0.0),
+                            //     &Vector3::new(0.0, 1.0, 0.0),
+                            //     &Vector3::new(0.0, 10.0, 1.0),
+                            //     ),
+                            &Point3::new(0.0, 0.0, -100.0)
+                        )),
+                        Box::new(Vacuum::new()),
+                        Some(Box::new(ComposableSurface {
+                            reflection_ratio: get_reflection_ratio_test,
+                            reflection_direction: get_reflection_direction_test,
+                            surface_color: get_surface_color_test,
+                        }))
+                    )));
         entities.push(Box::new(Void::new_with_vacuum()));
     }
 
@@ -336,6 +353,10 @@ fn main() {
             universe::d3::entity::intersect_void);
         intersectors.insert((Vacuum::id_static(), Sphere3::id_static()),
             universe::d3::entity::intersect_sphere_in_vacuum);
+        intersectors.insert((Vacuum::id_static(), Plane3::id_static()),
+            universe::d3::entity::intersect_plane_in_vacuum);
+        intersectors.insert((Vacuum::id_static(), HalfSpace3::id_static()),
+            universe::d3::entity::intersect_halfspace_in_vacuum);
     }
 
     {

@@ -244,6 +244,44 @@ pub fn intersect_sphere_in_vacuum<F: BaseFloat>(location: &Point3<F>,
     })
 }
 
+pub fn intersect_plane_in_vacuum<F: BaseFloat>(location: &Point3<F>,
+                                  direction: &Vector3<F>,
+                                  vacuum: &Material<F, Point3<F>>,
+                                  shape: &Shape<F, Point3<F>>)
+    -> Option<Intersection<F, Point3<F>>> {
+    vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
+    let plane: &Plane3 = shape.as_any().downcast_ref::<Plane3>().unwrap();
+    
+    // A*x + B*y + C*z + D = 0
+
+    let t = -(na::dot(&plane.normal, location.as_vector()) + plane.constant)
+        / na::dot(&plane.normal, direction);
+
+    if t < 0.0 {
+        return None;
+    }
+
+    let result_vector = *direction * t;
+    let result_point = Point3::new(location.x + result_vector.x, location.y + result_vector.y, location.z + result_vector.z);
+
+    Some(Intersection {
+        location: result_point,
+        direction: *direction,
+        distance_squared: na::distance_squared(location, &result_point),
+    })
+}
+
+pub fn intersect_halfspace_in_vacuum<F: BaseFloat>(location: &Point3<F>,
+                                  direction: &Vector3<F>,
+                                  vacuum: &Material<F, Point3<F>>,
+                                  shape: &Shape<F, Point3<F>>)
+    -> Option<Intersection<F, Point3<F>>> {
+    vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
+    let halfspace: &HalfSpace3 = shape.as_any().downcast_ref::<HalfSpace3>().unwrap();
+
+    intersect_plane_in_vacuum(location, direction, vacuum, &halfspace.plane)
+}
+
 pub struct PerlinSurface3<F: BaseFloat> {
     seed: Seed,
     size: F,
@@ -290,5 +328,102 @@ impl<F: BaseFloat> Surface<F, Point3<F>> for PerlinSurface3<F> {
         Rgba {
             data: palette::Rgba::from(Hsv::new(RgbHue::from(value * 360.0), 1.0, 1.0)).to_pixel(),
         }
+    }
+}
+
+pub struct Plane3 {
+    normal: Vector3<f32>,
+    constant: f32,
+}
+
+impl Plane3 {
+    pub fn new(point: &Point3<f32>,
+           vector_a: &Vector3<f32>,
+           vector_b: &Vector3<f32>) -> Plane3 {
+        // A*x + B*y + C*z + D = 0
+        let normal = na::cross(vector_a, vector_b);
+
+        // D = -(A*x + B*y + C*z)
+        let constant = -na::dot(&normal, point.as_vector());
+
+        Self::from_normal(&normal, constant)
+    }
+
+    pub fn from_normal(normal: &Vector3<f32>, constant: f32) -> Plane3 {
+        Plane3 {
+            normal: *normal,
+            constant: constant,
+        }
+    }
+
+    pub fn from_equation(a: f32, b: f32, c: f32, d: f32) -> Plane3 {
+        Self::from_normal(&Vector3::new(a, b, c), d)
+    }
+}
+
+impl HasId for Plane3 {
+    fn id(&self) -> TypeId {
+        Self::id_static()
+    }
+
+    fn as_any(&self) -> &Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut Any {
+        self
+    }
+}
+
+impl<F: BaseFloat> Shape<F, Point3<F>> for Plane3 {
+    fn get_normal_at(&self, point: &Point3<f32>) -> Vector3<f32> {
+        self.normal
+    }
+
+    fn is_point_inside(&self, point: &Point3<f32>) -> bool {
+        false
+    }
+}
+
+pub struct HalfSpace3 {
+    plane: Plane3,
+    point_inside: Point3<f32>,
+}
+
+impl HalfSpace3 {
+    pub fn new(plane: Plane3, point_inside: &Point3<f32>) -> HalfSpace3 {
+        HalfSpace3 {
+            plane: plane,
+            point_inside: *point_inside,
+        }
+    }
+}
+
+impl HasId for HalfSpace3 {
+    fn id(&self) -> TypeId {
+        Self::id_static()
+    }
+
+    fn as_any(&self) -> &Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut Any {
+        self
+    }
+}
+
+impl<F: BaseFloat> Shape<F, Point3<F>> for HalfSpace3 {
+    fn get_normal_at(&self, point: &Point3<f32>) -> Vector3<f32> {
+        self.plane.get_normal_at(point)
+    }
+
+    fn is_point_inside(&self, point: &Point3<f32>) -> bool {
+        // A*x + B*y + C*z + D = 0
+        // ~~~~~~~~~~~~~~~ dot
+        let identifier = na::dot(&self.plane.normal, point.as_vector()) + self.plane.constant;
+        let result = na::dot(&self.plane.normal, point.as_vector()) + self.plane.constant;
+
+        (identifier < 0.0) == (result < 0.0)
     }
 }

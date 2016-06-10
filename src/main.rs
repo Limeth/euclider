@@ -307,14 +307,20 @@ fn transition_vacuum_vacuum<F: CustomFloat>(from: &Material<F, Point3<F>>,
 }
 
 fn main() {
-    let mut universe: Universe3D<f64> = Universe3D::new();
+    run::<f32>();
+}
+
+fn run<F: CustomFloat>() {
+    let mut universe: Universe3D<F> = Universe3D::new();
 
     {
         let mut entities = universe.entities_mut();
         entities.push(Box::new(Entity3Impl::new(
-                Box::new(Sphere3::new(
-                    Point3::new(2.0, 1.0, 0.0),
-                    1.0
+                Box::new(Sphere3::<F>::new(
+                    Point3::new(Cast::from(2.0),
+                                Cast::from(1.0),
+                                Cast::from(0.0)),
+                    Cast::from(1.0)
                 )),
                 Box::new(Vacuum::new()),
                 // Some(Box::new(PerlinSurface3::rand(&mut StdRng::new().expect("Could not create a random number generator."), 1.0, 1.0)))
@@ -325,15 +331,17 @@ fn main() {
                 }))
             )));
         entities.push(Box::new(Entity3Impl::new(
-                Box::new(Sphere3::new(
-                        Point3::new(2.0, -1.5, 0.0),
-                        1.25
+                Box::new(Sphere3::<F>::new(
+                        Point3::new(Cast::from(2.0),
+                                    Cast::from(-1.5),
+                                    Cast::from(0.0)),
+                        Cast::from(1.25)
                         )),
                 Box::new(Vacuum::new()),
                 Some(Box::new(PerlinSurface3::rand(
                             &mut StdRng::new().expect("Could not create a random number generator."),
-                            2.0,
-                            1.0)))
+                            Cast::from(2.0),
+                            Cast::from(1.0))))
                 // Some(Box::new(ComposableSurface {
                 //     reflection_ratio: get_reflection_ratio_test,
                 //     reflection_direction: get_reflection_direction_test,
@@ -342,13 +350,18 @@ fn main() {
             )));
         entities.push(Box::new(Entity3Impl::new(
                         Box::new(HalfSpace3::new(
-                            Plane3::from_equation(0.0, 0.0, 0.0, -1.0),
+                            Plane3::from_equation(Cast::from(0.0),
+                                                  Cast::from(0.0),
+                                                  Cast::from(0.0),
+                                                  Cast::from(-1.0)),
                             // Plane3::new(
                             //     &Point3::new(0.0, 0.0, 0.0),
                             //     &Vector3::new(0.0, 1.0, 0.0),
                             //     &Vector3::new(0.0, 10.0, 1.0),
                             //     ),
-                            &Point3::new(0.0, 0.0, -100.0)
+                            &Point3::new(Cast::from(0.0),
+                                         Cast::from(0.0),
+                                         Cast::from(-100.0))
                         )),
                         Box::new(Vacuum::new()),
                         Some(Box::new(ComposableSurface {
@@ -366,13 +379,13 @@ fn main() {
                             universe::d3::entity::intersect_test);
         intersectors.insert((Vacuum::id_static(), VoidShape::id_static()),
                             universe::d3::entity::intersect_void);
-        intersectors.insert((Vacuum::id_static(), Sphere3::<f64>::id_static()),
+        intersectors.insert((Vacuum::id_static(), Sphere3::<F>::id_static()),
                             universe::d3::entity::intersect_void);
-        intersectors.insert((Vacuum::id_static(), Sphere3::<f64>::id_static()),
+        intersectors.insert((Vacuum::id_static(), Sphere3::<F>::id_static()),
                             universe::d3::entity::intersect_sphere_in_vacuum);
-        intersectors.insert((Vacuum::id_static(), Plane3::<f64>::id_static()),
+        intersectors.insert((Vacuum::id_static(), Plane3::<F>::id_static()),
                             universe::d3::entity::intersect_plane_in_vacuum);
-        intersectors.insert((Vacuum::id_static(), HalfSpace3::<f64>::id_static()),
+        intersectors.insert((Vacuum::id_static(), HalfSpace3::<F>::id_static()),
                             universe::d3::entity::intersect_halfspace_in_vacuum);
     }
 

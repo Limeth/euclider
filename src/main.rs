@@ -307,7 +307,7 @@ fn transition_vacuum_vacuum<F: CustomFloat>(from: &Material<F, Point3<F>>,
 }
 
 fn main() {
-    run::<f32>();
+    run::<f64>();
 }
 
 fn run<F: CustomFloat>() {
@@ -350,14 +350,20 @@ fn run<F: CustomFloat>() {
             )));
         entities.push(Box::new(Entity3Impl::new(
                         Box::new(HalfSpace3::new(
-                            Plane3::from_equation(Cast::from(0.0),
-                                                  Cast::from(0.0),
+                            Plane3::from_equation(Cast::from(1.0),
+                                                  Cast::from(0.5),
                                                   Cast::from(0.0),
                                                   Cast::from(-1.0)),
                             // Plane3::new(
-                            //     &Point3::new(0.0, 0.0, 0.0),
-                            //     &Vector3::new(0.0, 1.0, 0.0),
-                            //     &Vector3::new(0.0, 10.0, 1.0),
+                            //     &Point3::new(Cast::from(0.0),
+                            //                  Cast::from(0.0),
+                            //                  Cast::from(0.0)),
+                            //     &Vector3::new(Cast::from(0.0),
+                            //                   Cast::from(1.0),
+                            //                   Cast::from(0.0)),
+                            //     &Vector3::new(Cast::from(0.0),
+                            //                   Cast::from(10.0),
+                            //                   Cast::from(1.0)),
                             //     ),
                             &Point3::new(Cast::from(0.0),
                                          Cast::from(0.0),

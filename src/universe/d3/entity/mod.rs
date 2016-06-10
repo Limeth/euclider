@@ -366,6 +366,10 @@ impl<F: CustomFloat> Plane3<F> {
     }
 
     pub fn from_normal(normal: &Vector3<F>, constant: F) -> Plane3<F> {
+        if na::distance_squared(&na::origin(), normal.as_point()) <= Cast::from(0.0) {
+            panic!("Cannot have a normal with length of 0.");
+        }
+
         Plane3 {
             normal: *normal,
             constant: constant,

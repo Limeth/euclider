@@ -41,6 +41,7 @@ pub trait Camera<F: CustomFloat, P: NumPoint<F>, O: NalgebraOperations<F, P>>: E
                       screen_width: i32,
                       screen_height: i32)
                       -> <P as PointAsVector>::Vector;
+    fn max_depth(&self) -> u32;
 }
 
 pub trait HasId {
@@ -68,6 +69,7 @@ pub struct TracingContext<'a,
                           P: 'a + NumPoint<F>,
                           O: 'a + NalgebraOperations<F, P>> {
     pub time: &'a Duration,
+    pub depth_remaining: &'a u32,
     pub origin_traceable: &'a Traceable<F, P, O>,
     pub intersection_traceable: &'a Traceable<F, P, O>,
     pub intersection: &'a Intersection<F, P>,
@@ -76,12 +78,12 @@ pub struct TracingContext<'a,
     pub exiting: &'a bool,
     pub transitions: &'a HashMap<(TypeId, TypeId),
                                  fn(&Material<F, P>, &Material<F, P>, &TracingContext<F, P, O>)
-                                    -> Rgba<u8>>,
+                                    -> Option<Rgba<u8>>>,
     pub trace: &'a Fn(&Duration,
                       &Traceable<F, P, O>,
                       &P,
                       &<P as PointAsVector>::Vector)
-                      -> Rgba<u8>,
+                      -> Option<Rgba<u8>>,
 }
 
 pub trait Shape<F: CustomFloat, P: NumPoint<F>>
@@ -236,15 +238,6 @@ impl<F: CustomFloat, P: NumPoint<F>, O: NalgebraOperations<F, P>> ComposableSurf
             return None;
         }
 
-        let normal =
-            context.intersection_traceable.shape().get_normal_at(&context.intersection.location);
-
-        // Is the directional vector pointing away from the shape, or is it going inside?
-        if <O as NalgebraOperations<F, P>>::dot(&context.intersection.direction, &normal) >
-           <F as NumCast>::from(0.0).unwrap() {
-            return None;
-        }
-
         Some({
             let surface_color = self.get_surface_color(&context);
             let surface_color_alpha = surface_color.data[3];
@@ -265,10 +258,17 @@ impl<F: CustomFloat, P: NumPoint<F>, O: NalgebraOperations<F, P>> ComposableSurf
                                                                               surface_color[1],
                                                                               surface_color[2],
                                                                               surface_color[3]);
-                let transition_palette = palette::Rgba::new_u8(transition_color[0],
-                                                               transition_color[1],
-                                                               transition_color[2],
-                                                               transition_color[3]);
+                let transition_palette = if transition_color.is_some() {
+                    let transition_color = transition_color.unwrap();
+
+                    palette::Rgba::new_u8(transition_color[0],
+                                          transition_color[1],
+                                          transition_color[2],
+                                          transition_color[3])
+                } else {
+                    palette::Rgba::new_u8(0, 0, 0, 0)
+                };
+
                 let result = surface_palette.plus(transition_palette).to_pixel();
 
                 Rgba { data: result }
@@ -284,28 +284,19 @@ impl<F: CustomFloat, P: NumPoint<F>, O: NalgebraOperations<F, P>> ComposableSurf
             return None;
         }
 
-        let normal =
-            context.intersection_traceable.shape().get_normal_at(&context.intersection.location);
+        let reflection_direction = self.get_reflection_direction(&context);
+        let trace = context.trace;
+        // // Offset the new origin, so it doesn't hit the same shape over and over
+        // let vector_to_point = context.vector_to_point;
+        // let new_origin = context.intersection.location
+        //                  + (vector_to_point(&reflection_direction) * std::F::EPSILON * 8.0)
+        //                     .to_vector();
 
-        // Is the directional vector pointing away from the shape, or is it going inside?
-        if <O as NalgebraOperations<F, P>>::dot(&context.intersection.direction, &normal) >
-           <F as NumCast>::from(0.0).unwrap() {
-            return None;
-        } else {
-            let reflection_direction = self.get_reflection_direction(&context);
-            let trace = context.trace;
-            // // Offset the new origin, so it doesn't hit the same shape over and over
-            // let vector_to_point = context.vector_to_point;
-            // let new_origin = context.intersection.location
-            //                  + (vector_to_point(&reflection_direction) * std::F::EPSILON * 8.0)
-            //                     .to_vector();
-
-            return Some(trace(context.time,
-                              context.origin_traceable,
-                              &context.intersection.location,
-                              // &new_origin,
-                              &reflection_direction));
-        }
+        return trace(context.time,
+                     context.origin_traceable,
+                     &context.intersection.location,
+                     // &new_origin,
+                     &reflection_direction);
     }
 }
 
@@ -318,6 +309,7 @@ impl<F: CustomFloat, P: NumPoint<F>, O: NalgebraOperations<F, P>> Surface<F, P, 
             self.get_intersection_color(reflection_ratio, &context);
         let reflection_color: Option<Rgba<u8>> =
             self.get_reflection_color(reflection_ratio, &context);
+
         if intersection_color.is_none() {
             return reflection_color.expect("No intersection color calculated; the reflection color should exist.");
         } else if reflection_color.is_none() {

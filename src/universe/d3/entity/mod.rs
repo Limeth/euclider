@@ -408,15 +408,23 @@ impl<F: CustomFloat> Shape<F, Point3<F>> for Plane3<F> {
 
 pub struct HalfSpace3<F: CustomFloat> {
     plane: Plane3<F>,
-    point_inside: Point3<F>,
+    signum: F,
 }
 
 impl<F: CustomFloat> HalfSpace3<F> {
-    pub fn new(plane: Plane3<F>, point_inside: &Point3<F>) -> HalfSpace3<F> {
+    pub fn new(plane: Plane3<F>, mut signum: F) -> HalfSpace3<F> {
+        signum /= signum.abs();
+
         HalfSpace3 {
             plane: plane,
-            point_inside: *point_inside,
+            signum: signum,
         }
+    }
+
+    pub fn from_point(plane: Plane3<F>, point_inside: &Point3<F>) -> HalfSpace3<F> {
+        let identifier: F = na::dot(&plane.normal, point_inside.as_vector()) + plane.constant;
+
+        Self::new(plane, identifier)
     }
 }
 
@@ -436,15 +444,15 @@ impl<F: CustomFloat> HasId for HalfSpace3<F> {
 
 impl<F: CustomFloat> Shape<F, Point3<F>> for HalfSpace3<F> {
     fn get_normal_at(&self, point: &Point3<F>) -> Vector3<F> {
-        self.plane.get_normal_at(point)
+        // Works so far, not sure why
+        self.plane.get_normal_at(point) * -self.signum
     }
 
     fn is_point_inside(&self, point: &Point3<F>) -> bool {
         // A*x + B*y + C*z + D = 0
         // ~~~~~~~~~~~~~~~ dot
-        let identifier: F = na::dot(&self.plane.normal, point.as_vector()) + self.plane.constant;
         let result: F = na::dot(&self.plane.normal, point.as_vector()) + self.plane.constant;
 
-        identifier.signum() == result.signum()
+        self.signum == result.signum()
     }
 }

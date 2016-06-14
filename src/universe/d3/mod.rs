@@ -28,7 +28,7 @@ pub struct Universe3D<F: CustomFloat> {
                          fn(&Material<F, Point3<F>>,
                             &Material<F, Point3<F>>,
                             &TracingContext<F, Point3<F>, NalgebraOperations3>)
-                            -> Rgba<u8>>,
+                            -> Option<Rgba<u8>>>,
 }
 
 impl<F: CustomFloat> Universe3D<F> {
@@ -117,7 +117,7 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
                                        fn(&Material<F, Self::P>,
                                           &Material<F, Self::P>,
                                           &TracingContext<F, Self::P, Self::O>)
-                                          -> Rgba<u8>> {
+                                          -> Option<Rgba<u8>>> {
         &mut self.transitions
     }
 
@@ -126,7 +126,7 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
                                fn(&Material<F, Self::P>,
                                   &Material<F, Self::P>,
                                   &TracingContext<F, Self::P, Self::O>)
-                                  -> Rgba<u8>> {
+                                  -> Option<Rgba<u8>>> {
         &self.transitions
     }
     fn set_transitions(&mut self,
@@ -134,7 +134,7 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
                                             fn(&Material<F, Self::P>,
                                                &Material<F, Self::P>,
                                                &TracingContext<F, Self::P, Self::O>)
-                                               -> Rgba<u8>>) {
+                                               -> Option<Rgba<u8>>>) {
         self.transitions = transitions
     }
 }

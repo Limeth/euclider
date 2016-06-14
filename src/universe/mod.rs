@@ -86,29 +86,34 @@ pub trait Universe<F: CustomFloat>
                                        fn(&Material<F, Self::P>,
                                           &Material<F, Self::P>,
                                           &TracingContext<F, Self::P, Self::O>)
-                                          -> Rgba<u8>>;
+                                          -> Option<Rgba<u8>>>;
     fn transitions(&self)
                    -> &HashMap<(TypeId, TypeId),
                                fn(&Material<F, Self::P>,
                                   &Material<F, Self::P>,
                                   &TracingContext<F, Self::P, Self::O>)
-                                  -> Rgba<u8>>;
+                                  -> Option<Rgba<u8>>>;
     fn set_transitions(&mut self,
                        transitions: HashMap<(TypeId, TypeId),
                                             fn(&Material<F, Self::P>,
                                                &Material<F, Self::P>,
                                                &TracingContext<F, Self::P, Self::O>)
-                                               -> Rgba<u8>>);
+                                               -> Option<Rgba<u8>>>);
 
     fn trace(&self,
              time: &Duration,
+             max_depth: &u32,
              belongs_to: &Traceable<F, Self::P, Self::O>,
              location: &Self::P,
              rotation: &<Self::P as PointAsVector>::Vector)
-             -> Rgba<u8> {
+             -> Option<Rgba<u8>> {
         let material = belongs_to.material();
         let mut foreground: Option<Rgba<u8>> = None;
         let mut foreground_distance_squared: Option<F> = None;
+
+        if *max_depth <= 0 {
+            return None;
+        }
 
         for other in self.entities() {
             let other_traceable = other.as_traceable();
@@ -144,9 +149,10 @@ pub trait Universe<F: CustomFloat>
 
                     if <Self::O as NalgebraOperations<F, Self::P>>::angle_between(&intersection.direction,
                                                                       &normal)
-                            > <F as BaseFloat>::frac_pi_2() {
+                            < <F as BaseFloat>::frac_pi_2() {
                         closer_normal = <Self::O as NalgebraOperations<F, Self::P>>::neg(&normal);
                         exiting = true;
+                        continue; //The same behavior as the above TODO
                     } else {
                         closer_normal = <Self::O as NalgebraOperations<F, Self::P>>::clone(&normal);
                         exiting = false;
@@ -156,6 +162,7 @@ pub trait Universe<F: CustomFloat>
                        foreground_distance_squared.unwrap() > intersection.distance_squared {
                         let context = TracingContext {
                             time: time,
+                            depth_remaining: max_depth,
                             origin_traceable: belongs_to,
                             intersection_traceable: other_traceable,
                             intersection: &intersection,
@@ -164,7 +171,7 @@ pub trait Universe<F: CustomFloat>
                             exiting: &exiting,
                             transitions: self.transitions(),
                             trace: &|time, traceable, location, direction| {
-                                self.trace(time, traceable, location, direction)
+                                self.trace(time, &(*max_depth - 1), traceable, location, direction)
                             },
                         };
 
@@ -178,36 +185,28 @@ pub trait Universe<F: CustomFloat>
                         foreground = Some(surface.get_color(context));
                         foreground_distance_squared = Some(intersection.distance_squared);
                     }
-
-                    // // FIXME just for testing
-                    // use na::Point3;
-                    // use na::Vector3;
-                    // let location = unsafe { &*(location as *const _ as *const Point3<F>) }.clone();
-                    // let normal = unsafe { &*(&normal as *const _ as *const Vector3<F>) }.clone();
-                    // let rotation = unsafe { &*(rotation as *const _ as *const Vector3<F>) }.clone();
-                    // // Calculate the angle using the cosine formula
-                    // // |u*v| = ||u|| * ||v|| * cos(alpha)
-                    // let angle = (rotation.dot(&normal).abs() / (na::distance(&na::origin(), &rotation.to_point()) * na::distance(&na::origin(), &normal.to_point()) as F)).acos();
-                    // color.data[1] = (255.0 * (1.0 - angle / std::F::consts::FRAC_PI_2)) as u8;
-                    // color.data[3] = 255u8;
-
-                    // // println!("origin: [{}; {}; {}]; vector: <{}; {}; {}>", location.x, location.y, location.z, rotation.x, rotation.y, rotation.z);
-
-                    // if foreground_distance_squared.is_none()
-                    //     || foreground_distance_squared.unwrap() > intersection.distance_squared {
-                    //     foreground_distance_squared = Some(intersection.distance_squared);
-                    //     foreground = Some(color);
-                    // }
                 }
                 None => (),
             }
         }
 
-        foreground.unwrap_or(Rgba { data: [0u8, 0u8, 0u8, 0u8] })
+        foreground.or(Some(Rgba { data: [0u8, 0u8, 0u8, 0u8] }))
+    }
+
+    fn trace_first(&self,
+                   time: &Duration,
+                   max_depth: &u32,
+                   belongs_to: &Traceable<F, Self::P, Self::O>,
+                   location: &Self::P,
+                   rotation: &<Self::P as PointAsVector>::Vector)
+                   -> Rgba<u8> {
+        self.trace(time, max_depth, belongs_to, location, rotation)
+            .expect("Couldn't send out a ray; None returned.")
     }
 
     fn trace_unknown(&self,
                      time: &Duration,
+                     max_depth: &u32,
                      location: &Self::P,
                      rotation: &<Self::P as PointAsVector>::Vector)
                      -> Option<Rgb<u8>> {
@@ -233,7 +232,7 @@ pub trait Universe<F: CustomFloat>
 
         if belongs_to.is_some() {
             let background = Rgb { data: [255u8, 255u8, 255u8] };
-            let foreground = self.trace(time, belongs_to.unwrap(), location, rotation);
+            let foreground = self.trace_first(time, max_depth, belongs_to.unwrap(), location, rotation);
             Some(util::overlay_color::<F>(background, foreground))
         } else {
             None
@@ -242,6 +241,7 @@ pub trait Universe<F: CustomFloat>
 
     fn trace_screen_point(&self,
                           time: &Duration,
+                          max_depth: &u32,
                           screen_x: i32,
                           screen_y: i32,
                           screen_width: i32,
@@ -260,7 +260,7 @@ pub trait Universe<F: CustomFloat>
         //     println!("{}; {}:   <{}; {}; {}>", screen_x, screen_y, vector.x, vector.y, vector.z);
         // }
 
-        match self.trace_unknown(time, &point, &vector) {
+        match self.trace_unknown(time, max_depth, &point, &vector) {
             Some(color) => color,
             None => {
                 let checkerboard_size = 8;
@@ -283,6 +283,7 @@ pub trait Universe<F: CustomFloat>
         const COLOR_DIM: usize = 3;
         let buffer_width = width / context.resolution;
         let buffer_height = height / context.resolution;
+        let max_depth = self.camera().max_depth();
         let mut data: Vec<u8> = vec!(0; (buffer_width * buffer_height) as usize * COLOR_DIM);
         let mut pool = Pool::new(4);
 
@@ -293,6 +294,7 @@ pub trait Universe<F: CustomFloat>
                     let x = index as u32 % buffer_width;
                     let y = index as u32 / buffer_width;
                     let color = self.trace_screen_point(time,
+                                                        &max_depth,
                                                         x as i32,
                                                         y as i32,
                                                         buffer_width as i32,

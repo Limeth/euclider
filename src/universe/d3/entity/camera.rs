@@ -25,6 +25,7 @@ pub struct Camera3Impl<F: CustomFloat> {
     mouse_sensitivity: F,
     speed: F,
     fov: u8,
+    max_depth: u32,
 }
 
 unsafe impl<F: CustomFloat> Sync for Camera3Impl<F> {}
@@ -38,6 +39,7 @@ impl<F: CustomFloat> Camera3Impl<F> {
             mouse_sensitivity: Cast::from(0.01),
             speed: Cast::from(10.0),
             fov: 90,
+            max_depth: 10,
         }
     }
 
@@ -144,6 +146,10 @@ impl<F: CustomFloat> Camera<F, Point3<F>, NalgebraOperations3> for Camera3Impl<F
         let screen_point_3d = screen_center_point_3d + (self.up * rel_y) + (right * rel_x);
 
         (screen_point_3d - self.location).normalize()
+    }
+
+    fn max_depth(&self) -> u32 {
+        self.max_depth
     }
 }
 

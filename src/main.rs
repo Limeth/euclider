@@ -264,7 +264,7 @@ impl SimulationContext {
 
 use universe::d3::NalgebraOperations3;
 fn get_reflection_ratio_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, NalgebraOperations3>) -> F {
-    Cast::from(1.0)
+    Cast::from(0.5)
 }
 
 fn get_reflection_direction_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, NalgebraOperations3>)
@@ -304,7 +304,7 @@ fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>,
 fn transition_vacuum_vacuum<F: CustomFloat>(from: &Material<F, Point3<F>>,
                                             to: &Material<F, Point3<F>>,
                                             context: &TracingContext<F, Point3<F>, NalgebraOperations3>)
-                                            -> Rgba<u8> {
+                                            -> Option<Rgba<u8>> {
     let trace = context.trace;
     trace(context.time,
           context.intersection_traceable,
@@ -355,7 +355,7 @@ fn run<F: CustomFloat>() {
                 // }))
             )));
         entities.push(Box::new(Entity3Impl::new(
-                        Box::new(HalfSpace3::new(
+                        Box::new(HalfSpace3::from_point(
                             // Plane3::from_equation(Cast::from(1.0),
                             //                       Cast::from(0.5),
                             //                       Cast::from(0.0),
@@ -383,7 +383,7 @@ fn run<F: CustomFloat>() {
                         }))
                     )));
         entities.push(Box::new(Entity3Impl::new(
-                        Box::new(HalfSpace3::new(
+                        Box::new(HalfSpace3::from_point(
                             // Plane3::from_equation(Cast::from(1.0),
                             //                       Cast::from(0.5),
                             //                       Cast::from(0.0),
@@ -391,7 +391,7 @@ fn run<F: CustomFloat>() {
                             Plane3::new(
                                 &Point3::new(Cast::from(0.0),
                                              Cast::from(0.0),
-                                             Cast::from(0.0)),
+                                             Cast::from(-3.0)),
                                 &Vector3::new(Cast::from(0.0),
                                               Cast::from(1.0),
                                               Cast::from(0.0)),

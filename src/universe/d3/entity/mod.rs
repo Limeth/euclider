@@ -19,6 +19,7 @@ use palette;
 use palette::Hsv;
 use palette::RgbHue;
 use universe::entity::*;
+use universe::d3::NalgebraOperations3;
 use util::CustomFloat;
 
 #[allow(non_snake_case)]
@@ -30,15 +31,15 @@ pub fn AXIS_Z<F: CustomFloat>() -> Vector3<F> {
     }
 }
 
-pub type Entity3<F> = Entity<F, Point3<F>>;
-pub type Camera3<F> = Camera<F, Point3<F>>;
-pub type Updatable3<F> = Updatable<F, Point3<F>>;
-pub type Traceable3<F> = Traceable<F, Point3<F>>;
+pub type Entity3<F> = Entity<F, Point3<F>, NalgebraOperations3>;
+pub type Camera3<F> = Camera<F, Point3<F>, NalgebraOperations3>;
+pub type Updatable3<F> = Updatable<F, Point3<F>, NalgebraOperations3>;
+pub type Traceable3<F> = Traceable<F, Point3<F>, NalgebraOperations3>;
 pub type Locatable3<F> = Locatable<F, Point3<F>>;
 pub type Rotatable3<F> = Rotatable<F, Point3<F>>;
 pub type Shape3<F> = Shape<F, Point3<F>>;
 pub type Material3<F> = Material<F, Point3<F>>;
-pub type Surface3<F> = Surface<F, Point3<F>>;
+pub type Surface3<F> = Surface<F, Point3<F>, NalgebraOperations3>;
 
 pub struct Entity3Impl<F: CustomFloat> {
     shape: Box<Shape3<F>>,
@@ -61,8 +62,8 @@ impl<F: CustomFloat> Entity3Impl<F> {
     }
 }
 
-impl<F: CustomFloat> Entity<F, Point3<F>> for Entity3Impl<F> {
-    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<F, Point3<F>>> {
+impl<F: CustomFloat> Entity<F, Point3<F>, NalgebraOperations3> for Entity3Impl<F> {
+    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<F, Point3<F>, NalgebraOperations3>> {
         None
     }
 
@@ -70,7 +71,7 @@ impl<F: CustomFloat> Entity<F, Point3<F>> for Entity3Impl<F> {
         None
     }
 
-    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<F, Point3<F>>> {
+    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<F, Point3<F>, NalgebraOperations3>> {
         Some(self)
     }
 
@@ -79,7 +80,7 @@ impl<F: CustomFloat> Entity<F, Point3<F>> for Entity3Impl<F> {
     }
 }
 
-impl<F: CustomFloat> Traceable<F, Point3<F>> for Entity3Impl<F> {
+impl<F: CustomFloat> Traceable<F, Point3<F>, NalgebraOperations3> for Entity3Impl<F> {
     fn trace(&self) -> Rgba<u8> {
         Rgba { data: [0u8, 0u8, 0u8, 0u8] }
     }
@@ -332,8 +333,8 @@ impl<F: CustomFloat> PerlinSurface3<F> {
     }
 }
 
-impl<F: CustomFloat> Surface<F, Point3<F>> for PerlinSurface3<F> {
-    fn get_color<'a>(&self, context: TracingContext<'a, F, Point3<F>>) -> Rgba<u8> {
+impl<F: CustomFloat> Surface<F, Point3<F>, NalgebraOperations3> for PerlinSurface3<F> {
+    fn get_color<'a>(&self, context: TracingContext<'a, F, Point3<F>, NalgebraOperations3>) -> Rgba<u8> {
         let time_millis: F = Cast::from((context.time.clone() * 1000).as_secs() as f64 / 1000.0);
         let location = [context.intersection.location.x / self.size,
                         context.intersection.location.y / self.size,

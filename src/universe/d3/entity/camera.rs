@@ -9,6 +9,7 @@ use universe::entity::Rotatable;
 use universe::entity::Updatable;
 use universe::entity::Traceable;
 use universe::entity::Camera;
+use universe::d3::NalgebraOperations3;
 use universe::d3::entity::*;
 use num::traits::NumCast;
 use num::Zero;
@@ -110,7 +111,7 @@ impl<F: CustomFloat> Camera3Impl<F> {
     }
 }
 
-impl<F: CustomFloat> Camera<F, Point3<F>> for Camera3Impl<F> {
+impl<F: CustomFloat> Camera<F, Point3<F>, NalgebraOperations3> for Camera3Impl<F> {
     #[allow(unused_variables)]
     fn get_ray_point(&self,
                      screen_x: i32,
@@ -146,8 +147,8 @@ impl<F: CustomFloat> Camera<F, Point3<F>> for Camera3Impl<F> {
     }
 }
 
-impl<F: CustomFloat> Entity<F, Point3<F>> for Camera3Impl<F> {
-    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<F, Point3<F>>> {
+impl<F: CustomFloat> Entity<F, Point3<F>, NalgebraOperations3> for Camera3Impl<F> {
+    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<F, Point3<F>, NalgebraOperations3>> {
         Some(self)
     }
 
@@ -155,7 +156,7 @@ impl<F: CustomFloat> Entity<F, Point3<F>> for Camera3Impl<F> {
         Some(self)
     }
 
-    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<F, Point3<F>>> {
+    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<F, Point3<F>, NalgebraOperations3>> {
         None
     }
 
@@ -164,7 +165,7 @@ impl<F: CustomFloat> Entity<F, Point3<F>> for Camera3Impl<F> {
     }
 }
 
-impl<F: CustomFloat> Updatable<F, Point3<F>> for Camera3Impl<F> {
+impl<F: CustomFloat> Updatable<F, Point3<F>, NalgebraOperations3> for Camera3Impl<F> {
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext) {
         self.update_rotation(context);
 

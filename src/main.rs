@@ -262,11 +262,12 @@ impl SimulationContext {
     }
 }
 
-fn get_reflection_ratio_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>>) -> F {
-    Cast::from(0.25)
+use universe::d3::NalgebraOperations3;
+fn get_reflection_ratio_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, NalgebraOperations3>) -> F {
+    Cast::from(1.0)
 }
 
-fn get_reflection_direction_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>>)
+fn get_reflection_direction_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, NalgebraOperations3>)
                                                  -> Vector3<F> {
     // R = 2*(V dot N)*N - V
     let mut normal =
@@ -280,15 +281,20 @@ fn get_reflection_direction_test<F: CustomFloat>(context: &TracingContext<F, Poi
     na::dot(&context.intersection.direction, &normal) + context.intersection.direction
 }
 
-fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>>) -> Rgba<u8> {
-    let normal =
+fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, NalgebraOperations3>) -> Rgba<u8> {
+    let mut normal =
         context.intersection_traceable.shape().get_normal_at(&context.intersection.location);
+
+    if na::angle_between(&context.intersection.direction, &normal) > BaseFloat::frac_pi_2() {
+        normal = -normal;
+    }
+
     let angle: F = na::angle_between(&normal, &universe::d3::entity::AXIS_Z());
     let mut result = Rgba {
         data: palette::Rgba::from(Hsv::new(
                           RgbHue::from(0.0),
                           0.0,
-                          <f32 as NumCast>::from(<F as One>::one() - angle / <F as BaseFloat>::pi()).unwrap()
+                          <f32 as NumCast>::from(angle / <F as BaseFloat>::pi()).unwrap()
                           )).to_pixel(),
     };
     result.data[3] = 127;
@@ -297,7 +303,7 @@ fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>>
 
 fn transition_vacuum_vacuum<F: CustomFloat>(from: &Material<F, Point3<F>>,
                                             to: &Material<F, Point3<F>>,
-                                            context: &TracingContext<F, Point3<F>>)
+                                            context: &TracingContext<F, Point3<F>, NalgebraOperations3>)
                                             -> Rgba<u8> {
     let trace = context.trace;
     trace(context.time,
@@ -350,21 +356,49 @@ fn run<F: CustomFloat>() {
             )));
         entities.push(Box::new(Entity3Impl::new(
                         Box::new(HalfSpace3::new(
-                            Plane3::from_equation(Cast::from(1.0),
-                                                  Cast::from(0.5),
-                                                  Cast::from(0.0),
-                                                  Cast::from(-1.0)),
-                            // Plane3::new(
-                            //     &Point3::new(Cast::from(0.0),
-                            //                  Cast::from(0.0),
-                            //                  Cast::from(0.0)),
-                            //     &Vector3::new(Cast::from(0.0),
-                            //                   Cast::from(1.0),
-                            //                   Cast::from(0.0)),
-                            //     &Vector3::new(Cast::from(0.0),
-                            //                   Cast::from(10.0),
-                            //                   Cast::from(1.0)),
-                            //     ),
+                            // Plane3::from_equation(Cast::from(1.0),
+                            //                       Cast::from(0.5),
+                            //                       Cast::from(0.0),
+                            //                       Cast::from(-1.0)),
+                            Plane3::new(
+                                &Point3::new(Cast::from(0.0),
+                                             Cast::from(4.0),
+                                             Cast::from(0.0)),
+                                &Vector3::new(Cast::from(1.0),
+                                              Cast::from(0.0),
+                                              Cast::from(0.0)),
+                                &Vector3::new(Cast::from(0.0),
+                                              Cast::from(1.0),
+                                              Cast::from(1.0)),
+                                ),
+                            &Point3::new(Cast::from(0.0),
+                                         Cast::from(0.0),
+                                         Cast::from(-100.0))
+                        )),
+                        Box::new(Vacuum::new()),
+                        Some(Box::new(ComposableSurface {
+                            reflection_ratio: get_reflection_ratio_test,
+                            reflection_direction: get_reflection_direction_test,
+                            surface_color: get_surface_color_test,
+                        }))
+                    )));
+        entities.push(Box::new(Entity3Impl::new(
+                        Box::new(HalfSpace3::new(
+                            // Plane3::from_equation(Cast::from(1.0),
+                            //                       Cast::from(0.5),
+                            //                       Cast::from(0.0),
+                            //                       Cast::from(-1.0)),
+                            Plane3::new(
+                                &Point3::new(Cast::from(0.0),
+                                             Cast::from(0.0),
+                                             Cast::from(0.0)),
+                                &Vector3::new(Cast::from(0.0),
+                                              Cast::from(1.0),
+                                              Cast::from(0.0)),
+                                &Vector3::new(Cast::from(1.0),
+                                              Cast::from(0.0),
+                                              Cast::from(0.0)),
+                                ),
                             &Point3::new(Cast::from(0.0),
                                          Cast::from(0.0),
                                          Cast::from(-100.0))

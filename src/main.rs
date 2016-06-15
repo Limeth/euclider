@@ -47,6 +47,7 @@ use util::CustomFloat;
 use na::BaseFloat;
 use num::traits::NumCast;
 use num::One;
+use num::Zero;
 
 pub struct Simulation<F: CustomFloat, U: Universe<F>> {
     universe: Box<U>,
@@ -296,8 +297,8 @@ fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>,
     Alpha {
         color: Rgb::from(
                     Hsv::new(
-                        RgbHue::from(Cast::from(0.0)),
-                        Cast::from(0.0),
+                        RgbHue::from(<F as Zero>::zero()),
+                        <F as Zero>::zero(),
                         <F as NumCast>::from(angle / <F as BaseFloat>::pi()).unwrap()
                     )
                ),

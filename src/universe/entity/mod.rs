@@ -317,9 +317,9 @@ impl<F: CustomFloat, P: NumPoint<F>, O: NalgebraOperations<F, P>> Surface<F, P, 
             return intersection_color.expect("No reflection color calculated; the intersection color should exist.");
         }
 
-        util::combine_color(reflection_color.unwrap(),
-                            intersection_color.unwrap(),
-                            reflection_ratio)
+        util::combine_palette_color(reflection_color.unwrap(),
+                                    intersection_color.unwrap(),
+                                    reflection_ratio)
     }
 }
 

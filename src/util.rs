@@ -88,19 +88,28 @@ pub fn combine_palette_color<F: CustomFloat>(a: palette::Rgba<F>, b: palette::Rg
     } else if a_ratio >= Cast::from(1.0) {
         a
     } else {
-        let a_data: [F; 4] = a.to_pixel().to_rgba();
-        let b_data: [F; 4] = b.to_pixel();
+        let a_data = [
+            a.color.red,
+            a.color.green,
+            a.color.blue,
+            a.alpha,
+        ];
+        let b_data = [
+            b.color.red,
+            b.color.green,
+            b.color.blue,
+            b.alpha,
+        ];
         let data: Vec<F> = a_data
             .iter()
             .zip(b_data.iter())
             .map(|(a, b)| {
                 <F as NumCast>::from(*a).unwrap() * a_ratio +
                 <F as NumCast>::from(*b).unwrap() *
-                (<F as NumCast>::from(1.0).unwrap() - a_ratio)
+                (<F as One>::one() - a_ratio)
             })
             .collect();
-        let data = [data[0], data[1], data[2], data[3]];
-        palette::Rgba::from_pixel(&data)
+        palette::Rgba::new(data[0], data[1], data[2], data[3])
     }
 }
 

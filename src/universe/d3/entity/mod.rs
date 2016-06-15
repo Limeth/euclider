@@ -12,10 +12,10 @@ use na;
 use na::Cast;
 use na::Point3;
 use na::Vector3;
-use image::Rgba;
 use noise::perlin4;
 use noise::Seed;
 use palette;
+use palette::Rgba;
 use palette::Hsv;
 use palette::RgbHue;
 use universe::entity::*;
@@ -81,10 +81,6 @@ impl<F: CustomFloat> Entity<F, Point3<F>, NalgebraOperations3> for Entity3Impl<F
 }
 
 impl<F: CustomFloat> Traceable<F, Point3<F>, NalgebraOperations3> for Entity3Impl<F> {
-    fn trace(&self) -> Rgba<u8> {
-        Rgba { data: [0u8, 0u8, 0u8, 0u8] }
-    }
-
     fn shape(&self) -> &Shape3<F> {
         self.shape.as_ref()
     }
@@ -334,19 +330,16 @@ impl<F: CustomFloat> PerlinSurface3<F> {
 }
 
 impl<F: CustomFloat> Surface<F, Point3<F>, NalgebraOperations3> for PerlinSurface3<F> {
-    fn get_color<'a>(&self, context: TracingContext<'a, F, Point3<F>, NalgebraOperations3>) -> Rgba<u8> {
+    fn get_color<'a>(&self, context: TracingContext<'a, F, Point3<F>, NalgebraOperations3>) -> Rgba<F> {
         let time_millis: F = Cast::from((context.time.clone() * 1000).as_secs() as f64 / 1000.0);
         let location = [context.intersection.location.x / self.size,
                         context.intersection.location.y / self.size,
                         context.intersection.location.z / self.size,
                         time_millis * self.speed];
         let value = perlin4(&self.seed, &location);
-        Rgba {
-            data: palette::Rgba::from(Hsv::new(RgbHue::from(value * Cast::from(360.0)),
-                                               Cast::from(1.0),
-                                               Cast::from(1.0)))
-                .to_pixel(),
-        }
+        palette::Rgba::from(Hsv::new(RgbHue::from(value * Cast::from(360.0)),
+                                     Cast::from(1.0),
+                                     Cast::from(1.0)))
     }
 }
 

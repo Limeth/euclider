@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::any::TypeId;
 use std::borrow::Cow;
 use na;
+use na::Cast;
 use na::BaseFloat;
 use na::NumPoint;
 use na::PointAsVector;
@@ -14,8 +15,10 @@ use glium::Surface as GliumSurface;
 use glium::texture::Texture2d;
 use glium::backend::Facade;
 use glium::texture::ClientFormat;
-use image::Rgb;
-use image::Rgba;
+use image;
+use palette::Blend;
+use palette::Rgb;
+use palette::Rgba;
 use glium::BlitTarget;
 use glium::texture::RawImage2d;
 use glium::uniforms::MagnifySamplerFilter;
@@ -86,19 +89,19 @@ pub trait Universe<F: CustomFloat>
                                        fn(&Material<F, Self::P>,
                                           &Material<F, Self::P>,
                                           &TracingContext<F, Self::P, Self::O>)
-                                          -> Option<Rgba<u8>>>;
+                                          -> Option<Rgba<F>>>;
     fn transitions(&self)
                    -> &HashMap<(TypeId, TypeId),
                                fn(&Material<F, Self::P>,
                                   &Material<F, Self::P>,
                                   &TracingContext<F, Self::P, Self::O>)
-                                  -> Option<Rgba<u8>>>;
+                                  -> Option<Rgba<F>>>;
     fn set_transitions(&mut self,
                        transitions: HashMap<(TypeId, TypeId),
                                             fn(&Material<F, Self::P>,
                                                &Material<F, Self::P>,
                                                &TracingContext<F, Self::P, Self::O>)
-                                               -> Option<Rgba<u8>>>);
+                                               -> Option<Rgba<F>>>);
 
     fn trace(&self,
              time: &Duration,
@@ -106,9 +109,9 @@ pub trait Universe<F: CustomFloat>
              belongs_to: &Traceable<F, Self::P, Self::O>,
              location: &Self::P,
              rotation: &<Self::P as PointAsVector>::Vector)
-             -> Option<Rgba<u8>> {
+             -> Option<Rgba<F>> {
         let material = belongs_to.material();
-        let mut foreground: Option<Rgba<u8>> = None;
+        let mut foreground: Option<Rgba<F>> = None;
         let mut foreground_distance_squared: Option<F> = None;
 
         if *max_depth <= 0 {
@@ -190,7 +193,10 @@ pub trait Universe<F: CustomFloat>
             }
         }
 
-        foreground.or(Some(Rgba { data: [0u8, 0u8, 0u8, 0u8] }))
+        foreground.or(Some(Rgba::new(Cast::from(0.0),
+                                     Cast::from(0.0),
+                                     Cast::from(0.0),
+                                     Cast::from(0.0))))
     }
 
     fn trace_first(&self,
@@ -199,7 +205,7 @@ pub trait Universe<F: CustomFloat>
                    belongs_to: &Traceable<F, Self::P, Self::O>,
                    location: &Self::P,
                    rotation: &<Self::P as PointAsVector>::Vector)
-                   -> Rgba<u8> {
+                   -> Rgba<F> {
         self.trace(time, max_depth, belongs_to, location, rotation)
             .expect("Couldn't send out a ray; None returned.")
     }
@@ -209,7 +215,7 @@ pub trait Universe<F: CustomFloat>
                      max_depth: &u32,
                      location: &Self::P,
                      rotation: &<Self::P as PointAsVector>::Vector)
-                     -> Option<Rgb<u8>> {
+                     -> Option<Rgb<F>> {
         let mut belongs_to: Option<&Traceable<F, Self::P, Self::O>> = None;
 
         for entity in self.entities() {
@@ -231,9 +237,25 @@ pub trait Universe<F: CustomFloat>
         }
 
         if belongs_to.is_some() {
-            let background = Rgb { data: [255u8, 255u8, 255u8] };
-            let foreground = self.trace_first(time, max_depth, belongs_to.unwrap(), location, rotation);
-            Some(util::overlay_color::<F>(background, foreground))
+            let background = Rgba::from(
+                                Rgb::new(
+                                    Cast::from(1.0),
+                                    Cast::from(1.0),
+                                    Cast::from(1.0)
+                                )
+                             ).into_premultiplied();
+            let foreground = self.trace_first(time,
+                                              max_depth,
+                                              belongs_to.unwrap(),
+                                              location,
+                                              rotation)
+                                 .into_premultiplied();
+            Some(
+                Rgb::from_premultiplied(
+                    foreground.over(background)
+                )
+            )
+            // Some(util::overlay_color::<F>(background, foreground))
         } else {
             None
         }
@@ -246,7 +268,7 @@ pub trait Universe<F: CustomFloat>
                           screen_y: i32,
                           screen_width: i32,
                           screen_height: i32)
-                          -> Rgb<u8> {
+                          -> Rgb<F> {
         let camera = self.camera();
         let point = camera.get_ray_point(screen_x, screen_y, screen_width, screen_height);
         let vector = camera.get_ray_vector(screen_x, screen_y, screen_width, screen_height);
@@ -266,8 +288,8 @@ pub trait Universe<F: CustomFloat>
                 let checkerboard_size = 8;
 
                 match (screen_x / checkerboard_size + screen_y / checkerboard_size) % 2 == 0 {
-                    true => Rgb { data: [0u8, 0u8, 0u8] },
-                    false => Rgb { data: [255u8, 0u8, 255u8] },
+                    true => Rgb::new(Cast::from(0.0), Cast::from(0.0), Cast::from(0.0)),
+                    false => Rgb::new(Cast::from(1.0), Cast::from(0.0), Cast::from(1.0)),
                 }
             }
         }
@@ -287,7 +309,6 @@ pub trait Universe<F: CustomFloat>
         let mut data: Vec<u8> = vec!(0; (buffer_width * buffer_height) as usize * COLOR_DIM);
         let mut pool = Pool::new(4);
 
-        // TODO: This loop takes a long time!
         pool.scoped(|scope| {
             for (index, chunk) in &mut data.chunks_mut(COLOR_DIM).enumerate() {
                 scope.execute(move || {
@@ -299,6 +320,9 @@ pub trait Universe<F: CustomFloat>
                                                         y as i32,
                                                         buffer_width as i32,
                                                         buffer_height as i32);
+                    let color = image::Rgb {
+                        data: color.to_pixel(),
+                    };
 
                     for (i, result) in chunk.iter_mut().enumerate() {
                         *result = color.data[i];

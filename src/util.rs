@@ -29,6 +29,7 @@ use num::Num;
 use num::num_traits::ParseFloatError;
 use num::traits::NumCast;
 use num::traits::ToPrimitive;
+use palette;
 use image::Rgb;
 use image::Rgba;
 use na::BaseFloat;
@@ -78,6 +79,28 @@ pub fn combine_color<F: CustomFloat>(a: Rgba<u8>, b: Rgba<u8>, a_ratio: F) -> Rg
             })
             .collect();
         Rgba { data: [data[0], data[1], data[2], data[3]] }
+    }
+}
+
+pub fn combine_palette_color<F: CustomFloat>(a: palette::Rgba<F>, b: palette::Rgba<F>, a_ratio: F) -> palette::Rgba<F> {
+    if a_ratio <= Cast::from(0.0) {
+        b
+    } else if a_ratio >= Cast::from(1.0) {
+        a
+    } else {
+        let a_data: [F; 4] = a.to_pixel().to_rgba();
+        let b_data: [F; 4] = b.to_pixel();
+        let data: Vec<F> = a_data
+            .iter()
+            .zip(b_data.iter())
+            .map(|(a, b)| {
+                <F as NumCast>::from(*a).unwrap() * a_ratio +
+                <F as NumCast>::from(*b).unwrap() *
+                (<F as NumCast>::from(1.0).unwrap() - a_ratio)
+            })
+            .collect();
+        let data = [data[0], data[1], data[2], data[3]];
+        palette::Rgba::from_pixel(&data)
     }
 }
 

@@ -33,7 +33,9 @@ use glium::glutin::ElementState;
 use glium::glutin::Event;
 use glium::glutin::CursorState;
 use glium::glutin::MouseScrollDelta;
-use image::Rgba;
+use palette::Alpha;
+use palette::Rgb;
+use palette::Rgba;
 use palette::Hsv;
 use palette::RgbHue;
 use universe::Universe;
@@ -281,7 +283,7 @@ fn get_reflection_direction_test<F: CustomFloat>(context: &TracingContext<F, Poi
     na::dot(&context.intersection.direction, &normal) + context.intersection.direction
 }
 
-fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, NalgebraOperations3>) -> Rgba<u8> {
+fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, NalgebraOperations3>) -> Rgba<F> {
     let mut normal =
         context.intersection_traceable.shape().get_normal_at(&context.intersection.location);
 
@@ -290,21 +292,23 @@ fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>,
     }
 
     let angle: F = na::angle_between(&normal, &universe::d3::entity::AXIS_Z());
-    let mut result = Rgba {
-        data: palette::Rgba::from(Hsv::new(
-                          RgbHue::from(0.0),
-                          0.0,
-                          <f32 as NumCast>::from(angle / <F as BaseFloat>::pi()).unwrap()
-                          )).to_pixel(),
-    };
-    result.data[3] = 127;
-    result
+
+    Alpha {
+        color: Rgb::from(
+                    Hsv::new(
+                        RgbHue::from(Cast::from(0.0)),
+                        Cast::from(0.0),
+                        <F as NumCast>::from(angle / <F as BaseFloat>::pi()).unwrap()
+                    )
+               ),
+        alpha: Cast::from(0.5),
+    }
 }
 
 fn transition_vacuum_vacuum<F: CustomFloat>(from: &Material<F, Point3<F>>,
                                             to: &Material<F, Point3<F>>,
                                             context: &TracingContext<F, Point3<F>, NalgebraOperations3>)
-                                            -> Option<Rgba<u8>> {
+                                            -> Option<Rgba<F>> {
     let trace = context.trace;
     trace(context.time,
           context.intersection_traceable,

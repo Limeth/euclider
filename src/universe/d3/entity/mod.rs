@@ -128,57 +128,6 @@ impl<F: CustomFloat> Shape<F, Point3<F>> for Sphere3<F> {
     }
 }
 
-pub struct Test3 {}
-
-impl HasId for Test3 {
-    fn id(&self) -> TypeId {
-        Self::id_static()
-    }
-
-    fn as_any(&self) -> &Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut Any {
-        self
-    }
-}
-
-impl<F: CustomFloat> Shape<F, Point3<F>> for Test3 {
-    fn is_point_inside(&self, point: &Point3<F>) -> bool {
-        false
-    }
-}
-
-pub fn intersect_test<F: CustomFloat>(location: &Point3<F>,
-                                      direction: &Vector3<F>,
-                                      material: &Material<F, Point3<F>>,
-                                      void: &Shape<F, Point3<F>>)
-                                      -> Option<Intersection<F, Point3<F>>> {
-    let t: F = (<F as One>::one() - location.x) / direction.x;
-
-    if t <= <F as Zero>::zero() {
-        return None;
-    }
-
-    let result = Point3::new(location.x + t * direction.x,
-                             location.y + t * direction.y,
-                             location.z + t * direction.z);
-
-    if result.y > <F as One>::one() || result.y < <F as Zero>::zero() ||
-       result.z > <F as One>::one() || result.z < <F as Zero>::zero() {
-        return None;
-    }
-
-    Some(Intersection {
-        location: result,
-        direction: *direction,
-        normal: Vector3::new(<F as One>::one(), <F as Zero>::zero(), <F as Zero>::zero()),
-        distance_squared: na::distance_squared(location, &result),
-        float_precision: PhantomData,
-    })
-}
-
 pub fn intersect_void<F: CustomFloat>(location: &Point3<F>,
                                       direction: &Vector3<F>,
                                       material: &Material<F, Point3<F>>,

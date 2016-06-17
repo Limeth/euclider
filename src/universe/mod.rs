@@ -139,7 +139,6 @@ pub trait Universe<F: CustomFloat>
 
             match intersector(location, rotation, material, shape) {
                 Some(intersection) => {
-                    let normal = shape.get_normal_at(&intersection.location);
                     let surface = other_traceable.surface();
 
                     if surface.is_none() {
@@ -151,13 +150,15 @@ pub trait Universe<F: CustomFloat>
                     let closer_normal: <Self::P as PointAsVector>::Vector;
 
                     if <Self::O as NalgebraOperations<F, Self::P>>::angle_between(&intersection.direction,
-                                                                      &normal)
+                                                                      &intersection.normal)
                             < <F as BaseFloat>::frac_pi_2() {
-                        closer_normal = <Self::O as NalgebraOperations<F, Self::P>>::neg(&normal);
+                        closer_normal = <Self::O as NalgebraOperations<F, Self::P>>::neg(
+                                            &intersection.normal);
                         exiting = true;
                         continue; //The same behavior as the above TODO
                     } else {
-                        closer_normal = <Self::O as NalgebraOperations<F, Self::P>>::clone(&normal);
+                        closer_normal = <Self::O as NalgebraOperations<F, Self::P>>::clone(
+                                            &intersection.normal);
                         exiting = false;
                     }
 
@@ -169,7 +170,6 @@ pub trait Universe<F: CustomFloat>
                             origin_traceable: belongs_to,
                             intersection_traceable: other_traceable,
                             intersection: &intersection,
-                            intersection_normal: &normal,
                             intersection_normal_closer: &closer_normal,
                             exiting: &exiting,
                             transitions: self.transitions(),

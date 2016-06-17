@@ -61,6 +61,7 @@ pub trait HasId {
 pub struct Intersection<F: CustomFloat, P: NumPoint<F>> {
     pub location: P,
     pub direction: <P as PointAsVector>::Vector,
+    pub normal: <P as PointAsVector>::Vector,
     pub distance_squared: F,
     pub float_precision: PhantomData<F>,
 }
@@ -75,7 +76,6 @@ pub struct TracingContext<'a,
     pub origin_traceable: &'a Traceable<F, P, O>,
     pub intersection_traceable: &'a Traceable<F, P, O>,
     pub intersection: &'a Intersection<F, P>,
-    pub intersection_normal: &'a <P as PointAsVector>::Vector,
     pub intersection_normal_closer: &'a <P as PointAsVector>::Vector,
     pub exiting: &'a bool,
     pub transitions: &'a HashMap<(TypeId, TypeId),
@@ -91,7 +91,6 @@ pub struct TracingContext<'a,
 pub trait Shape<F: CustomFloat, P: NumPoint<F>>
     where Self: HasId
 {
-    fn get_normal_at(&self, point: &P) -> <P as PointAsVector>::Vector;
     fn is_point_inside(&self, point: &P) -> bool;
 }
 
@@ -407,11 +406,6 @@ impl HasId for VoidShape {
 }
 
 impl<F: CustomFloat, P: NumPoint<F>> Shape<F, P> for VoidShape {
-    fn get_normal_at(&self, point: &P) -> <P as PointAsVector>::Vector {
-        let origin: P = na::origin();
-        origin.to_vector()
-    }
-
     fn is_point_inside(&self, point: &P) -> bool {
         true
     }

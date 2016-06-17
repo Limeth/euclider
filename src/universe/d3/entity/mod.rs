@@ -123,11 +123,6 @@ impl<F: CustomFloat> HasId for Sphere3<F> {
 }
 
 impl<F: CustomFloat> Shape<F, Point3<F>> for Sphere3<F> {
-    fn get_normal_at(&self, point: &Point3<F>) -> Vector3<F> {
-        let norm = *point - self.location;
-        na::normalize(&norm)
-    }
-
     fn is_point_inside(&self, point: &Point3<F>) -> bool {
         na::distance_squared(&self.location, point) <= self.radius * self.radius
     }
@@ -150,10 +145,6 @@ impl HasId for Test3 {
 }
 
 impl<F: CustomFloat> Shape<F, Point3<F>> for Test3 {
-    fn get_normal_at(&self, point: &Point3<F>) -> Vector3<F> {
-        Vector3::new(<F as One>::one(), <F as Zero>::zero(), <F as Zero>::zero())
-    }
-
     fn is_point_inside(&self, point: &Point3<F>) -> bool {
         false
     }
@@ -182,6 +173,7 @@ pub fn intersect_test<F: CustomFloat>(location: &Point3<F>,
     Some(Intersection {
         location: result,
         direction: *direction,
+        normal: Vector3::new(<F as One>::one(), <F as Zero>::zero(), <F as Zero>::zero()),
         distance_squared: na::distance_squared(location, &result),
         float_precision: PhantomData,
     })
@@ -242,9 +234,13 @@ pub fn intersect_sphere_in_vacuum<F: CustomFloat>(location: &Point3<F>,
                                    location.y + result_vector.y,
                                    location.z + result_vector.z);
 
+    let mut normal = result_point - sphere.location;
+    let normal = na::normalize(&normal);
+
     Some(Intersection {
         location: result_point,
         direction: *direction,
+        normal: normal,
         distance_squared: na::distance_squared(location, &result_point),
         float_precision: PhantomData,
     })
@@ -272,9 +268,12 @@ pub fn intersect_plane_in_vacuum<F: CustomFloat>(location: &Point3<F>,
                                    location.y + result_vector.y,
                                    location.z + result_vector.z);
 
+    let normal = plane.normal;
+
     Some(Intersection {
         location: result_point,
         direction: *direction,
+        normal: normal,
         distance_squared: na::distance_squared(location, &result_point),
         float_precision: PhantomData,
     })
@@ -287,8 +286,16 @@ pub fn intersect_halfspace_in_vacuum<F: CustomFloat>(location: &Point3<F>,
                                                      -> Option<Intersection<F, Point3<F>>> {
     vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
     let halfspace: &HalfSpace3<F> = shape.as_any().downcast_ref::<HalfSpace3<F>>().unwrap();
+    let mut intersection = intersect_plane_in_vacuum(location, direction, vacuum, &halfspace.plane);
 
-    intersect_plane_in_vacuum(location, direction, vacuum, &halfspace.plane)
+    // Works so far, not sure why
+    if intersection.is_some() {
+        let mut intersection_unwrapped = intersection.unwrap();
+        intersection_unwrapped.normal *= -halfspace.signum;
+        intersection = Some(intersection_unwrapped);
+    }
+
+    intersection
 }
 
 pub struct PerlinSurface3<F: CustomFloat> {
@@ -390,10 +397,6 @@ impl<F: CustomFloat> HasId for Plane3<F> {
 }
 
 impl<F: CustomFloat> Shape<F, Point3<F>> for Plane3<F> {
-    fn get_normal_at(&self, point: &Point3<F>) -> Vector3<F> {
-        self.normal
-    }
-
     fn is_point_inside(&self, point: &Point3<F>) -> bool {
         false
     }
@@ -436,11 +439,6 @@ impl<F: CustomFloat> HasId for HalfSpace3<F> {
 }
 
 impl<F: CustomFloat> Shape<F, Point3<F>> for HalfSpace3<F> {
-    fn get_normal_at(&self, point: &Point3<F>) -> Vector3<F> {
-        // Works so far, not sure why
-        self.plane.get_normal_at(point) * -self.signum
-    }
-
     fn is_point_inside(&self, point: &Point3<F>) -> bool {
         // A*x + B*y + C*z + D = 0
         // ~~~~~~~~~~~~~~~ dot

@@ -273,8 +273,7 @@ fn get_reflection_ratio_test<F: CustomFloat>(context: &TracingContext<F, Point3<
 fn get_reflection_direction_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, NalgebraOperations3>)
                                                  -> Vector3<F> {
     // R = 2*(V dot N)*N - V
-    let mut normal =
-        context.intersection_traceable.shape().get_normal_at(&context.intersection.location);
+    let mut normal = context.intersection.normal;
 
     if na::angle_between(&context.intersection.direction, &normal) > BaseFloat::frac_pi_2() {
         normal = -normal;
@@ -285,8 +284,7 @@ fn get_reflection_direction_test<F: CustomFloat>(context: &TracingContext<F, Poi
 }
 
 fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, NalgebraOperations3>) -> Rgba<F> {
-    let mut normal =
-        context.intersection_traceable.shape().get_normal_at(&context.intersection.location);
+    let mut normal = context.intersection.normal;
 
     if na::angle_between(&context.intersection.direction, &normal) > BaseFloat::frac_pi_2() {
         normal = -normal;

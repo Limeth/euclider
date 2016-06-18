@@ -3,6 +3,9 @@ pub mod camera;
 use std::any::Any;
 use std::any::TypeId;
 use std::marker::PhantomData;
+use std::fmt;
+use std::fmt::Debug;
+use std::fmt::Display;
 use num::traits::NumCast;
 use num::Zero;
 use num::One;
@@ -125,6 +128,18 @@ impl<F: CustomFloat> HasId for Sphere3<F> {
 impl<F: CustomFloat> Shape<F, Point3<F>> for Sphere3<F> {
     fn is_point_inside(&self, point: &Point3<F>) -> bool {
         na::distance_squared(&self.location, point) <= self.radius * self.radius
+    }
+}
+
+impl<F: CustomFloat> Debug for Sphere3<F> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Sphere3 [ location: {:?}, radius: {:?} ]", self.location, self.radius)
+    }
+}
+
+impl<F: CustomFloat> Display for Sphere3<F> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Sphere3 [ location: {}, radius: {} ]", self.location, self.radius)
     }
 }
 
@@ -351,6 +366,18 @@ impl<F: CustomFloat> Shape<F, Point3<F>> for Plane3<F> {
     }
 }
 
+impl<F: CustomFloat> Debug for Plane3<F> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Plane3 [ normal: {:?}, constant: {:?} ]", self.normal, self.constant)
+    }
+}
+
+impl<F: CustomFloat> Display for Plane3<F> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Plane3 [ normal: {}, constant: {} ]", self.normal, self.constant)
+    }
+}
+
 pub struct HalfSpace3<F: CustomFloat> {
     plane: Plane3<F>,
     signum: F,
@@ -394,5 +421,17 @@ impl<F: CustomFloat> Shape<F, Point3<F>> for HalfSpace3<F> {
         let result: F = na::dot(&self.plane.normal, point.as_vector()) + self.plane.constant;
 
         self.signum == result.signum()
+    }
+}
+
+impl<F: CustomFloat> Debug for HalfSpace3<F> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "HalfSpace3 [ plane: {:?}, signum: {:?} ]", self.plane, self.signum)
+    }
+}
+
+impl<F: CustomFloat> Display for HalfSpace3<F> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "HalfSpace3 [ plane: {}, signum: {} ]", self.plane, self.signum)
     }
 }

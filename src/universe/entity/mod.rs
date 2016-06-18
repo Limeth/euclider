@@ -2,6 +2,7 @@ use std;
 use std::marker::PhantomData;
 use std::fmt;
 use std::fmt::Debug;
+use std::fmt::Display;
 use std::marker::Reflect;
 use std::time::Duration;
 use std::any::TypeId;
@@ -89,15 +90,101 @@ pub struct TracingContext<'a,
 }
 
 pub trait Shape<F: CustomFloat, P: NumPoint<F>>
-    where Self: HasId
+    where Self: HasId + Debug + Display
 {
     fn is_point_inside(&self, point: &P) -> bool;
 }
 
-pub trait Material<F: CustomFloat, P: NumPoint<F>> where Self: HasId + Debug {}
+pub trait Material<F: CustomFloat, P: NumPoint<F>> where Self: HasId + Debug + Display {}
 
 pub trait Surface<F: CustomFloat, P: NumPoint<F>, O: NalgebraOperations<F, P>> {
     fn get_color<'a>(&self, context: TracingContext<'a, F, P, O>) -> Rgba<F>;
+}
+
+pub struct ComposableShape<F: CustomFloat, P: NumPoint<F>,
+        A: Shape<F, P>, B: Shape<F, P>> {
+    pub a: A,
+    pub b: B,
+    pub operation: SetOperation,
+    pub float_precision: PhantomData<F>,
+    pub dimensions: PhantomData<P>,
+}
+
+#[allow(dead_code)]
+#[derive(Debug)]
+pub enum SetOperation {
+    Union, // A + B
+    Intersection,  // A && B
+    Complement,  // A - B
+    SymmetricDifference,  // A ^ B
+}
+
+impl Display for SetOperation {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl<F: CustomFloat, P: NumPoint<F>, A: Shape<F, P>, B: Shape<F, P>>
+        ComposableShape<F, P, A, B> {
+    pub fn new(a: A, b: B, operation: SetOperation) -> ComposableShape<F, P, A, B> {
+        ComposableShape {
+            a: a,
+            b: b,
+            operation: operation,
+            float_precision: PhantomData,
+            dimensions: PhantomData,
+        }
+    }
+}
+
+impl<F: 'static + CustomFloat, P: 'static + NumPoint<F>, A: 'static + Shape<F, P>, B: 'static + Shape<F, P>> Shape<F, P>
+        for ComposableShape<F, P, A, B> {
+    fn is_point_inside(&self, point: &P) -> bool {
+        match self.operation {
+            SetOperation::Union =>
+                self.a.is_point_inside(point) || self.b.is_point_inside(point),
+            SetOperation::Intersection =>
+                self.a.is_point_inside(point) && self.b.is_point_inside(point),
+            SetOperation::Complement =>
+                self.a.is_point_inside(point) && !self.b.is_point_inside(point),
+            SetOperation::SymmetricDifference =>
+                self.a.is_point_inside(point) ^ self.b.is_point_inside(point),
+        }
+    }
+}
+
+impl<F: CustomFloat, P: NumPoint<F>, A: Shape<F, P>, B: Shape<F, P>> Debug
+        for ComposableShape<F, P, A, B> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "ComposableShape [ operation: {:?} ]", self.operation)
+    }
+}
+
+impl<F: CustomFloat, P: NumPoint<F>, A: Shape<F, P>, B: Shape<F, P>> Display
+        for ComposableShape<F, P, A, B> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "ComposableShape [ a: {}, b: {}, operation: {} ]", self.a, self.b,
+               self.operation)
+    }
+}
+
+impl<F: CustomFloat, P: NumPoint<F>, A: Shape<F, P>, B: Shape<F, P>> Reflect
+        for ComposableShape<F, P, A, B> {}
+
+impl<F: 'static + CustomFloat, P: 'static + NumPoint<F>, A: 'static + Shape<F, P>, B: 'static + Shape<F, P>> HasId
+        for ComposableShape<F, P, A, B> {
+    fn id(&self) -> TypeId {
+        Self::id_static()
+    }
+
+    fn as_any(&self) -> &Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut Any {
+        self
+    }
 }
 
 // pub trait AbstractSurface<F: CustomFloat, P: NumPoint<F>> {
@@ -300,7 +387,8 @@ impl<F: CustomFloat, P: NumPoint<F>, O: NalgebraOperations<F, P>> ComposableSurf
     }
 }
 
-impl<F: CustomFloat, P: NumPoint<F>, O: NalgebraOperations<F, P>> Surface<F, P, O> for ComposableSurface<F, P, O> {
+impl<F: CustomFloat, P: NumPoint<F>, O: NalgebraOperations<F, P>> Surface<F, P, O>
+        for ComposableSurface<F, P, O> {
     fn get_color(&self, context: TracingContext<F, P, O>) -> Rgba<F> {
         let reflection_ratio = self.get_reflection_ratio(&context)
             .min(<F as NumCast>::from(1.0).unwrap())
@@ -379,7 +467,13 @@ impl<F: CustomFloat, P: NumPoint<F>> Material<F, P> for Vacuum {}
 
 impl Debug for Vacuum {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Material [ Vacuum ]")
+        write!(f, "Vacuum")
+    }
+}
+
+impl Display for Vacuum {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Vacuum")
     }
 }
 
@@ -408,6 +502,18 @@ impl HasId for VoidShape {
 impl<F: CustomFloat, P: NumPoint<F>> Shape<F, P> for VoidShape {
     fn is_point_inside(&self, point: &P) -> bool {
         true
+    }
+}
+
+impl Debug for VoidShape {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "VoidShape")
+    }
+}
+
+impl Display for VoidShape {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "VoidShape")
     }
 }
 

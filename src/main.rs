@@ -413,6 +413,57 @@ fn run<F: CustomFloat>() {
                             surface_color: get_surface_color_test,
                         }))
                     )));
+        entities.push(Box::new(Entity3Impl::new(
+                    Box::new(ComposableShape::new(
+                        HalfSpace3::from_point(
+                            // Plane3::from_equation(Cast::from(1.0),
+                            //                       Cast::from(0.5),
+                            //                       Cast::from(0.0),
+                            //                       Cast::from(-1.0)),
+                            Plane3::new(
+                                &Point3::new(Cast::from(0.0),
+                                Cast::from(0.0),
+                                Cast::from(-3.0)),
+                                &Vector3::new(Cast::from(0.0),
+                                Cast::from(1.0),
+                                Cast::from(0.0)),
+                                &Vector3::new(Cast::from(1.0),
+                                Cast::from(0.0),
+                                Cast::from(0.0)),
+                            ),
+                            &Point3::new(Cast::from(0.0),
+                            Cast::from(100.0),
+                            Cast::from(0.0))
+                        ),
+                        HalfSpace3::from_point(
+                            // Plane3::from_equation(Cast::from(1.0),
+                            //                       Cast::from(0.5),
+                            //                       Cast::from(0.0),
+                            //                       Cast::from(-1.0)),
+                            Plane3::new(
+                                &Point3::new(Cast::from(0.0),
+                                Cast::from(3.0),
+                                Cast::from(0.0)),
+                                &Vector3::new(Cast::from(0.0),
+                                Cast::from(0.0),
+                                Cast::from(1.0)),
+                                &Vector3::new(Cast::from(1.0),
+                                Cast::from(0.0),
+                                Cast::from(0.0)),
+                            ),
+                            &Point3::new(Cast::from(0.0),
+                            Cast::from(0.0),
+                            Cast::from(0.0))
+                        ),
+                        SetOperation::Complement
+                        )),
+                        Box::new(Vacuum::new()),
+                        Some(Box::new(ComposableSurface {
+                            reflection_ratio: get_reflection_ratio_test,
+                            reflection_direction: get_reflection_direction_test,
+                            surface_color: get_surface_color_test,
+                        }))
+                    )));
         entities.push(Box::new(Void::new_with_vacuum()));
     }
 

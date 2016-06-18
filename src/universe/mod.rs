@@ -131,11 +131,13 @@ pub trait Universe<F: CustomFloat>
             let shape_id = shape.id();
             let intersector = self.intersectors().get(&(material_id, shape_id));
 
-            if intersector.is_none() {
-                continue;
-            }
+            let intersector = intersector.expect(&format!("Couldn't find an intersector for material {} and shape {}.",
+                                                 material, shape));
+            // if intersector.is_none() {
+            //     continue;
+            // }
 
-            let intersector = intersector.unwrap();
+            // let intersector = intersector.unwrap();
 
             match intersector(location, rotation, material, shape) {
                 Some(intersection) => {

@@ -17,17 +17,16 @@ use util::CustomFloat;
 pub struct Universe3D<F: CustomFloat> {
     camera: Box<Camera3<F>>,
     entities: Vec<Box<Entity3<F>>>,
-    operations: NalgebraOperations3,
     intersections: HashMap<(TypeId, TypeId),
                            fn(&Point3<F>,
                               &Vector3<F>,
-                              &Material<F, Point3<F>>,
-                              &Shape<F, Point3<F>>)
-                              -> Option<Intersection<F, Point3<F>>>>,
+                              &Material<F, Point3<F>, Vector3<F>>,
+                              &Shape<F, Point3<F>, Vector3<F>>)
+                              -> Option<Intersection<F, Point3<F>, Vector3<F>>>>,
     transitions: HashMap<(TypeId, TypeId),
-                         fn(&Material<F, Point3<F>>,
-                            &Material<F, Point3<F>>,
-                            &TracingContext<F, Point3<F>, NalgebraOperations3>)
+                         fn(&Material<F, Point3<F>, Vector3<F>>,
+                            &Material<F, Point3<F>, Vector3<F>>,
+                            &TracingContext<F, Point3<F>, Vector3<F>, NalgebraOperations3>)
                             -> Option<Rgba<F>>>,
 }
 
@@ -36,7 +35,6 @@ impl<F: CustomFloat> Universe3D<F> {
         Universe3D {
             camera: Box::new(Camera3Impl::new()),
             entities: Vec::new(),
-            operations: NalgebraOperations3 {},
             intersections: HashMap::new(),
             transitions: HashMap::new(),
         }
@@ -45,6 +43,7 @@ impl<F: CustomFloat> Universe3D<F> {
 
 impl<F: CustomFloat> Universe<F> for Universe3D<F> {
     type P = Point3<F>;
+    type V = Vector3<F>;
     type O = NalgebraOperations3;
 
     // fn trace(&self, location: &Point3<F>, rotation: &Vector3<F>) -> Option<Rgb<u8>> {
@@ -57,7 +56,7 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
     //     })
     // }
 
-    fn camera_mut(&mut self) -> &mut Camera<F, Point3<F>, NalgebraOperations3> {
+    fn camera_mut(&mut self) -> &mut Camera<F, Point3<F>, Vector3<F>, NalgebraOperations3> {
         &mut *self.camera
     }
 
@@ -85,9 +84,9 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
                          -> &mut HashMap<(TypeId, TypeId),
                                          fn(&Self::P,
                                                      &<Self::P as PointAsVector>::Vector,
-                                                     &Material<F, Self::P>,
-                                                     &Shape<F, Self::P>)
-                                                     -> Option<Intersection<F, Self::P>>> {
+                                                     &Material<F, Self::P, Self::V>,
+                                                     &Shape<F, Self::P, Self::V>)
+                                                     -> Option<Intersection<F, Self::P, Self::V>>> {
         &mut self.intersections
     }
 
@@ -95,45 +94,44 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
                     -> &HashMap<(TypeId, TypeId),
                                 fn(&Self::P,
                                    &<Self::P as PointAsVector>::Vector,
-                                   &Material<F, Self::P>,
-                                   &Shape<F, Self::P>)
-                                   -> Option<Intersection<F, Self::P>>> {
+                                   &Material<F, Self::P, Self::V>,
+                                   &Shape<F, Self::P, Self::V>)
+                                   -> Option<Intersection<F, Self::P, Self::V>>> {
         &self.intersections
     }
 
-    #[rustfmt_skip]
     fn set_intersectors(&mut self,
                          intersections: HashMap<(TypeId, TypeId),
                                                 fn(&Self::P,
                                                             &<Self::P as PointAsVector>::Vector,
-                                                            &Material<F, Self::P>,
-                                                            &Shape<F, Self::P>)
-                                                            -> Option<Intersection<F, Self::P>>>) {
+                                                            &Material<F, Self::P, Self::V>,
+                                                            &Shape<F, Self::P, Self::V>)
+                                                            -> Option<Intersection<F, Self::P, Self::V>>>) {
         self.intersections = intersections;
     }
 
     fn transitions_mut(&mut self)
                        -> &mut HashMap<(TypeId, TypeId),
-                                       fn(&Material<F, Self::P>,
-                                          &Material<F, Self::P>,
-                                          &TracingContext<F, Self::P, Self::O>)
+                                       fn(&Material<F, Self::P, Self::V>,
+                                          &Material<F, Self::P, Self::V>,
+                                          &TracingContext<F, Self::P, Self::V, Self::O>)
                                           -> Option<Rgba<F>>> {
         &mut self.transitions
     }
 
     fn transitions(&self)
                    -> &HashMap<(TypeId, TypeId),
-                               fn(&Material<F, Self::P>,
-                                  &Material<F, Self::P>,
-                                  &TracingContext<F, Self::P, Self::O>)
+                               fn(&Material<F, Self::P, Self::V>,
+                                  &Material<F, Self::P, Self::V>,
+                                  &TracingContext<F, Self::P, Self::V, Self::O>)
                                   -> Option<Rgba<F>>> {
         &self.transitions
     }
     fn set_transitions(&mut self,
                        transitions: HashMap<(TypeId, TypeId),
-                                            fn(&Material<F, Self::P>,
-                                               &Material<F, Self::P>,
-                                               &TracingContext<F, Self::P, Self::O>)
+                                            fn(&Material<F, Self::P, Self::V>,
+                                               &Material<F, Self::P, Self::V>,
+                                               &TracingContext<F, Self::P, Self::V, Self::O>)
                                                -> Option<Rgba<F>>>) {
         self.transitions = transitions
     }
@@ -142,7 +140,7 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
 #[derive(Copy, Clone)]
 pub struct NalgebraOperations3;
 
-impl<F: CustomFloat> NalgebraOperations<F, Point3<F>> for NalgebraOperations3 {
+impl<F: CustomFloat> NalgebraOperations<F, Point3<F>, Vector3<F>> for NalgebraOperations3 {
     fn to_point(vector: &Vector3<F>) -> Point3<F> {
         vector.to_point()
     }

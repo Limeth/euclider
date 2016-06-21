@@ -113,7 +113,7 @@ impl<F: CustomFloat> Camera3Impl<F> {
     }
 }
 
-impl<F: CustomFloat> Camera<F, Point3<F>, NalgebraOperations3> for Camera3Impl<F> {
+impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>, NalgebraOperations3> for Camera3Impl<F> {
     #[allow(unused_variables)]
     fn get_ray_point(&self,
                      screen_x: i32,
@@ -153,8 +153,8 @@ impl<F: CustomFloat> Camera<F, Point3<F>, NalgebraOperations3> for Camera3Impl<F
     }
 }
 
-impl<F: CustomFloat> Entity<F, Point3<F>, NalgebraOperations3> for Camera3Impl<F> {
-    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<F, Point3<F>, NalgebraOperations3>> {
+impl<F: CustomFloat> Entity<F, Point3<F>, Vector3<F>, NalgebraOperations3> for Camera3Impl<F> {
+    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<F, Point3<F>, Vector3<F>, NalgebraOperations3>> {
         Some(self)
     }
 
@@ -162,7 +162,7 @@ impl<F: CustomFloat> Entity<F, Point3<F>, NalgebraOperations3> for Camera3Impl<F
         Some(self)
     }
 
-    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<F, Point3<F>, NalgebraOperations3>> {
+    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<F, Point3<F>, Vector3<F>, NalgebraOperations3>> {
         None
     }
 
@@ -171,7 +171,7 @@ impl<F: CustomFloat> Entity<F, Point3<F>, NalgebraOperations3> for Camera3Impl<F
     }
 }
 
-impl<F: CustomFloat> Updatable<F, Point3<F>, NalgebraOperations3> for Camera3Impl<F> {
+impl<F: CustomFloat> Updatable<F, Point3<F>, Vector3<F>, NalgebraOperations3> for Camera3Impl<F> {
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext) {
         self.update_rotation(context);
 
@@ -209,7 +209,7 @@ impl<F: CustomFloat> Updatable<F, Point3<F>, NalgebraOperations3> for Camera3Imp
     }
 }
 
-impl<F: CustomFloat> Locatable<F, Point3<F>> for Camera3Impl<F> {
+impl<F: CustomFloat> Locatable<F, Point3<F>, Vector3<F>> for Camera3Impl<F> {
     fn location_mut(&mut self) -> &mut Point3<F> {
         &mut self.location
     }
@@ -223,7 +223,7 @@ impl<F: CustomFloat> Locatable<F, Point3<F>> for Camera3Impl<F> {
     }
 }
 
-impl<F: CustomFloat> Rotatable<F, Point3<F>> for Camera3Impl<F> {
+impl<F: CustomFloat> Rotatable<F, Point3<F>, Vector3<F>> for Camera3Impl<F> {
     fn rotation_mut(&mut self) -> &mut Vector3<F> {
         &mut self.forward
     }

@@ -5,7 +5,6 @@ use std::time::Duration;
 use std::collections::HashMap;
 use std::any::TypeId;
 use std::borrow::Cow;
-use na;
 use na::Cast;
 use na::BaseFloat;
 use na::NumPoint;
@@ -25,15 +24,17 @@ use glium::uniforms::MagnifySamplerFilter;
 use scoped_threadpool::Pool;
 use SimulationContext;
 use universe::entity::*;
-use util;
+use util::CustomPoint;
+use util::CustomVector;
 use util::CustomFloat;
 use util::Consts;
 
 pub trait Universe<F: CustomFloat>
     where Self: Sync
 {
-    type P: NumPoint<F>;
-    type O: NalgebraOperations<F, Self::P>;
+    type P: CustomPoint<F, Self::V>;
+    type V: CustomVector<F>;
+    type O: NalgebraOperations<F, Self::P, Self::V>;
     // Generics hell I might need in the future:
     //
     // fn camera_mut<C>(&mut self) -> &mut C where C: Camera<Self::P, Self::V>;
@@ -43,70 +44,70 @@ pub trait Universe<F: CustomFloat>
     // fn entities<E>(&self) -> &Vec<Box<E>> where E: Entity<Self::P, Self::V>;
     // fn set_entities<E>(&mut self, entities: Vec<Box<E>>) where E: Entity<Self::P, Self::V>;
     // fn intersections_mut<F, M, S>(&mut self) -> &mut HashMap<(TypeId, TypeId), F>
-    //     where F: Fn(M, S) -> Option<F, Self::P>,
+    //     where F: Fn(M, S) -> Option<F, Self::P, Self::V>,
     //           M: Material<Self::P, Self::V>,
     //           S: Shape<Self::P, Self::V>;
     // fn intersections<F, M, S>(&self) -> &HashMap<(TypeId, TypeId), F>
-    //     where F: Fn(M, S) -> Option<F, Self::P>,
+    //     where F: Fn(M, S) -> Option<F, Self::P, Self::V>,
     //           M: Material<Self::P, Self::V>,
     //           S: Shape<Self::P, Self::V>;
     // fn set_intersections<F, M, S>(&mut self, intersections: &mut HashMap<(TypeId, TypeId), F>)
-    //     where F: Fn(M, S) -> Option<F, Self::P>,
+    //     where F: Fn(M, S) -> Option<F, Self::P, Self::V>,
     //           M: Material<Self::P, Self::V>,
     //           S: Shape<Self::P, Self::V>;
     /// FIXME: Temporary method, because there is currently no way to do this in nalgebra
-    fn camera_mut(&mut self) -> &mut Camera<F, Self::P, Self::O>;
-    fn camera(&self) -> &Camera<F, Self::P, Self::O>;
-    fn set_camera(&mut self, camera: Box<Camera<F, Self::P, Self::O>>);
-    fn entities_mut(&mut self) -> &mut Vec<Box<Entity<F, Self::P, Self::O>>>;
-    fn entities(&self) -> &Vec<Box<Entity<F, Self::P, Self::O>>>;
-    fn set_entities(&mut self, entities: Vec<Box<Entity<F, Self::P, Self::O>>>);
+    fn camera_mut(&mut self) -> &mut Camera<F, Self::P, Self::V, Self::O>;
+    fn camera(&self) -> &Camera<F, Self::P, Self::V, Self::O>;
+    fn set_camera(&mut self, camera: Box<Camera<F, Self::P, Self::V, Self::O>>);
+    fn entities_mut(&mut self) -> &mut Vec<Box<Entity<F, Self::P, Self::V, Self::O>>>;
+    fn entities(&self) -> &Vec<Box<Entity<F, Self::P, Self::V, Self::O>>>;
+    fn set_entities(&mut self, entities: Vec<Box<Entity<F, Self::P, Self::V, Self::O>>>);
     /// Calculates the intersection of the shape (second) in the material (first)
     fn intersectors_mut(&mut self)
                          -> &mut HashMap<(TypeId, TypeId),
                                          fn(&Self::P,
                                             &<Self::P as PointAsVector>::Vector,
-                                            &Material<F, Self::P>,
-                                            &Shape<F, Self::P>)
-                                            -> Option<Intersection<F, Self::P>>>;
+                                            &Material<F, Self::P, Self::V>,
+                                            &Shape<F, Self::P, Self::V>)
+                                            -> Option<Intersection<F, Self::P, Self::V>>>;
     fn intersectors(&self)
                     -> &HashMap<(TypeId, TypeId),
                                 fn(&Self::P,
                                    &<Self::P as PointAsVector>::Vector,
-                                   &Material<F, Self::P>,
-                                   &Shape<F, Self::P>)
-                                   -> Option<Intersection<F, Self::P>>>;
+                                   &Material<F, Self::P, Self::V>,
+                                   &Shape<F, Self::P, Self::V>)
+                                   -> Option<Intersection<F, Self::P, Self::V>>>;
     fn set_intersectors(&mut self,
                          intersections: HashMap<(TypeId, TypeId),
                                                 fn(&Self::P,
                                                    &<Self::P as PointAsVector>::Vector,
-                                                   &Material<F, Self::P>,
-                                                   &Shape<F, Self::P>)
-                                                   -> Option<Intersection<F, Self::P>>>);
+                                                   &Material<F, Self::P, Self::V>,
+                                                   &Shape<F, Self::P, Self::V>)
+                                                   -> Option<Intersection<F, Self::P, Self::V>>>);
     /// Stores the behavior of a ray passing from the first material to the second
     fn transitions_mut(&mut self)
                        -> &mut HashMap<(TypeId, TypeId),
-                                       fn(&Material<F, Self::P>,
-                                          &Material<F, Self::P>,
-                                          &TracingContext<F, Self::P, Self::O>)
+                                       fn(&Material<F, Self::P, Self::V>,
+                                          &Material<F, Self::P, Self::V>,
+                                          &TracingContext<F, Self::P, Self::V, Self::O>)
                                           -> Option<Rgba<F>>>;
     fn transitions(&self)
                    -> &HashMap<(TypeId, TypeId),
-                               fn(&Material<F, Self::P>,
-                                  &Material<F, Self::P>,
-                                  &TracingContext<F, Self::P, Self::O>)
+                               fn(&Material<F, Self::P, Self::V>,
+                                  &Material<F, Self::P, Self::V>,
+                                  &TracingContext<F, Self::P, Self::V, Self::O>)
                                   -> Option<Rgba<F>>>;
     fn set_transitions(&mut self,
                        transitions: HashMap<(TypeId, TypeId),
-                                            fn(&Material<F, Self::P>,
-                                               &Material<F, Self::P>,
-                                               &TracingContext<F, Self::P, Self::O>)
+                                            fn(&Material<F, Self::P, Self::V>,
+                                               &Material<F, Self::P, Self::V>,
+                                               &TracingContext<F, Self::P, Self::V, Self::O>)
                                                -> Option<Rgba<F>>>);
 
     fn trace(&self,
              time: &Duration,
              max_depth: &u32,
-             belongs_to: &Traceable<F, Self::P, Self::O>,
+             belongs_to: &Traceable<F, Self::P, Self::V, Self::O>,
              location: &Self::P,
              rotation: &<Self::P as PointAsVector>::Vector)
              -> Option<Rgba<F>> {
@@ -151,15 +152,15 @@ pub trait Universe<F: CustomFloat>
                     let exiting: bool;
                     let closer_normal: <Self::P as PointAsVector>::Vector;
 
-                    if <Self::O as NalgebraOperations<F, Self::P>>::angle_between(&intersection.direction,
+                    if <Self::O as NalgebraOperations<F, Self::P, Self::V>>::angle_between(&intersection.direction,
                                                                       &intersection.normal)
                             < <F as BaseFloat>::frac_pi_2() {
-                        closer_normal = <Self::O as NalgebraOperations<F, Self::P>>::neg(
+                        closer_normal = <Self::O as NalgebraOperations<F, Self::P, Self::V>>::neg(
                                             &intersection.normal);
                         exiting = true;
                         continue; //The same behavior as the above TODO
                     } else {
-                        closer_normal = <Self::O as NalgebraOperations<F, Self::P>>::clone(
+                        closer_normal = <Self::O as NalgebraOperations<F, Self::P, Self::V>>::clone(
                                             &intersection.normal);
                         exiting = false;
                     }
@@ -204,7 +205,7 @@ pub trait Universe<F: CustomFloat>
     fn trace_first(&self,
                    time: &Duration,
                    max_depth: &u32,
-                   belongs_to: &Traceable<F, Self::P, Self::O>,
+                   belongs_to: &Traceable<F, Self::P, Self::V, Self::O>,
                    location: &Self::P,
                    rotation: &<Self::P as PointAsVector>::Vector)
                    -> Rgba<F> {
@@ -218,7 +219,7 @@ pub trait Universe<F: CustomFloat>
                      location: &Self::P,
                      rotation: &<Self::P as PointAsVector>::Vector)
                      -> Option<Rgb<F>> {
-        let mut belongs_to: Option<&Traceable<F, Self::P, Self::O>> = None;
+        let mut belongs_to: Option<&Traceable<F, Self::P, Self::V, Self::O>> = None;
 
         for entity in self.entities() {
             let traceable = entity.as_traceable();
@@ -227,8 +228,8 @@ pub trait Universe<F: CustomFloat>
                 continue;
             }
 
-            let traceable: &Traceable<F, Self::P, Self::O> = traceable.unwrap();
-            let shape: &Shape<F, Self::P> = traceable.shape();
+            let traceable: &Traceable<F, Self::P, Self::V, Self::O> = traceable.unwrap();
+            let shape: &Shape<F, Self::P, Self::V> = traceable.shape();
 
             if !shape.is_point_inside(location) {
                 continue;
@@ -364,7 +365,7 @@ pub trait Universe<F: CustomFloat>
     }
 }
 
-pub trait NalgebraOperations<F: CustomFloat, P: NumPoint<F>> {
+pub trait NalgebraOperations<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F>> {
     fn to_point(vector: &<P as PointAsVector>::Vector) -> P;
     fn dot(first: &<P as PointAsVector>::Vector,
            second: &<P as PointAsVector>::Vector)

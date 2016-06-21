@@ -32,9 +32,30 @@ use num::traits::ToPrimitive;
 use palette;
 use image::Rgb;
 use image::Rgba;
+use na;
 use na::BaseFloat;
 use na::Cast;
 use na::ApproxEq;
+use na::NumPoint;
+use na::NumVector;
+use na::PointAsVector;
+use na::FloatPoint;
+use na::FloatVector;
+use na::PartialOrder;
+use na::Shape;
+use na::Indexable;
+use na::Repeat;
+use na::Dimension;
+use na::Axpy;
+use na::Iterable;
+use na::IterableMut;
+use na::Dot;
+use na::Norm;
+use na::Mean;
+use core::iter::FromIterator;
+use na::Point3;
+use na::Vector3;
+use std::mem;
 
 pub trait RemoveIf<T, C> {
     fn remove_if<F>(&mut self, f: F) -> C where F: Fn(&T) -> bool;
@@ -155,6 +176,150 @@ pub fn overlay_color<F: CustomFloat>(bottom: Rgb<u8>, top: Rgba<u8>) -> Rgb<u8> 
     }
 }
 
+pub trait CustomPoint<F: CustomFloat, V: CustomVector<F>>:
+    // Rotate<O> +
+    PartialOrder +
+    Div<F, Output=Self> +
+    DivAssign<F> +
+    Mul<F, Output=Self> +
+    MulAssign<F> +
+    Add<F, Output=Self> +
+    AddAssign<F> +
+    Sub<F, Output=Self> +
+    SubAssign<F> +
+    // Cast<Self> +
+    // Implement for generic array lengths
+    // AsRef<[N; 3]>
+    // AsMut<[N; 3]>
+    // From<&'a [N; 3]>
+    // From<&'a mut [N; 3]>
+    // Index<Output=[N]::Output> +
+    // IndexMut<Output=[N]::Output> +
+    Shape<usize> +
+    Indexable<usize, F> +
+    Repeat<F> +
+    Dimension +
+    PointAsVector<Vector=V> +
+    Sub<Self, Output=V> +
+    Neg<Output=Self> +
+    Add<V, Output=Self> +
+    AddAssign<V> +
+    Sub<V, Output=Self> +
+    SubAssign<V> +
+    ApproxEq<F> +
+    FromIterator<F> +
+    // Bounded +
+    Axpy<F> +
+    Iterable<F> +
+    IterableMut<F> +
+    // ToHomogeneous<Point4<N>>
+    // FromHomogeneous<Point4<N>>
+    NumPoint<F> +
+    FloatPoint<F> +
+    // Arbitrary +
+    // Rand +
+    Display +
+    // Mul<UnitQuaternion<F>>
+    // MulAssign<UnitQuaternion<F>>
+    // Mul<Rotation3<F>>
+    // MulAssign<Rotation3<F>>
+    Copy +
+    Debug +
+    // Hash +
+    Clone +
+    // Decodable +
+    // Encodable +
+    PartialEq +
+    // Eq +
+    'static {}
+
+pub trait CustomVector<F: CustomFloat>:
+    // Rotate<O> +
+    PartialOrder +
+    Div<F, Output=Self> +
+    DivAssign<F> +
+    Mul<F, Output=Self> +
+    MulAssign<F> +
+    Add<F, Output=Self> +
+    AddAssign<F> +
+    Sub<F, Output=Self> +
+    SubAssign<F> +
+    // Cast<Self> +
+    // Implement for generic array lengths
+    // AsRef<[N; 3]>
+    // AsMut<[N; 3]>
+    // From<&'a [N; 3]>
+    // From<&'a mut [N; 3]>
+    // Index<Output=[N]::Output> +
+    // IndexMut<Output=[N]::Output> +
+    Shape<usize> +
+    Indexable<usize, F> +
+    Repeat<F> +
+    Dimension +
+    Neg<Output=Self> +
+    Dot<F> +
+    Norm<F> +
+    Mean<F> +
+    Add<Self, Output=Self> +
+    AddAssign<Self> +
+    Sub<Self, Output=Self> +
+    SubAssign<Self> +
+    ApproxEq<F> +
+    FromIterator<F> +
+    // Bounded +
+    Axpy<F> +
+    Iterable<F> +
+    IterableMut<F> +
+    // ToHomogeneous<Point4<N>>
+    // FromHomogeneous<Point4<N>>
+    NumVector<F> +
+    FloatVector<F> +
+    // Arbitrary +
+    // Rand +
+    Display +
+    // Mul<UnitQuaternion<F>>
+    // MulAssign<UnitQuaternion<F>>
+    // Mul<Rotation3<F>>
+    // MulAssign<Rotation3<F>>
+    Copy +
+    Debug +
+    // Hash +
+    Clone +
+    // Decodable +
+    // Encodable +
+    PartialEq +
+    // Eq +
+    'static {}
+
+// pub trait VectorAsPoint<F: CustomFloat> {
+//     fn to_point(self) -> Self::Point;
+//     fn as_point(&self) -> &CustomVector<F>;
+//     fn set_coords(&mut self, coords: Self::Point);
+// }
+
+impl<F: CustomFloat> CustomPoint<F, Vector3<F>> for Point3<F> {}
+impl<F: CustomFloat> CustomVector<F> for Vector3<F> {}
+
+// impl<F: CustomFloat> VectorAsPoint for Vector3<F> {
+//     type Point = Point3<F>;
+
+//     fn to_point(self) -> Self::Point {
+//         na::origin::<Self::Point>() + self
+//     }
+
+//     fn as_point(&self) -> &Self::Point {
+//         unsafe {
+//             mem::transmute(self)
+//         }
+//     }
+
+//     fn set_coords(&mut self, coords: Self::Point) {
+//         self.x = coords.x;
+//         self.y = coords.y;
+//         self.z = coords.z;
+//     }
+// }
+
 pub trait CustomFloat:
     BaseFloat +
     Consts +
@@ -168,6 +333,7 @@ pub trait CustomFloat:
     Debug +
     Default +
     Clone +
+    Copy +
     PartialOrd<Self> +
     PartialEq<Self> +
     RemAssign<Self> +

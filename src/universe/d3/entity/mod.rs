@@ -34,15 +34,15 @@ pub fn AXIS_Z<F: CustomFloat>() -> Vector3<F> {
     }
 }
 
-pub type Entity3<F> = Entity<F, Point3<F>, NalgebraOperations3>;
-pub type Camera3<F> = Camera<F, Point3<F>, NalgebraOperations3>;
-pub type Updatable3<F> = Updatable<F, Point3<F>, NalgebraOperations3>;
-pub type Traceable3<F> = Traceable<F, Point3<F>, NalgebraOperations3>;
-pub type Locatable3<F> = Locatable<F, Point3<F>>;
-pub type Rotatable3<F> = Rotatable<F, Point3<F>>;
-pub type Shape3<F> = Shape<F, Point3<F>>;
-pub type Material3<F> = Material<F, Point3<F>>;
-pub type Surface3<F> = Surface<F, Point3<F>, NalgebraOperations3>;
+pub type Entity3<F> = Entity<F, Point3<F>, Vector3<F>, NalgebraOperations3>;
+pub type Camera3<F> = Camera<F, Point3<F>, Vector3<F>, NalgebraOperations3>;
+pub type Updatable3<F> = Updatable<F, Point3<F>, Vector3<F>, NalgebraOperations3>;
+pub type Traceable3<F> = Traceable<F, Point3<F>, Vector3<F>, NalgebraOperations3>;
+pub type Locatable3<F> = Locatable<F, Point3<F>, Vector3<F>>;
+pub type Rotatable3<F> = Rotatable<F, Point3<F>, Vector3<F>>;
+pub type Shape3<F> = Shape<F, Point3<F>, Vector3<F>>;
+pub type Material3<F> = Material<F, Point3<F>, Vector3<F>>;
+pub type Surface3<F> = Surface<F, Point3<F>, Vector3<F>, NalgebraOperations3>;
 
 pub struct Entity3Impl<F: CustomFloat> {
     shape: Box<Shape3<F>>,
@@ -65,8 +65,8 @@ impl<F: CustomFloat> Entity3Impl<F> {
     }
 }
 
-impl<F: CustomFloat> Entity<F, Point3<F>, NalgebraOperations3> for Entity3Impl<F> {
-    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<F, Point3<F>, NalgebraOperations3>> {
+impl<F: CustomFloat> Entity<F, Point3<F>, Vector3<F>, NalgebraOperations3> for Entity3Impl<F> {
+    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<F, Point3<F>, Vector3<F>, NalgebraOperations3>> {
         None
     }
 
@@ -74,7 +74,7 @@ impl<F: CustomFloat> Entity<F, Point3<F>, NalgebraOperations3> for Entity3Impl<F
         None
     }
 
-    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<F, Point3<F>, NalgebraOperations3>> {
+    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<F, Point3<F>, Vector3<F>, NalgebraOperations3>> {
         Some(self)
     }
 
@@ -83,7 +83,7 @@ impl<F: CustomFloat> Entity<F, Point3<F>, NalgebraOperations3> for Entity3Impl<F
     }
 }
 
-impl<F: CustomFloat> Traceable<F, Point3<F>, NalgebraOperations3> for Entity3Impl<F> {
+impl<F: CustomFloat> Traceable<F, Point3<F>, Vector3<F>, NalgebraOperations3> for Entity3Impl<F> {
     fn shape(&self) -> &Shape3<F> {
         self.shape.as_ref()
     }
@@ -125,7 +125,7 @@ impl<F: CustomFloat> HasId for Sphere3<F> {
     }
 }
 
-impl<F: CustomFloat> Shape<F, Point3<F>> for Sphere3<F> {
+impl<F: CustomFloat> Shape<F, Point3<F>, Vector3<F>> for Sphere3<F> {
     fn is_point_inside(&self, point: &Point3<F>) -> bool {
         na::distance_squared(&self.location, point) <= self.radius * self.radius
     }
@@ -143,20 +143,21 @@ impl<F: CustomFloat> Display for Sphere3<F> {
     }
 }
 
+#[allow(unused_variables)]
 pub fn intersect_void<F: CustomFloat>(location: &Point3<F>,
                                       direction: &Vector3<F>,
-                                      material: &Material<F, Point3<F>>,
-                                      void: &Shape<F, Point3<F>>)
-                                      -> Option<Intersection<F, Point3<F>>> {
+                                      material: &Material<F, Point3<F>, Vector3<F>>,
+                                      void: &Shape<F, Point3<F>, Vector3<F>>)
+                                      -> Option<Intersection<F, Point3<F>, Vector3<F>>> {
     void.as_any().downcast_ref::<VoidShape>().unwrap();
     None
 }
 
 pub fn intersect_sphere_in_vacuum<F: CustomFloat>(location: &Point3<F>,
                                                   direction: &Vector3<F>,
-                                                  vacuum: &Material<F, Point3<F>>,
-                                                  sphere: &Shape<F, Point3<F>>)
-                                                  -> Option<Intersection<F, Point3<F>>> {
+                                                  vacuum: &Material<F, Point3<F>, Vector3<F>>,
+                                                  sphere: &Shape<F, Point3<F>, Vector3<F>>)
+                                                  -> Option<Intersection<F, Point3<F>, Vector3<F>>> {
     // Unsafe cast example:
     // let a = unsafe { &*(a as *const _ as *const Aimpl) };
     vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
@@ -199,22 +200,21 @@ pub fn intersect_sphere_in_vacuum<F: CustomFloat>(location: &Point3<F>,
                                    location.z + result_vector.z);
 
     let mut normal = result_point - sphere.location;
-    let normal = na::normalize(&normal);
+    normal = na::normalize(&normal);
 
-    Some(Intersection {
-        location: result_point,
-        direction: *direction,
-        normal: normal,
-        distance_squared: na::distance_squared(location, &result_point),
-        float_precision: PhantomData,
-    })
+    Some(Intersection::new(
+            result_point,
+            *direction,
+            normal,
+            na::distance_squared(location, &result_point)
+    ))
 }
 
 pub fn intersect_plane_in_vacuum<F: CustomFloat>(location: &Point3<F>,
                                                  direction: &Vector3<F>,
-                                                 vacuum: &Material<F, Point3<F>>,
-                                                 shape: &Shape<F, Point3<F>>)
-                                                 -> Option<Intersection<F, Point3<F>>> {
+                                                 vacuum: &Material<F, Point3<F>, Vector3<F>>,
+                                                 shape: &Shape<F, Point3<F>, Vector3<F>>)
+                                                 -> Option<Intersection<F, Point3<F>, Vector3<F>>> {
     vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
     let plane: &Plane3<F> = shape.as_any().downcast_ref::<Plane3<F>>().unwrap();
 
@@ -234,20 +234,19 @@ pub fn intersect_plane_in_vacuum<F: CustomFloat>(location: &Point3<F>,
 
     let normal = plane.normal;
 
-    Some(Intersection {
-        location: result_point,
-        direction: *direction,
-        normal: normal,
-        distance_squared: na::distance_squared(location, &result_point),
-        float_precision: PhantomData,
-    })
+    Some(Intersection::new(
+            result_point,
+            *direction,
+            normal,
+            na::distance_squared(location, &result_point)
+    ))
 }
 
 pub fn intersect_halfspace_in_vacuum<F: CustomFloat>(location: &Point3<F>,
                                                      direction: &Vector3<F>,
-                                                     vacuum: &Material<F, Point3<F>>,
-                                                     shape: &Shape<F, Point3<F>>)
-                                                     -> Option<Intersection<F, Point3<F>>> {
+                                                     vacuum: &Material<F, Point3<F>, Vector3<F>>,
+                                                     shape: &Shape<F, Point3<F>, Vector3<F>>)
+                                                     -> Option<Intersection<F, Point3<F>, Vector3<F>>> {
     vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
     let halfspace: &HalfSpace3<F> = shape.as_any().downcast_ref::<HalfSpace3<F>>().unwrap();
     let mut intersection = intersect_plane_in_vacuum(location, direction, vacuum, &halfspace.plane);
@@ -283,6 +282,7 @@ impl<F: CustomFloat> HasId for PerlinSurface3<F> {
 }
 
 impl<F: CustomFloat> PerlinSurface3<F> {
+    #[allow(dead_code)]
     pub fn new(seed: u32, size: F, speed: F) -> PerlinSurface3<F> {
         PerlinSurface3 {
             seed: Seed::new(seed),
@@ -300,8 +300,8 @@ impl<F: CustomFloat> PerlinSurface3<F> {
     }
 }
 
-impl<F: CustomFloat> Surface<F, Point3<F>, NalgebraOperations3> for PerlinSurface3<F> {
-    fn get_color<'a>(&self, context: TracingContext<'a, F, Point3<F>, NalgebraOperations3>) -> Rgba<F> {
+impl<F: CustomFloat> Surface<F, Point3<F>, Vector3<F>, NalgebraOperations3> for PerlinSurface3<F> {
+    fn get_color<'a>(&self, context: TracingContext<'a, F, Point3<F>, Vector3<F>, NalgebraOperations3>) -> Rgba<F> {
         let time_millis: F = Cast::from((context.time.clone() * 1000).as_secs() as f64 / 1000.0);
         let location = [context.intersection.location.x / self.size,
                         context.intersection.location.y / self.size,
@@ -341,6 +341,7 @@ impl<F: CustomFloat> Plane3<F> {
         }
     }
 
+    #[allow(dead_code)]
     pub fn from_equation(a: F, b: F, c: F, d: F) -> Plane3<F> {
         Self::from_normal(&Vector3::new(a, b, c), d)
     }
@@ -360,7 +361,8 @@ impl<F: CustomFloat> HasId for Plane3<F> {
     }
 }
 
-impl<F: CustomFloat> Shape<F, Point3<F>> for Plane3<F> {
+impl<F: CustomFloat> Shape<F, Point3<F>, Vector3<F>> for Plane3<F> {
+    #[allow(unused_variables)]
     fn is_point_inside(&self, point: &Point3<F>) -> bool {
         false
     }
@@ -414,7 +416,7 @@ impl<F: CustomFloat> HasId for HalfSpace3<F> {
     }
 }
 
-impl<F: CustomFloat> Shape<F, Point3<F>> for HalfSpace3<F> {
+impl<F: CustomFloat> Shape<F, Point3<F>, Vector3<F>> for HalfSpace3<F> {
     fn is_point_inside(&self, point: &Point3<F>) -> bool {
         // A*x + B*y + C*z + D = 0
         // ~~~~~~~~~~~~~~~ dot

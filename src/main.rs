@@ -42,11 +42,11 @@ use universe::Universe;
 use universe::entity::*;
 use universe::d3::Universe3D;
 use universe::d3::entity::*;
+use universe::d3::NalgebraOperations3;
 use util::RemoveIf;
 use util::CustomFloat;
 use na::BaseFloat;
 use num::traits::NumCast;
-use num::One;
 use num::Zero;
 
 pub struct Simulation<F: CustomFloat, U: Universe<F>> {
@@ -190,6 +190,7 @@ impl SimulationContext {
         self.delta_mouse = na::zero();
     }
 
+    #[allow(unused_variables)]
     pub fn update(&mut self, facade: &mut GlutinFacade) -> Result<(), Event> {
         self.reset_delta_mouse();
         for event in facade.poll_events() {
@@ -265,12 +266,12 @@ impl SimulationContext {
     }
 }
 
-use universe::d3::NalgebraOperations3;
-fn get_reflection_ratio_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, NalgebraOperations3>) -> F {
+#[allow(unused_variables)]
+fn get_reflection_ratio_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, Vector3<F>, NalgebraOperations3>) -> F {
     Cast::from(0.5)
 }
 
-fn get_reflection_direction_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, NalgebraOperations3>)
+fn get_reflection_direction_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, Vector3<F>, NalgebraOperations3>)
                                                  -> Vector3<F> {
     // R = 2*(V dot N)*N - V
     let mut normal = context.intersection.normal;
@@ -283,7 +284,7 @@ fn get_reflection_direction_test<F: CustomFloat>(context: &TracingContext<F, Poi
     na::dot(&context.intersection.direction, &normal) + context.intersection.direction
 }
 
-fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, NalgebraOperations3>) -> Rgba<F> {
+fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, Vector3<F>, NalgebraOperations3>) -> Rgba<F> {
     let mut normal = context.intersection.normal;
 
     if na::angle_between(&context.intersection.direction, &normal) > BaseFloat::frac_pi_2() {
@@ -304,9 +305,10 @@ fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>,
     }
 }
 
-fn transition_vacuum_vacuum<F: CustomFloat>(from: &Material<F, Point3<F>>,
-                                            to: &Material<F, Point3<F>>,
-                                            context: &TracingContext<F, Point3<F>, NalgebraOperations3>)
+#[allow(unused_variables)]
+fn transition_vacuum_vacuum<F: CustomFloat>(from: &Material<F, Point3<F>, Vector3<F>>,
+                                            to: &Material<F, Point3<F>, Vector3<F>>,
+                                            context: &TracingContext<F, Point3<F>, Vector3<F>, NalgebraOperations3>)
                                             -> Option<Rgba<F>> {
     let trace = context.trace;
     trace(context.time,

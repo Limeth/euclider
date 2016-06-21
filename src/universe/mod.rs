@@ -5,7 +5,6 @@ use std::time::Duration;
 use std::collections::HashMap;
 use std::any::TypeId;
 use std::borrow::Cow;
-use na;
 use na::Cast;
 use na::BaseFloat;
 use na::PointAsVector;
@@ -68,21 +67,33 @@ pub trait Universe<F: CustomFloat>
                                          fn(&Self::P,
                                             &<Self::P as PointAsVector>::Vector,
                                             &Material<F, Self::P, Self::V>,
-                                            &Shape<F, Self::P, Self::V>)
+                                            &Shape<F, Self::P, Self::V>,
+                                            &Fn(
+                                                &Material<F, Self::P, Self::V>,
+                                                &Shape<F, Self::P, Self::V>
+                                            ) -> Option<Intersection<F, Self::P, Self::V>>)
                                             -> Option<Intersection<F, Self::P, Self::V>>>;
     fn intersectors(&self)
                     -> &HashMap<(TypeId, TypeId),
                                 fn(&Self::P,
                                    &<Self::P as PointAsVector>::Vector,
                                    &Material<F, Self::P, Self::V>,
-                                   &Shape<F, Self::P, Self::V>)
+                                   &Shape<F, Self::P, Self::V>,
+                                   &Fn(
+                                       &Material<F, Self::P, Self::V>,
+                                       &Shape<F, Self::P, Self::V>
+                                   ) -> Option<Intersection<F, Self::P, Self::V>>)
                                    -> Option<Intersection<F, Self::P, Self::V>>>;
     fn set_intersectors(&mut self,
                          intersections: HashMap<(TypeId, TypeId),
                                                 fn(&Self::P,
                                                    &<Self::P as PointAsVector>::Vector,
                                                    &Material<F, Self::P, Self::V>,
-                                                   &Shape<F, Self::P, Self::V>)
+                                                   &Shape<F, Self::P, Self::V>,
+                                                   &Fn(
+                                                       &Material<F, Self::P, Self::V>,
+                                                       &Shape<F, Self::P, Self::V>
+                                                   ) -> Option<Intersection<F, Self::P, Self::V>>)
                                                    -> Option<Intersection<F, Self::P, Self::V>>>);
     /// Stores the behavior of a ray passing from the first material to the second
     fn transitions_mut(&mut self)
@@ -103,6 +114,34 @@ pub trait Universe<F: CustomFloat>
                                                &Material<F, Self::P, Self::V>,
                                                &TracingContext<F, Self::P, Self::V>)
                                                -> Option<Rgba<F>>>);
+
+    fn intersect(&self,
+                       location: &Self::P,
+                       rotation: &Self::V,
+                       material: &Material<F, Self::P, Self::V>,
+                       shape: &Shape<F, Self::P, Self::V>)
+                       -> Option<Intersection<F, Self::P, Self::V>> {
+        let material_id = material.id();
+        let shape_id = shape.id();
+        let intersector = self.intersectors().get(&(material_id, shape_id));
+
+        let intersector = intersector.expect(&format!("Couldn't find an intersector for material {} and shape {}.",
+                                             material, shape));
+        // if intersector.is_none() {
+        //     continue;
+        // }
+
+        // let intersector = intersector.unwrap();
+
+        let intersect: &Fn(
+                           &Material<F, Self::P, Self::V>,
+                           &Shape<F, Self::P, Self::V>
+                       ) -> Option<Intersection<F, Self::P, Self::V>> = &|material, shape| {
+            self.intersect(location, rotation, material, shape)
+        };
+
+        intersector(location, rotation, material, shape, intersect)
+    }
 
     fn trace(&self,
              time: &Duration,
@@ -128,19 +167,8 @@ pub trait Universe<F: CustomFloat>
 
             let other_traceable = other_traceable.unwrap();
             let shape = other_traceable.shape();
-            let material_id = material.id();
-            let shape_id = shape.id();
-            let intersector = self.intersectors().get(&(material_id, shape_id));
 
-            let intersector = intersector.expect(&format!("Couldn't find an intersector for material {} and shape {}.",
-                                                 material, shape));
-            // if intersector.is_none() {
-            //     continue;
-            // }
-
-            // let intersector = intersector.unwrap();
-
-            match intersector(location, rotation, material, shape) {
+            match self.intersect(location, rotation, material, shape) {
                 Some(intersection) => {
                     let surface = other_traceable.surface();
 

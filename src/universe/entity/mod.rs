@@ -152,6 +152,29 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, A: Shape<F, P,
             vector_dimensions: PhantomData,
         }
     }
+
+    pub fn intersect_in_vacuum(location: &P,
+                               direction: &V,
+                               material: &Material<F, P, V>,
+                               void: &Shape<F, P, V>,
+                               intersect: &Fn(
+                                   &Material<F, P, V>,
+                                   &Shape<F, P, V>
+                               ) -> Option<Intersection<F, P, V>>)
+                               -> Option<Intersection<F, P, V>> {
+                                   None
+        // match self.operation {
+        //     SetOperation::Union =>
+        //         let a_intersection = 
+        //         self.a.is_point_inside(point) || self.b.is_point_inside(point),
+        //     SetOperation::Intersection =>
+        //         self.a.is_point_inside(point) && self.b.is_point_inside(point),
+        //     SetOperation::Complement =>
+        //         self.a.is_point_inside(point) && !self.b.is_point_inside(point),
+        //     SetOperation::SymmetricDifference =>
+        //         self.a.is_point_inside(point) ^ self.b.is_point_inside(point),
+        // }
+    }
 }
 
 impl<F: 'static + CustomFloat, P: 'static + CustomPoint<F, V>, V: 'static + CustomVector<F, P>, A: 'static + Shape<F, P, V>, B: 'static + Shape<F, P, V>> Shape<F, P, V>

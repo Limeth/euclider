@@ -20,7 +20,11 @@ pub struct Universe3D<F: CustomFloat> {
                            fn(&Point3<F>,
                               &Vector3<F>,
                               &Material<F, Point3<F>, Vector3<F>>,
-                              &Shape<F, Point3<F>, Vector3<F>>)
+                              &Shape<F, Point3<F>, Vector3<F>>,
+                              &Fn(
+                                  &Material<F, Point3<F>, Vector3<F>>,
+                                  &Shape<F, Point3<F>, Vector3<F>>
+                              ) -> Option<Intersection<F, Point3<F>, Vector3<F>>>)
                               -> Option<Intersection<F, Point3<F>, Vector3<F>>>>,
     transitions: HashMap<(TypeId, TypeId),
                          fn(&Material<F, Point3<F>, Vector3<F>>,
@@ -83,7 +87,11 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
                                          fn(&Self::P,
                                                      &<Self::P as PointAsVector>::Vector,
                                                      &Material<F, Self::P, Self::V>,
-                                                     &Shape<F, Self::P, Self::V>)
+                                                     &Shape<F, Self::P, Self::V>,
+                                                     &Fn(
+                                                         &Material<F, Self::P, Self::V>,
+                                                         &Shape<F, Self::P, Self::V>
+                                                     ) -> Option<Intersection<F, Self::P, Self::V>>)
                                                      -> Option<Intersection<F, Self::P, Self::V>>> {
         &mut self.intersections
     }
@@ -93,7 +101,11 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
                                 fn(&Self::P,
                                    &<Self::P as PointAsVector>::Vector,
                                    &Material<F, Self::P, Self::V>,
-                                   &Shape<F, Self::P, Self::V>)
+                                   &Shape<F, Self::P, Self::V>,
+                                   &Fn(
+                                       &Material<F, Self::P, Self::V>,
+                                       &Shape<F, Self::P, Self::V>
+                                   ) -> Option<Intersection<F, Self::P, Self::V>>)
                                    -> Option<Intersection<F, Self::P, Self::V>>> {
         &self.intersections
     }
@@ -103,7 +115,11 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
                                                 fn(&Self::P,
                                                             &<Self::P as PointAsVector>::Vector,
                                                             &Material<F, Self::P, Self::V>,
-                                                            &Shape<F, Self::P, Self::V>)
+                                                            &Shape<F, Self::P, Self::V>,
+                                                            &Fn(
+                                                                &Material<F, Self::P, Self::V>,
+                                                                &Shape<F, Self::P, Self::V>
+                                                            ) -> Option<Intersection<F, Self::P, Self::V>>)
                                                             -> Option<Intersection<F, Self::P, Self::V>>>) {
         self.intersections = intersections;
     }

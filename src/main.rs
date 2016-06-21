@@ -359,61 +359,23 @@ fn run<F: CustomFloat>() {
                 // }))
             )));
         entities.push(Box::new(Entity3Impl::new(
-                        Box::new(HalfSpace3::from_point(
-                            // Plane3::from_equation(Cast::from(1.0),
-                            //                       Cast::from(0.5),
-                            //                       Cast::from(0.0),
-                            //                       Cast::from(-1.0)),
-                            Plane3::new(
-                                &Point3::new(Cast::from(0.0),
-                                             Cast::from(4.0),
-                                             Cast::from(0.0)),
-                                &Vector3::new(Cast::from(1.0),
-                                              Cast::from(0.0),
-                                              Cast::from(0.0)),
-                                &Vector3::new(Cast::from(0.0),
-                                              Cast::from(1.0),
-                                              Cast::from(1.0)),
-                                ),
-                            &Point3::new(Cast::from(0.0),
-                                         Cast::from(0.0),
-                                         Cast::from(-100.0))
+                Box::new(Sphere3::<F>::new(
+                        Point3::new(Cast::from(2.0),
+                                    Cast::from(10.5), // FIXME: The Y-coordinate seems to be flipped.
+                                    Cast::from(0.0)),
+                        Cast::from(2.25)
                         )),
-                        Box::new(Vacuum::new()),
-                        Some(Box::new(ComposableSurface {
-                            reflection_ratio: get_reflection_ratio_test,
-                            reflection_direction: get_reflection_direction_test,
-                            surface_color: get_surface_color_test,
-                        }))
-                    )));
-        entities.push(Box::new(Entity3Impl::new(
-                        Box::new(HalfSpace3::from_point(
-                            // Plane3::from_equation(Cast::from(1.0),
-                            //                       Cast::from(0.5),
-                            //                       Cast::from(0.0),
-                            //                       Cast::from(-1.0)),
-                            Plane3::new(
-                                &Point3::new(Cast::from(0.0),
-                                             Cast::from(0.0),
-                                             Cast::from(-3.0)),
-                                &Vector3::new(Cast::from(0.0),
-                                              Cast::from(1.0),
-                                              Cast::from(0.0)),
-                                &Vector3::new(Cast::from(1.0),
-                                              Cast::from(0.0),
-                                              Cast::from(0.0)),
-                                ),
-                            &Point3::new(Cast::from(0.0),
-                                         Cast::from(0.0),
-                                         Cast::from(-100.0))
-                        )),
-                        Box::new(Vacuum::new()),
-                        Some(Box::new(ComposableSurface {
-                            reflection_ratio: get_reflection_ratio_test,
-                            reflection_direction: get_reflection_direction_test,
-                            surface_color: get_surface_color_test,
-                        }))
-                    )));
+                Box::new(Vacuum::new()),
+                Some(Box::new(PerlinSurface3::rand(
+                            &mut StdRng::new().expect("Could not create a random number generator."),
+                            Cast::from(2.0),
+                            Cast::from(1.0))))
+                // Some(Box::new(ComposableSurface {
+                //     reflection_ratio: get_reflection_ratio_test,
+                //     reflection_direction: get_reflection_direction_test,
+                //     surface_color: get_surface_color_test,
+                // }))
+            )));
         entities.push(Box::new(Entity3Impl::new(
                     Box::new(ComposableShape::new(
                         HalfSpace3::from_point(
@@ -423,18 +385,18 @@ fn run<F: CustomFloat>() {
                             //                       Cast::from(-1.0)),
                             Plane3::new(
                                 &Point3::new(Cast::from(0.0),
-                                Cast::from(0.0),
-                                Cast::from(-3.0)),
+                                Cast::from(3.0),
+                                Cast::from(3.0)),
                                 &Vector3::new(Cast::from(0.0),
-                                Cast::from(1.0),
-                                Cast::from(0.0)),
+                                Cast::from(3.0),
+                                Cast::from(1.0)),
                                 &Vector3::new(Cast::from(1.0),
                                 Cast::from(0.0),
                                 Cast::from(0.0)),
                             ),
                             &Point3::new(Cast::from(0.0),
-                            Cast::from(100.0),
-                            Cast::from(0.0))
+                            Cast::from(0.0),
+                            Cast::from(-100.0))
                         ),
                         HalfSpace3::from_point(
                             // Plane3::from_equation(Cast::from(1.0),
@@ -444,19 +406,19 @@ fn run<F: CustomFloat>() {
                             Plane3::new(
                                 &Point3::new(Cast::from(0.0),
                                 Cast::from(3.0),
-                                Cast::from(0.0)),
+                                Cast::from(3.0)),
                                 &Vector3::new(Cast::from(0.0),
-                                Cast::from(0.0),
-                                Cast::from(1.0)),
+                                Cast::from(3.0),
+                                Cast::from(-1.0)),
                                 &Vector3::new(Cast::from(1.0),
                                 Cast::from(0.0),
                                 Cast::from(0.0)),
                             ),
                             &Point3::new(Cast::from(0.0),
                             Cast::from(0.0),
-                            Cast::from(0.0))
+                            Cast::from(100.0))
                         ),
-                        SetOperation::Complement
+                        SetOperation::Intersection
                         )),
                         Box::new(Vacuum::new()),
                         Some(Box::new(ComposableSurface {

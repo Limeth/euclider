@@ -155,25 +155,73 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, A: Shape<F, P,
 
     pub fn intersect_in_vacuum(location: &P,
                                direction: &V,
-                               material: &Material<F, P, V>,
-                               void: &Shape<F, P, V>,
+                               vacuum: &Material<F, P, V>,
+                               shape: &Shape<F, P, V>,
                                intersect: &Fn(
                                    &Material<F, P, V>,
                                    &Shape<F, P, V>
                                ) -> Option<Intersection<F, P, V>>)
-                               -> Option<Intersection<F, P, V>> {
-                                   None
-        // match self.operation {
-        //     SetOperation::Union =>
-        //         let a_intersection = 
-        //         self.a.is_point_inside(point) || self.b.is_point_inside(point),
-        //     SetOperation::Intersection =>
-        //         self.a.is_point_inside(point) && self.b.is_point_inside(point),
-        //     SetOperation::Complement =>
-        //         self.a.is_point_inside(point) && !self.b.is_point_inside(point),
-        //     SetOperation::SymmetricDifference =>
-        //         self.a.is_point_inside(point) ^ self.b.is_point_inside(point),
-        // }
+                               -> Option<Intersection<F, P, V>>
+                               where A: 'static, B: 'static {
+        vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
+        let composed: &ComposableShape<F, P, V, A, B> = shape.as_any().downcast_ref::<ComposableShape<F, P, V, A, B>>().unwrap();
+        match composed.operation {
+            SetOperation::Union => {
+                let a_intersection = intersect(vacuum, &composed.a);
+                let b_intersection = intersect(vacuum, &composed.b);
+
+                if a_intersection.is_some() {
+                    if b_intersection.is_some() {
+                        let a_intersection = a_intersection.unwrap();
+                        let b_intersection = b_intersection.unwrap();
+
+                        if a_intersection.distance_squared
+                                < b_intersection.distance_squared {
+                            Some(a_intersection)
+                        } else {
+                            Some(b_intersection)
+                        }
+                    } else {
+                        a_intersection
+                    }
+                } else {
+                    b_intersection
+                }
+            }
+            SetOperation::Intersection => {
+                // Doesn't currently account for this:
+                // Request and lazily calculate the other intersections
+                // --> [a]   [b]   [a[a+b]b]
+
+                let a_intersection = intersect(vacuum, &composed.a);
+
+                if a_intersection.is_some() {
+                    let a_intersection = a_intersection.unwrap();
+
+                    if composed.b.is_point_inside(&a_intersection.location) {
+                        return Some(a_intersection);
+                    }
+                }
+
+                let b_intersection = intersect(vacuum, &composed.b);
+
+                if b_intersection.is_some() {
+                    let b_intersection = b_intersection.unwrap();
+
+                    if composed.a.is_point_inside(&b_intersection.location) {
+                        return Some(b_intersection);
+                    }
+                }
+
+                None
+            }
+            SetOperation::Complement =>
+                unimplemented!(),
+                // self.a.is_point_inside(point) && !self.b.is_point_inside(point),
+            SetOperation::SymmetricDifference =>
+                unimplemented!(),
+                // self.a.is_point_inside(point) ^ self.b.is_point_inside(point),
+        }
     }
 }
 

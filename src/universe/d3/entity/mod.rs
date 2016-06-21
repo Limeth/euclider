@@ -2,7 +2,6 @@ pub mod camera;
 
 use std::any::Any;
 use std::any::TypeId;
-use std::marker::PhantomData;
 use std::fmt;
 use std::fmt::Debug;
 use std::fmt::Display;

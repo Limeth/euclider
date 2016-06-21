@@ -7,7 +7,6 @@ use std::any::TypeId;
 use std::borrow::Cow;
 use na::Cast;
 use na::BaseFloat;
-use na::NumPoint;
 use na::PointAsVector;
 use num::traits::NumCast;
 use glium::Surface as GliumSurface;
@@ -33,7 +32,7 @@ pub trait Universe<F: CustomFloat>
     where Self: Sync
 {
     type P: CustomPoint<F, Self::V>;
-    type V: CustomVector<F>;
+    type V: CustomVector<F, Self::P>;
     type O: NalgebraOperations<F, Self::P, Self::V>;
     // Generics hell I might need in the future:
     //
@@ -365,7 +364,7 @@ pub trait Universe<F: CustomFloat>
     }
 }
 
-pub trait NalgebraOperations<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F>> {
+pub trait NalgebraOperations<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
     fn to_point(vector: &<P as PointAsVector>::Vector) -> P;
     fn dot(first: &<P as PointAsVector>::Vector,
            second: &<P as PointAsVector>::Vector)

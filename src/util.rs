@@ -176,7 +176,7 @@ pub fn overlay_color<F: CustomFloat>(bottom: Rgb<u8>, top: Rgba<u8>) -> Rgb<u8> 
     }
 }
 
-pub trait CustomPoint<F: CustomFloat, V: CustomVector<F>>:
+pub trait CustomPoint<F: CustomFloat, V: CustomVector<F, Self>>:
     // Rotate<O> +
     PartialOrder +
     Div<F, Output=Self> +
@@ -233,7 +233,7 @@ pub trait CustomPoint<F: CustomFloat, V: CustomVector<F>>:
     // Eq +
     'static {}
 
-pub trait CustomVector<F: CustomFloat>:
+pub trait CustomVector<F: CustomFloat, P: CustomPoint<F, Self>>:
     // Rotate<O> +
     PartialOrder +
     Div<F, Output=Self> +
@@ -281,6 +281,7 @@ pub trait CustomVector<F: CustomFloat>:
     // MulAssign<UnitQuaternion<F>>
     // Mul<Rotation3<F>>
     // MulAssign<Rotation3<F>>
+    VectorAsPoint<F, Point=P> +
     Copy +
     Debug +
     // Hash +
@@ -291,34 +292,35 @@ pub trait CustomVector<F: CustomFloat>:
     // Eq +
     'static {}
 
-// pub trait VectorAsPoint<F: CustomFloat> {
-//     fn to_point(self) -> Self::Point;
-//     fn as_point(&self) -> &CustomVector<F>;
-//     fn set_coords(&mut self, coords: Self::Point);
-// }
+pub trait VectorAsPoint<F: CustomFloat> {
+    type Point;
+    fn to_point(self) -> Self::Point where Self: Sized;
+    fn as_point(&self) -> &Self::Point where Self: Sized;
+    fn set_coords(&mut self, coords: Self::Point) where Self: Sized;
+}
 
 impl<F: CustomFloat> CustomPoint<F, Vector3<F>> for Point3<F> {}
-impl<F: CustomFloat> CustomVector<F> for Vector3<F> {}
+impl<F: CustomFloat> CustomVector<F, Point3<F>> for Vector3<F> {}
 
-// impl<F: CustomFloat> VectorAsPoint for Vector3<F> {
-//     type Point = Point3<F>;
+impl<F: CustomFloat> VectorAsPoint<F> for Vector3<F> {
+    type Point = Point3<F>;
 
-//     fn to_point(self) -> Self::Point {
-//         na::origin::<Self::Point>() + self
-//     }
+    fn to_point(self) -> Self::Point {
+        na::origin::<Self::Point>() + self
+    }
 
-//     fn as_point(&self) -> &Self::Point {
-//         unsafe {
-//             mem::transmute(self)
-//         }
-//     }
+    fn as_point(&self) -> &Self::Point {
+        unsafe {
+            mem::transmute(self)
+        }
+    }
 
-//     fn set_coords(&mut self, coords: Self::Point) {
-//         self.x = coords.x;
-//         self.y = coords.y;
-//         self.z = coords.z;
-//     }
-// }
+    fn set_coords(&mut self, coords: Self::Point) {
+        self.x = coords.x;
+        self.y = coords.y;
+        self.z = coords.z;
+    }
+}
 
 pub trait CustomFloat:
     BaseFloat +

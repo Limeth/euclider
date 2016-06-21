@@ -42,7 +42,6 @@ use universe::Universe;
 use universe::entity::*;
 use universe::d3::Universe3D;
 use universe::d3::entity::*;
-use universe::d3::NalgebraOperations3;
 use util::RemoveIf;
 use util::CustomFloat;
 use na::BaseFloat;
@@ -267,11 +266,11 @@ impl SimulationContext {
 }
 
 #[allow(unused_variables)]
-fn get_reflection_ratio_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, Vector3<F>, NalgebraOperations3>) -> F {
+fn get_reflection_ratio_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, Vector3<F>>) -> F {
     Cast::from(0.5)
 }
 
-fn get_reflection_direction_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, Vector3<F>, NalgebraOperations3>)
+fn get_reflection_direction_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, Vector3<F>>)
                                                  -> Vector3<F> {
     // R = 2*(V dot N)*N - V
     let mut normal = context.intersection.normal;
@@ -284,7 +283,7 @@ fn get_reflection_direction_test<F: CustomFloat>(context: &TracingContext<F, Poi
     na::dot(&context.intersection.direction, &normal) + context.intersection.direction
 }
 
-fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, Vector3<F>, NalgebraOperations3>) -> Rgba<F> {
+fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, Vector3<F>>) -> Rgba<F> {
     let mut normal = context.intersection.normal;
 
     if na::angle_between(&context.intersection.direction, &normal) > BaseFloat::frac_pi_2() {
@@ -308,7 +307,7 @@ fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>,
 #[allow(unused_variables)]
 fn transition_vacuum_vacuum<F: CustomFloat>(from: &Material<F, Point3<F>, Vector3<F>>,
                                             to: &Material<F, Point3<F>, Vector3<F>>,
-                                            context: &TracingContext<F, Point3<F>, Vector3<F>, NalgebraOperations3>)
+                                            context: &TracingContext<F, Point3<F>, Vector3<F>>)
                                             -> Option<Rgba<F>> {
     let trace = context.trace;
     trace(context.time,
@@ -415,57 +414,57 @@ fn run<F: CustomFloat>() {
                             surface_color: get_surface_color_test,
                         }))
                     )));
-        entities.push(Box::new(Entity3Impl::new(
-                    Box::new(ComposableShape::new(
-                        HalfSpace3::from_point(
-                            // Plane3::from_equation(Cast::from(1.0),
-                            //                       Cast::from(0.5),
-                            //                       Cast::from(0.0),
-                            //                       Cast::from(-1.0)),
-                            Plane3::new(
-                                &Point3::new(Cast::from(0.0),
-                                Cast::from(0.0),
-                                Cast::from(-3.0)),
-                                &Vector3::new(Cast::from(0.0),
-                                Cast::from(1.0),
-                                Cast::from(0.0)),
-                                &Vector3::new(Cast::from(1.0),
-                                Cast::from(0.0),
-                                Cast::from(0.0)),
-                            ),
-                            &Point3::new(Cast::from(0.0),
-                            Cast::from(100.0),
-                            Cast::from(0.0))
-                        ),
-                        HalfSpace3::from_point(
-                            // Plane3::from_equation(Cast::from(1.0),
-                            //                       Cast::from(0.5),
-                            //                       Cast::from(0.0),
-                            //                       Cast::from(-1.0)),
-                            Plane3::new(
-                                &Point3::new(Cast::from(0.0),
-                                Cast::from(3.0),
-                                Cast::from(0.0)),
-                                &Vector3::new(Cast::from(0.0),
-                                Cast::from(0.0),
-                                Cast::from(1.0)),
-                                &Vector3::new(Cast::from(1.0),
-                                Cast::from(0.0),
-                                Cast::from(0.0)),
-                            ),
-                            &Point3::new(Cast::from(0.0),
-                            Cast::from(0.0),
-                            Cast::from(0.0))
-                        ),
-                        SetOperation::Complement
-                        )),
-                        Box::new(Vacuum::new()),
-                        Some(Box::new(ComposableSurface {
-                            reflection_ratio: get_reflection_ratio_test,
-                            reflection_direction: get_reflection_direction_test,
-                            surface_color: get_surface_color_test,
-                        }))
-                    )));
+        // entities.push(Box::new(Entity3Impl::new(
+        //             Box::new(ComposableShape::new(
+        //                 HalfSpace3::from_point(
+        //                     // Plane3::from_equation(Cast::from(1.0),
+        //                     //                       Cast::from(0.5),
+        //                     //                       Cast::from(0.0),
+        //                     //                       Cast::from(-1.0)),
+        //                     Plane3::new(
+        //                         &Point3::new(Cast::from(0.0),
+        //                         Cast::from(0.0),
+        //                         Cast::from(-3.0)),
+        //                         &Vector3::new(Cast::from(0.0),
+        //                         Cast::from(1.0),
+        //                         Cast::from(0.0)),
+        //                         &Vector3::new(Cast::from(1.0),
+        //                         Cast::from(0.0),
+        //                         Cast::from(0.0)),
+        //                     ),
+        //                     &Point3::new(Cast::from(0.0),
+        //                     Cast::from(100.0),
+        //                     Cast::from(0.0))
+        //                 ),
+        //                 HalfSpace3::from_point(
+        //                     // Plane3::from_equation(Cast::from(1.0),
+        //                     //                       Cast::from(0.5),
+        //                     //                       Cast::from(0.0),
+        //                     //                       Cast::from(-1.0)),
+        //                     Plane3::new(
+        //                         &Point3::new(Cast::from(0.0),
+        //                         Cast::from(3.0),
+        //                         Cast::from(0.0)),
+        //                         &Vector3::new(Cast::from(0.0),
+        //                         Cast::from(0.0),
+        //                         Cast::from(1.0)),
+        //                         &Vector3::new(Cast::from(1.0),
+        //                         Cast::from(0.0),
+        //                         Cast::from(0.0)),
+        //                     ),
+        //                     &Point3::new(Cast::from(0.0),
+        //                     Cast::from(0.0),
+        //                     Cast::from(0.0))
+        //                 ),
+        //                 SetOperation::Complement
+        //                 )),
+        //                 Box::new(Vacuum::new()),
+        //                 Some(Box::new(ComposableSurface {
+        //                     reflection_ratio: get_reflection_ratio_test,
+        //                     reflection_direction: get_reflection_direction_test,
+        //                     surface_color: get_surface_color_test,
+        //                 }))
+        //             )));
         entities.push(Box::new(Void::new_with_vacuum()));
     }
 

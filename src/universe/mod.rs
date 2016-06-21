@@ -5,6 +5,7 @@ use std::time::Duration;
 use std::collections::HashMap;
 use std::any::TypeId;
 use std::borrow::Cow;
+use na;
 use na::Cast;
 use na::BaseFloat;
 use na::PointAsVector;
@@ -27,13 +28,13 @@ use util::CustomPoint;
 use util::CustomVector;
 use util::CustomFloat;
 use util::Consts;
+use util::AngleBetween;
 
 pub trait Universe<F: CustomFloat>
     where Self: Sync
 {
     type P: CustomPoint<F, Self::V>;
     type V: CustomVector<F, Self::P>;
-    type O: NalgebraOperations<F, Self::P, Self::V>;
     // Generics hell I might need in the future:
     //
     // fn camera_mut<C>(&mut self) -> &mut C where C: Camera<Self::P, Self::V>;
@@ -55,12 +56,12 @@ pub trait Universe<F: CustomFloat>
     //           M: Material<Self::P, Self::V>,
     //           S: Shape<Self::P, Self::V>;
     /// FIXME: Temporary method, because there is currently no way to do this in nalgebra
-    fn camera_mut(&mut self) -> &mut Camera<F, Self::P, Self::V, Self::O>;
-    fn camera(&self) -> &Camera<F, Self::P, Self::V, Self::O>;
-    fn set_camera(&mut self, camera: Box<Camera<F, Self::P, Self::V, Self::O>>);
-    fn entities_mut(&mut self) -> &mut Vec<Box<Entity<F, Self::P, Self::V, Self::O>>>;
-    fn entities(&self) -> &Vec<Box<Entity<F, Self::P, Self::V, Self::O>>>;
-    fn set_entities(&mut self, entities: Vec<Box<Entity<F, Self::P, Self::V, Self::O>>>);
+    fn camera_mut(&mut self) -> &mut Camera<F, Self::P, Self::V>;
+    fn camera(&self) -> &Camera<F, Self::P, Self::V>;
+    fn set_camera(&mut self, camera: Box<Camera<F, Self::P, Self::V>>);
+    fn entities_mut(&mut self) -> &mut Vec<Box<Entity<F, Self::P, Self::V>>>;
+    fn entities(&self) -> &Vec<Box<Entity<F, Self::P, Self::V>>>;
+    fn set_entities(&mut self, entities: Vec<Box<Entity<F, Self::P, Self::V>>>);
     /// Calculates the intersection of the shape (second) in the material (first)
     fn intersectors_mut(&mut self)
                          -> &mut HashMap<(TypeId, TypeId),
@@ -88,25 +89,25 @@ pub trait Universe<F: CustomFloat>
                        -> &mut HashMap<(TypeId, TypeId),
                                        fn(&Material<F, Self::P, Self::V>,
                                           &Material<F, Self::P, Self::V>,
-                                          &TracingContext<F, Self::P, Self::V, Self::O>)
+                                          &TracingContext<F, Self::P, Self::V>)
                                           -> Option<Rgba<F>>>;
     fn transitions(&self)
                    -> &HashMap<(TypeId, TypeId),
                                fn(&Material<F, Self::P, Self::V>,
                                   &Material<F, Self::P, Self::V>,
-                                  &TracingContext<F, Self::P, Self::V, Self::O>)
+                                  &TracingContext<F, Self::P, Self::V>)
                                   -> Option<Rgba<F>>>;
     fn set_transitions(&mut self,
                        transitions: HashMap<(TypeId, TypeId),
                                             fn(&Material<F, Self::P, Self::V>,
                                                &Material<F, Self::P, Self::V>,
-                                               &TracingContext<F, Self::P, Self::V, Self::O>)
+                                               &TracingContext<F, Self::P, Self::V>)
                                                -> Option<Rgba<F>>>);
 
     fn trace(&self,
              time: &Duration,
              max_depth: &u32,
-             belongs_to: &Traceable<F, Self::P, Self::V, Self::O>,
+             belongs_to: &Traceable<F, Self::P, Self::V>,
              location: &Self::P,
              rotation: &<Self::P as PointAsVector>::Vector)
              -> Option<Rgba<F>> {
@@ -151,16 +152,13 @@ pub trait Universe<F: CustomFloat>
                     let exiting: bool;
                     let closer_normal: <Self::P as PointAsVector>::Vector;
 
-                    if <Self::O as NalgebraOperations<F, Self::P, Self::V>>::angle_between(&intersection.direction,
-                                                                      &intersection.normal)
+                    if intersection.direction.angle_between(&intersection.normal)
                             < <F as BaseFloat>::frac_pi_2() {
-                        closer_normal = <Self::O as NalgebraOperations<F, Self::P, Self::V>>::neg(
-                                            &intersection.normal);
+                        closer_normal = -intersection.normal;
                         exiting = true;
                         continue; //The same behavior as the above TODO
                     } else {
-                        closer_normal = <Self::O as NalgebraOperations<F, Self::P, Self::V>>::clone(
-                                            &intersection.normal);
+                        closer_normal = intersection.normal.clone();
                         exiting = false;
                     }
 
@@ -204,7 +202,7 @@ pub trait Universe<F: CustomFloat>
     fn trace_first(&self,
                    time: &Duration,
                    max_depth: &u32,
-                   belongs_to: &Traceable<F, Self::P, Self::V, Self::O>,
+                   belongs_to: &Traceable<F, Self::P, Self::V>,
                    location: &Self::P,
                    rotation: &<Self::P as PointAsVector>::Vector)
                    -> Rgba<F> {
@@ -218,7 +216,7 @@ pub trait Universe<F: CustomFloat>
                      location: &Self::P,
                      rotation: &<Self::P as PointAsVector>::Vector)
                      -> Option<Rgb<F>> {
-        let mut belongs_to: Option<&Traceable<F, Self::P, Self::V, Self::O>> = None;
+        let mut belongs_to: Option<&Traceable<F, Self::P, Self::V>> = None;
 
         for entity in self.entities() {
             let traceable = entity.as_traceable();
@@ -227,7 +225,7 @@ pub trait Universe<F: CustomFloat>
                 continue;
             }
 
-            let traceable: &Traceable<F, Self::P, Self::V, Self::O> = traceable.unwrap();
+            let traceable: &Traceable<F, Self::P, Self::V> = traceable.unwrap();
             let shape: &Shape<F, Self::P, Self::V> = traceable.shape();
 
             if !shape.is_point_inside(location) {
@@ -362,16 +360,4 @@ pub trait Universe<F: CustomFloat>
             }
         }
     }
-}
-
-pub trait NalgebraOperations<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
-    fn to_point(vector: &<P as PointAsVector>::Vector) -> P;
-    fn dot(first: &<P as PointAsVector>::Vector,
-           second: &<P as PointAsVector>::Vector)
-           -> F;
-    fn angle_between(first: &<P as PointAsVector>::Vector,
-                     second: &<P as PointAsVector>::Vector)
-                     -> F;
-    fn neg(vector: &<P as PointAsVector>::Vector) -> <P as PointAsVector>::Vector;
-    fn clone(vector: &<P as PointAsVector>::Vector) -> <P as PointAsVector>::Vector;
 }

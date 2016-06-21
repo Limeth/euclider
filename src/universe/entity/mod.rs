@@ -14,22 +14,21 @@ use palette;
 use palette::Rgba;
 use palette::Blend;
 use SimulationContext;
-use universe::NalgebraOperations;
 use util;
 use util::CustomFloat;
 use util::CustomPoint;
 use util::CustomVector;
 
-pub trait Entity<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, O: NalgebraOperations<F, P, V>>
+pub trait Entity<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
     where Self: Sync
 {
-    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<F, P, V, O>>;
-    fn as_updatable(&self) -> Option<&Updatable<F, P, V, O>>;
-    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<F, P, V, O>>;
-    fn as_traceable(&self) -> Option<&Traceable<F, P, V, O>>;
+    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<F, P, V>>;
+    fn as_updatable(&self) -> Option<&Updatable<F, P, V>>;
+    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<F, P, V>>;
+    fn as_traceable(&self) -> Option<&Traceable<F, P, V>>;
 }
 
-pub trait Camera<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, O: NalgebraOperations<F, P, V>>: Entity<F, P, V, O> {
+pub trait Camera<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: Entity<F, P, V> {
     fn get_ray_point(&self,
                      screen_x: i32,
                      screen_y: i32,
@@ -86,20 +85,19 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Intersection<F
 pub struct TracingContext<'a,
                           F: 'a + CustomFloat,
                           P: 'a + CustomPoint<F, V>,
-                          V: 'a + CustomVector<F, P>,
-                          O: 'a + NalgebraOperations<F, P, V>> {
+                          V: 'a + CustomVector<F, P>> {
     pub time: &'a Duration,
     pub depth_remaining: &'a u32,
-    pub origin_traceable: &'a Traceable<F, P, V, O>,
-    pub intersection_traceable: &'a Traceable<F, P, V, O>,
+    pub origin_traceable: &'a Traceable<F, P, V>,
+    pub intersection_traceable: &'a Traceable<F, P, V>,
     pub intersection: &'a Intersection<F, P, V>,
     pub intersection_normal_closer: &'a <P as PointAsVector>::Vector,
     pub exiting: &'a bool,
     pub transitions: &'a HashMap<(TypeId, TypeId),
-                                 fn(&Material<F, P, V>, &Material<F, P, V>, &TracingContext<F, P, V, O>)
+                                 fn(&Material<F, P, V>, &Material<F, P, V>, &TracingContext<F, P, V>)
                                     -> Option<Rgba<F>>>,
     pub trace: &'a Fn(&Duration,
-                      &Traceable<F, P, V, O>,
+                      &Traceable<F, P, V>,
                       &P,
                       &<P as PointAsVector>::Vector)
                       -> Option<Rgba<F>>,
@@ -113,8 +111,8 @@ pub trait Shape<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
 
 pub trait Material<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> where Self: HasId + Debug + Display {}
 
-pub trait Surface<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, O: NalgebraOperations<F, P, V>> {
-    fn get_color<'a>(&self, context: TracingContext<'a, F, P, V, O>) -> Rgba<F>;
+pub trait Surface<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
+    fn get_color<'a>(&self, context: TracingContext<'a, F, P, V>) -> Rgba<F>;
 }
 
 pub struct ComposableShape<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>,
@@ -295,10 +293,10 @@ impl<F: 'static + CustomFloat, P: 'static + CustomPoint<F, V>, V: 'static + Cust
 //     }
 // }
 
-pub struct ComposableSurface<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, O: NalgebraOperations<F, P, V>> {
-    pub reflection_ratio: fn(&TracingContext<F, P, V, O>) -> F,
-    pub reflection_direction: fn(&TracingContext<F, P, V, O>) -> <P as PointAsVector>::Vector,
-    pub surface_color: fn(&TracingContext<F, P, V, O>) -> Rgba<F>,
+pub struct ComposableSurface<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
+    pub reflection_ratio: fn(&TracingContext<F, P, V>) -> F,
+    pub reflection_direction: fn(&TracingContext<F, P, V>) -> <P as PointAsVector>::Vector,
+    pub surface_color: fn(&TracingContext<F, P, V>) -> Rgba<F>,
 }
 
 // impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> AbstractSurface<F, P> for ComposableSurface<F, P> {
@@ -318,27 +316,27 @@ pub struct ComposableSurface<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVect
 //     }
 // }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, O: NalgebraOperations<F, P, V>> ComposableSurface<F, P, V, O> {
-    fn get_reflection_ratio(&self, context: &TracingContext<F, P, V, O>) -> F {
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurface<F, P, V> {
+    fn get_reflection_ratio(&self, context: &TracingContext<F, P, V>) -> F {
         let reflection_ratio = self.reflection_ratio;
         reflection_ratio(context)
     }
 
     fn get_reflection_direction(&self,
-                                context: &TracingContext<F, P, V, O>)
+                                context: &TracingContext<F, P, V>)
                                 -> <P as PointAsVector>::Vector {
         let reflection_direction = self.reflection_direction;
         reflection_direction(context)
     }
 
-    fn get_surface_color(&self, context: &TracingContext<F, P, V, O>) -> Rgba<F> {
+    fn get_surface_color(&self, context: &TracingContext<F, P, V>) -> Rgba<F> {
         let surface_color = self.surface_color;
         surface_color(context)
     }
 
     fn get_intersection_color(&self,
                               reflection_ratio: F,
-                              context: &TracingContext<F, P, V, O>)
+                              context: &TracingContext<F, P, V>)
                               -> Option<Rgba<F>> {
         if reflection_ratio >= <F as NumCast>::from(1.0).unwrap() {
             return None;
@@ -383,7 +381,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, O: NalgebraOpe
 
     fn get_reflection_color(&self,
                             reflection_ratio: F,
-                            context: &TracingContext<F, P, V, O>)
+                            context: &TracingContext<F, P, V>)
                             -> Option<Rgba<F>> {
         if reflection_ratio <= <F as NumCast>::from(0.0).unwrap() {
             return None;
@@ -405,9 +403,9 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, O: NalgebraOpe
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, O: NalgebraOperations<F, P, V>> Surface<F, P, V, O>
-        for ComposableSurface<F, P, V, O> {
-    fn get_color(&self, context: TracingContext<F, P, V, O>) -> Rgba<F> {
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Surface<F, P, V>
+        for ComposableSurface<F, P, V> {
+    fn get_color(&self, context: TracingContext<F, P, V>) -> Rgba<F> {
         let reflection_ratio = self.get_reflection_ratio(&context)
             .min(<F as NumCast>::from(1.0).unwrap())
             .max(<F as NumCast>::from(0.0).unwrap());
@@ -428,14 +426,14 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, O: NalgebraOpe
     }
 }
 
-pub trait Updatable<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, O: NalgebraOperations<F, P, V>>: Entity<F, P, V, O> {
+pub trait Updatable<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: Entity<F, P, V> {
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext);
 }
 
-pub trait Traceable<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, O: NalgebraOperations<F, P, V>>: Entity<F, P, V, O> {
+pub trait Traceable<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: Entity<F, P, V> {
     fn shape(&self) -> &Shape<F, P, V>;
     fn material(&self) -> &Material<F, P, V>;
-    fn surface(&self) -> Option<&Surface<F, P, V, O>>;
+    fn surface(&self) -> Option<&Surface<F, P, V>>;
 }
 
 pub trait Locatable<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
@@ -536,47 +534,45 @@ impl Display for VoidShape {
     }
 }
 
-pub struct Void<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, O: NalgebraOperations<F, P, V>> {
+pub struct Void<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
     shape: Box<VoidShape>,
     material: Box<Material<F, P, V>>,
-    operations: PhantomData<O>,
 }
 
-unsafe impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, O: NalgebraOperations<F, P, V>> Sync for Void<F, P, V, O> {}
+unsafe impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Sync for Void<F, P, V> {}
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, O: NalgebraOperations<F, P, V>> Void<F, P, V, O> {
-    pub fn new(material: Box<Material<F, P, V>>) -> Void<F, P, V, O> {
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Void<F, P, V> {
+    pub fn new(material: Box<Material<F, P, V>>) -> Void<F, P, V> {
         Void {
             shape: Box::new(VoidShape::new()),
             material: material,
-            operations: PhantomData,
         }
     }
 
-    pub fn new_with_vacuum() -> Void<F, P, V, O> {
+    pub fn new_with_vacuum() -> Void<F, P, V> {
         Self::new(Box::new(Vacuum::new()))
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, O: NalgebraOperations<F, P, V>> Entity<F, P, V, O> for Void<F, P, V, O> {
-    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<F, P, V, O>> {
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Entity<F, P, V> for Void<F, P, V> {
+    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<F, P, V>> {
         None
     }
 
-    fn as_updatable(&self) -> Option<&Updatable<F, P, V, O>> {
+    fn as_updatable(&self) -> Option<&Updatable<F, P, V>> {
         None
     }
 
-    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<F, P, V, O>> {
+    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<F, P, V>> {
         Some(self)
     }
 
-    fn as_traceable(&self) -> Option<&Traceable<F, P, V, O>> {
+    fn as_traceable(&self) -> Option<&Traceable<F, P, V>> {
         Some(self)
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, O: NalgebraOperations<F, P, V>> Traceable<F, P, V, O> for Void<F, P, V, O> {
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Traceable<F, P, V> for Void<F, P, V> {
     fn shape(&self) -> &Shape<F, P, V> {
         self.shape.as_ref()
     }
@@ -585,7 +581,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, O: NalgebraOpe
         self.material.as_ref()
     }
 
-    fn surface(&self) -> Option<&Surface<F, P, V, O>> {
+    fn surface(&self) -> Option<&Surface<F, P, V>> {
         None
     }
 }

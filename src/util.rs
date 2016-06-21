@@ -233,8 +233,10 @@ pub trait CustomPoint<F: CustomFloat, V: CustomVector<F, Self>>:
     // Eq +
     'static {}
 
+    use na::RotationTo;
 pub trait CustomVector<F: CustomFloat, P: CustomPoint<F, Self>>:
     // Rotate<O> +
+    AngleBetween<F> +
     PartialOrder +
     Div<F, Output=Self> +
     DivAssign<F> +
@@ -281,7 +283,7 @@ pub trait CustomVector<F: CustomFloat, P: CustomPoint<F, Self>>:
     // MulAssign<UnitQuaternion<F>>
     // Mul<Rotation3<F>>
     // MulAssign<Rotation3<F>>
-    VectorAsPoint<F, Point=P> +
+    VectorAsPoint +
     Copy +
     Debug +
     // Hash +
@@ -292,17 +294,21 @@ pub trait CustomVector<F: CustomFloat, P: CustomPoint<F, Self>>:
     // Eq +
     'static {}
 
-pub trait VectorAsPoint<F: CustomFloat> {
+pub trait VectorAsPoint {
     type Point;
     fn to_point(self) -> Self::Point where Self: Sized;
     fn as_point(&self) -> &Self::Point where Self: Sized;
     fn set_coords(&mut self, coords: Self::Point) where Self: Sized;
 }
 
+pub trait AngleBetween<F: CustomFloat> {
+    fn angle_between(&self, other: &Self) -> F;
+}
+
 impl<F: CustomFloat> CustomPoint<F, Vector3<F>> for Point3<F> {}
 impl<F: CustomFloat> CustomVector<F, Point3<F>> for Vector3<F> {}
 
-impl<F: CustomFloat> VectorAsPoint<F> for Vector3<F> {
+impl<F: CustomFloat> VectorAsPoint for Vector3<F> {
     type Point = Point3<F>;
 
     fn to_point(self) -> Self::Point {
@@ -319,6 +325,14 @@ impl<F: CustomFloat> VectorAsPoint<F> for Vector3<F> {
         self.x = coords.x;
         self.y = coords.y;
         self.z = coords.z;
+    }
+}
+
+impl<F: CustomFloat> AngleBetween<F> for Vector3<F> {
+    fn angle_between(&self, other: &Self) -> F {
+        F::acos(
+            na::dot(self, other) / (self.norm() * other.norm())
+        )
     }
 }
 

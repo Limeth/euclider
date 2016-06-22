@@ -54,7 +54,7 @@ impl<F: CustomFloat> Camera3Impl<F> {
 
         let direction = delta_mouse_float * self.mouse_sensitivity;
 
-        self.rotate_x(direction.x);
+        self.rotate_x(-direction.x);
         self.rotate_y(-direction.y);
     }
 
@@ -103,11 +103,11 @@ impl<F: CustomFloat> Camera3Impl<F> {
         Camera3Impl::rotate_y_static(&mut self.forward, &mut self.up, angle, true);
     }
 
-    fn get_right(&self) -> Vector3<F> {
+    fn get_left(&self) -> Vector3<F> {
         na::cross(&self.up, &self.forward).normalize()
     }
 
-    fn get_left(&self) -> Vector3<F> {
+    fn get_right(&self) -> Vector3<F> {
         na::cross(&self.forward, &self.up).normalize()
     }
 }

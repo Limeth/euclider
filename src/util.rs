@@ -214,7 +214,7 @@ impl<T> Provider<T> {
         }
     }
 
-    fn iter(&self) -> Marcher<T> {
+    pub fn iter(&self) -> Marcher<T> {
         Marcher {
             index: 0,
             provider: self.data.borrow_mut(),

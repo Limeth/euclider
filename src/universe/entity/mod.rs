@@ -8,6 +8,7 @@ use std::time::Duration;
 use std::any::TypeId;
 use std::any::Any;
 use std::collections::HashMap;
+use std::iter;
 use num::traits::NumCast;
 use na::PointAsVector;
 use palette;
@@ -19,6 +20,7 @@ use util::CustomFloat;
 use util::CustomPoint;
 use util::CustomVector;
 use util::HasId;
+use util::Provider;
 
 pub trait Entity<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
     where Self: Sync
@@ -116,7 +118,7 @@ pub struct ComposableShape<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum SetOperation {
     Union, // A + B
     Intersection,  // A && B
@@ -151,15 +153,15 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, A: Shape<F, P,
                                intersect: &Fn(
                                    &Material<F, P, V>,
                                    &Shape<F, P, V>
-                               ) -> Option<Intersection<F, P, V>>)
-                               -> Option<Intersection<F, P, V>>
+                               ) -> Provider<Intersection<F, P, V>>)
+                               -> Box<Iterator<Item=Intersection<F, P, V>>>
                                where A: 'static, B: 'static {
         vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
         let composed: &ComposableShape<F, P, V, A, B> = shape.as_any().downcast_ref::<ComposableShape<F, P, V, A, B>>().unwrap();
         match composed.operation {
             SetOperation::Union => {
-                let a_intersection = intersect(vacuum, &composed.a);
-                let b_intersection = intersect(vacuum, &composed.b);
+                let a_intersection = intersect(vacuum, &composed.a).iter().next();
+                let b_intersection = intersect(vacuum, &composed.b).iter().next();
 
                 if a_intersection.is_some() {
                     if b_intersection.is_some() {
@@ -168,15 +170,15 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, A: Shape<F, P,
 
                         if a_intersection.distance_squared
                                 < b_intersection.distance_squared {
-                            Some(a_intersection)
+                            return Box::new(iter::once(*a_intersection));
                         } else {
-                            Some(b_intersection)
+                            return Box::new(iter::once(*b_intersection));
                         }
                     } else {
-                        a_intersection
+                        return Box::new(*a_intersection.iter());
                     }
                 } else {
-                    b_intersection
+                    return Box::new(b_intersection.clone().into_iter());
                 }
             }
             SetOperation::Intersection => {
@@ -184,27 +186,27 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, A: Shape<F, P,
                 // Request and lazily calculate the other intersections
                 // --> [a]   [b]   [a[a+b]b]
 
-                let a_intersection = intersect(vacuum, &composed.a);
+                let a_intersection = intersect(vacuum, &composed.a).iter().next();
 
                 if a_intersection.is_some() {
                     let a_intersection = a_intersection.unwrap();
 
                     if composed.b.is_point_inside(&a_intersection.location) {
-                        return Some(a_intersection);
+                        return Box::new(iter::once(*a_intersection));
                     }
                 }
 
-                let b_intersection = intersect(vacuum, &composed.b);
+                let b_intersection = intersect(vacuum, &composed.b).iter().next();
 
                 if b_intersection.is_some() {
                     let b_intersection = b_intersection.unwrap();
 
                     if composed.a.is_point_inside(&b_intersection.location) {
-                        return Some(b_intersection);
+                        return Box::new(iter::once(*b_intersection));
                     }
                 }
 
-                None
+                return Box::new(iter::empty());
             }
             SetOperation::Complement =>
                 unimplemented!(),

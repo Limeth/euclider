@@ -11,6 +11,7 @@ use universe::d3::entity::camera::Camera3Impl;
 use universe::Universe;
 use universe::d3::entity::*;
 use util::CustomFloat;
+use util::Provider;
 
 pub struct Universe3D<F: CustomFloat> {
     camera: Box<Camera3<F>>,
@@ -24,7 +25,7 @@ pub struct Universe3D<F: CustomFloat> {
                                   &Material<F, Point3<F>, Vector3<F>>,
                                   &Shape<F, Point3<F>, Vector3<F>>
                               ) -> Option<Intersection<F, Point3<F>, Vector3<F>>>)
-                              -> Option<Intersection<F, Point3<F>, Vector3<F>>>>,
+                              -> Provider<Intersection<F, Point3<F>, Vector3<F>>>>,
     transitions: HashMap<(TypeId, TypeId),
                          fn(&Material<F, Point3<F>, Vector3<F>>,
                             &Material<F, Point3<F>, Vector3<F>>,
@@ -91,7 +92,7 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
                                                          &Material<F, Self::P, Self::V>,
                                                          &Shape<F, Self::P, Self::V>
                                                      ) -> Option<Intersection<F, Self::P, Self::V>>)
-                                                     -> Option<Intersection<F, Self::P, Self::V>>> {
+                                                     -> Provider<Intersection<F, Self::P, Self::V>>> {
         &mut self.intersections
     }
 
@@ -105,7 +106,7 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
                                        &Material<F, Self::P, Self::V>,
                                        &Shape<F, Self::P, Self::V>
                                    ) -> Option<Intersection<F, Self::P, Self::V>>)
-                                   -> Option<Intersection<F, Self::P, Self::V>>> {
+                                   -> Provider<Intersection<F, Self::P, Self::V>>> {
         &self.intersections
     }
 
@@ -119,7 +120,7 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
                                                                 &Material<F, Self::P, Self::V>,
                                                                 &Shape<F, Self::P, Self::V>
                                                             ) -> Option<Intersection<F, Self::P, Self::V>>)
-                                                            -> Option<Intersection<F, Self::P, Self::V>>>) {
+                                                            -> Provider<Intersection<F, Self::P, Self::V>>>) {
         self.intersections = intersections;
     }
 

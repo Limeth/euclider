@@ -28,6 +28,7 @@ use util::CustomVector;
 use util::CustomFloat;
 use util::Consts;
 use util::AngleBetween;
+use util::Provider;
 
 pub trait Universe<F: CustomFloat>
     where Self: Sync
@@ -72,7 +73,7 @@ pub trait Universe<F: CustomFloat>
                                                 &Material<F, Self::P, Self::V>,
                                                 &Shape<F, Self::P, Self::V>
                                             ) -> Option<Intersection<F, Self::P, Self::V>>)
-                                            -> Option<Intersection<F, Self::P, Self::V>>>;
+                                            -> Provider<Intersection<F, Self::P, Self::V>>>;
     fn intersectors(&self)
                     -> &HashMap<(TypeId, TypeId),
                                 fn(&Self::P,
@@ -83,7 +84,7 @@ pub trait Universe<F: CustomFloat>
                                        &Material<F, Self::P, Self::V>,
                                        &Shape<F, Self::P, Self::V>
                                    ) -> Option<Intersection<F, Self::P, Self::V>>)
-                                   -> Option<Intersection<F, Self::P, Self::V>>>;
+                                   -> Provider<Intersection<F, Self::P, Self::V>>>;
     fn set_intersectors(&mut self,
                          intersections: HashMap<(TypeId, TypeId),
                                                 fn(&Self::P,
@@ -94,7 +95,7 @@ pub trait Universe<F: CustomFloat>
                                                        &Material<F, Self::P, Self::V>,
                                                        &Shape<F, Self::P, Self::V>
                                                    ) -> Option<Intersection<F, Self::P, Self::V>>)
-                                                   -> Option<Intersection<F, Self::P, Self::V>>>);
+                                                   -> Provider<Intersection<F, Self::P, Self::V>>>);
     /// Stores the behavior of a ray passing from the first material to the second
     fn transitions_mut(&mut self)
                        -> &mut HashMap<(TypeId, TypeId),
@@ -120,7 +121,7 @@ pub trait Universe<F: CustomFloat>
                        rotation: &Self::V,
                        material: &Material<F, Self::P, Self::V>,
                        shape: &Shape<F, Self::P, Self::V>)
-                       -> Option<Intersection<F, Self::P, Self::V>> {
+                       -> Provider<Intersection<F, Self::P, Self::V>> {
         let material_id = material.id();
         let shape_id = shape.id();
         let intersector = self.intersectors().get(&(material_id, shape_id));
@@ -136,7 +137,7 @@ pub trait Universe<F: CustomFloat>
         let intersect: &Fn(
                            &Material<F, Self::P, Self::V>,
                            &Shape<F, Self::P, Self::V>
-                       ) -> Option<Intersection<F, Self::P, Self::V>> = &|material, shape| {
+                       ) -> Provider<Intersection<F, Self::P, Self::V>> = &|material, shape| {
             self.intersect(location, rotation, material, shape)
         };
 

@@ -8,8 +8,6 @@ use std::time::Duration;
 use std::any::TypeId;
 use std::any::Any;
 use std::collections::HashMap;
-use core::ops::Index;
-use core::ops::IndexMut;
 use num::traits::NumCast;
 use na::PointAsVector;
 use palette;
@@ -20,6 +18,7 @@ use util;
 use util::CustomFloat;
 use util::CustomPoint;
 use util::CustomVector;
+use util::HasId;
 
 pub trait Entity<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
     where Self: Sync
@@ -44,18 +43,6 @@ pub trait Camera<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: E
                       screen_height: i32)
                       -> <P as PointAsVector>::Vector;
     fn max_depth(&self) -> u32;
-}
-
-pub trait HasId {
-    fn id_static() -> TypeId
-        where Self: Sized + Reflect + 'static
-    {
-        TypeId::of::<Self>()
-    }
-
-    fn id(&self) -> TypeId;
-    fn as_any(&self) -> &Any;
-    fn as_any_mut(&mut self) -> &mut Any;
 }
 
 #[derive(Debug, Copy, Clone)]

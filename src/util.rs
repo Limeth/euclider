@@ -1,8 +1,9 @@
 use std;
+use std::any::TypeId;
+use std::any::Any;
 use std::collections::HashSet;
 use std::hash::Hash;
 use std::u8;
-use core::marker::Reflect;
 use std::fmt::UpperExp;
 use std::fmt::LowerExp;
 use std::fmt::Display;
@@ -55,9 +56,11 @@ use na::IterableMut;
 use na::Dot;
 use na::Norm;
 use na::Mean;
-use core::iter::FromIterator;
 use na::Point3;
 use na::Vector3;
+use core::iter::FromIterator;
+use core::marker::Reflect;
+use core::ops::DerefMut;
 
 pub trait RemoveIf<T, C> {
     fn remove_if<F>(&mut self, f: F) -> C where F: Fn(&T) -> bool;
@@ -83,6 +86,18 @@ impl<T> RemoveIf<T, HashSet<T>> for HashSet<T>
 
         removed
     }
+}
+
+pub trait HasId {
+    fn id_static() -> TypeId
+        where Self: Sized + Reflect + 'static
+    {
+        TypeId::of::<Self>()
+    }
+
+    fn id(&self) -> TypeId;
+    fn as_any(&self) -> &Any;
+    fn as_any_mut(&mut self) -> &mut Any;
 }
 
 pub fn combine_color<F: CustomFloat>(a: Rgba<u8>, b: Rgba<u8>, a_ratio: F) -> Rgba<u8> {
@@ -212,10 +227,11 @@ struct Marcher<'a, T: 'a, I: 'a> {
     provider: RefMut<'a, ProviderData<T, I>>,
 }
 
-impl<'a, T, I: Iterator<Item=T>> Marcher<'a, T, I> {
-    fn next(&mut self) -> Option<&T> {
-        // return None;
-        let result: Option<&T>;
+impl<'a, T, I: Iterator<Item=T>> Iterator for Marcher<'a, T, I> {
+    type Item = &'a mut T;  // The iterator should return a reference to an instance
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let result: Option<Self::Item>;
 
         if self.index >= self.provider.items.len() {
             let item = self.provider.iterator.next();
@@ -223,45 +239,24 @@ impl<'a, T, I: Iterator<Item=T>> Marcher<'a, T, I> {
             if item.is_some() {
                 self.provider.items.push(item);
                 let index = self.provider.items.len() - 1;
-                result = self.provider.items[index].as_ref();
+                let provider: &'a mut ProviderData<T, I> = unsafe {
+                    mem::transmute(self.provider.deref_mut())
+                };
+                result = provider.items[index].as_mut();
             } else {
                 self.provider.items.push(None);
                 result = None;
             }
         } else {
-            result = self.provider.items[self.index].as_ref();
+            let provider: &'a mut ProviderData<T, I> = unsafe {
+                mem::transmute(self.provider.deref_mut())
+            };
+            result = provider.items[self.index].as_mut();
         }
 
         self.index += 1;
 
         return result;
-    }
-}
-
-fn do_stuff<T: Display, I: Iterator<Item=T>>(provider: &mut Provider<T, I>) {
-    {
-        let mut iter = provider.iter();
-
-        {
-            let first = iter.next();
-            println!("{}", first.unwrap())
-        }
-        {
-            let second = iter.next();
-            println!("{}", second.unwrap())
-        }
-    }
-    {
-        let mut iter = provider.iter();
-
-        {
-            let first = iter.next();
-            println!("{}", first.unwrap())
-        }
-        {
-            let second = iter.next();
-            println!("{}", second.unwrap())
-        }
     }
 }
 

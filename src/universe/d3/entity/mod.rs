@@ -22,6 +22,7 @@ use palette::Hsv;
 use palette::RgbHue;
 use universe::entity::*;
 use util::CustomFloat;
+use util::HasId;
 
 #[allow(non_snake_case)]
 pub fn AXIS_Z<F: CustomFloat>() -> Vector3<F> {

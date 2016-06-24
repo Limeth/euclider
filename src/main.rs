@@ -44,6 +44,7 @@ use universe::d3::Universe3D;
 use universe::d3::entity::*;
 use util::RemoveIf;
 use util::CustomFloat;
+use util::HasId;
 use na::BaseFloat;
 use num::traits::NumCast;
 use num::Zero;

@@ -2,7 +2,6 @@ pub mod entity;
 
 use std::collections::HashMap;
 use std::any::TypeId;
-use na;
 use na::PointAsVector;
 use na::Point3;
 use na::Vector3;

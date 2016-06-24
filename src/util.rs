@@ -193,28 +193,28 @@ pub fn overlay_color<F: CustomFloat>(bottom: Rgb<u8>, top: Rgba<u8>) -> Rgb<u8> 
     }
 }
 
-pub struct ProviderData<T, I> {
+struct ProviderData<T> {
     items: Vec<Option<T>>,
-    iterator: I,
+    iterator: Box<Iterator<Item=T>>,
 }
 
-pub struct Provider<T, I> {
-    data: RefCell<ProviderData<T, I>>,
+pub struct Provider<T> {
+    data: RefCell<ProviderData<T>>,
 }
 
-impl<T, I: Iterator<Item=T>> Provider<T, I> {
+impl<T> Provider<T> {
     // Create an object that provides iterators which lazily compute values
     // that have not been requested yet
-    pub fn new(a: I) -> Provider<T, I> {
+    pub fn new<I: Iterator<Item=T> + 'static>(a: I) -> Provider<T> {
         Provider {
         data: RefCell::new(ProviderData {
                 items: Vec::new(),
-                iterator: a,
+                iterator: Box::new(a),
             }),
         }
     }
 
-    fn iter(&self) -> Marcher<T, I> {
+    fn iter(&self) -> Marcher<T> {
         Marcher {
             index: 0,
             provider: self.data.borrow_mut(),
@@ -222,12 +222,12 @@ impl<T, I: Iterator<Item=T>> Provider<T, I> {
     }
 }
 
-struct Marcher<'a, T: 'a, I: 'a> {
+struct Marcher<'a, T: 'a> {
     index: usize,
-    provider: RefMut<'a, ProviderData<T, I>>,
+    provider: RefMut<'a, ProviderData<T>>,
 }
 
-impl<'a, T, I: Iterator<Item=T>> Iterator for Marcher<'a, T, I> {
+impl<'a, T> Iterator for Marcher<'a, T> {
     type Item = &'a mut T;  // The iterator should return a reference to an instance
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -239,7 +239,7 @@ impl<'a, T, I: Iterator<Item=T>> Iterator for Marcher<'a, T, I> {
             if item.is_some() {
                 self.provider.items.push(item);
                 let index = self.provider.items.len() - 1;
-                let provider: &'a mut ProviderData<T, I> = unsafe {
+                let provider: &'a mut ProviderData<T> = unsafe {
                     mem::transmute(self.provider.deref_mut())
                 };
                 result = provider.items[index].as_mut();
@@ -248,7 +248,7 @@ impl<'a, T, I: Iterator<Item=T>> Iterator for Marcher<'a, T, I> {
                 result = None;
             }
         } else {
-            let provider: &'a mut ProviderData<T, I> = unsafe {
+            let provider: &'a mut ProviderData<T> = unsafe {
                 mem::transmute(self.provider.deref_mut())
             };
             result = provider.items[self.index].as_mut();

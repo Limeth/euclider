@@ -143,6 +143,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, A: Shape<F, P,
         }
     }
 
+    #[allow(unused_variables)]
     pub fn intersect_in_vacuum(location: &P,
                                direction: &V,
                                vacuum: &Material<F, P, V>,

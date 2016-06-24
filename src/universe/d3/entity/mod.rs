@@ -156,6 +156,7 @@ pub fn intersect_void<F: CustomFloat>(location: &Point3<F>,
     None
 }
 
+#[allow(unused_variables)]
 pub fn intersect_sphere_in_vacuum<F: CustomFloat>(location: &Point3<F>,
                                                   direction: &Vector3<F>,
                                                   vacuum: &Material<F, Point3<F>, Vector3<F>>,
@@ -217,6 +218,7 @@ pub fn intersect_sphere_in_vacuum<F: CustomFloat>(location: &Point3<F>,
     ))
 }
 
+#[allow(unused_variables)]
 pub fn intersect_plane_in_vacuum<F: CustomFloat>(location: &Point3<F>,
                                                  direction: &Vector3<F>,
                                                  vacuum: &Material<F, Point3<F>, Vector3<F>>,

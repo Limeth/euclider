@@ -8,6 +8,8 @@ use std::time::Duration;
 use std::any::TypeId;
 use std::any::Any;
 use std::collections::HashMap;
+use core::ops::Index;
+use core::ops::IndexMut;
 use num::traits::NumCast;
 use na::PointAsVector;
 use palette;
@@ -56,10 +58,11 @@ pub trait HasId {
     fn as_any_mut(&mut self) -> &mut Any;
 }
 
+#[derive(Debug, Copy, Clone)]
 pub struct Intersection<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
     pub location: P,
-    pub direction: <P as PointAsVector>::Vector,
-    pub normal: <P as PointAsVector>::Vector,
+    pub direction: V,
+    pub normal: V,
     pub distance_squared: F,
     pub float_precision: PhantomData<F>,
     pub vector_dimensions: PhantomData<V>,

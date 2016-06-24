@@ -25,6 +25,9 @@ use std::convert::From;
 use std::num::One;
 use std::num::Zero;
 use std::default::Default;
+use std::mem;
+use std::cell::RefCell;
+use std::cell::RefMut;
 use num::Num;
 use num::num_traits::ParseFloatError;
 use num::traits::NumCast;
@@ -55,7 +58,6 @@ use na::Mean;
 use core::iter::FromIterator;
 use na::Point3;
 use na::Vector3;
-use std::mem;
 
 pub trait RemoveIf<T, C> {
     fn remove_if<F>(&mut self, f: F) -> C where F: Fn(&T) -> bool;
@@ -172,6 +174,93 @@ pub fn overlay_color<F: CustomFloat>(bottom: Rgb<u8>, top: Rgba<u8>) -> Rgb<u8> 
                            .sqrt() *
                                          <F as NumCast>::from(255.0).unwrap())
                        .unwrap()],
+        }
+    }
+}
+
+pub struct ProviderData<T, I> {
+    items: Vec<Option<T>>,
+    iterator: I,
+}
+
+pub struct Provider<T, I> {
+    data: RefCell<ProviderData<T, I>>,
+}
+
+impl<T, I: Iterator<Item=T>> Provider<T, I> {
+    // Create an object that provides iterators which lazily compute values
+    // that have not been requested yet
+    pub fn new(a: I) -> Provider<T, I> {
+        Provider {
+        data: RefCell::new(ProviderData {
+                items: Vec::new(),
+                iterator: a,
+            }),
+        }
+    }
+
+    fn iter(&self) -> Marcher<T, I> {
+        Marcher {
+            index: 0,
+            provider: self.data.borrow_mut(),
+        }
+    }
+}
+
+struct Marcher<'a, T: 'a, I: 'a> {
+    index: usize,
+    provider: RefMut<'a, ProviderData<T, I>>,
+}
+
+impl<'a, T, I: Iterator<Item=T>> Marcher<'a, T, I> {
+    fn next(&mut self) -> Option<&T> {
+        // return None;
+        let result: Option<&T>;
+
+        if self.index >= self.provider.items.len() {
+            let item = self.provider.iterator.next();
+
+            if item.is_some() {
+                self.provider.items.push(item);
+                let index = self.provider.items.len() - 1;
+                result = self.provider.items[index].as_ref();
+            } else {
+                self.provider.items.push(None);
+                result = None;
+            }
+        } else {
+            result = self.provider.items[self.index].as_ref();
+        }
+
+        self.index += 1;
+
+        return result;
+    }
+}
+
+fn do_stuff<T: Display, I: Iterator<Item=T>>(provider: &mut Provider<T, I>) {
+    {
+        let mut iter = provider.iter();
+
+        {
+            let first = iter.next();
+            println!("{}", first.unwrap())
+        }
+        {
+            let second = iter.next();
+            println!("{}", second.unwrap())
+        }
+    }
+    {
+        let mut iter = provider.iter();
+
+        {
+            let first = iter.next();
+            println!("{}", first.unwrap())
+        }
+        {
+            let second = iter.next();
+            println!("{}", second.unwrap())
         }
     }
 }

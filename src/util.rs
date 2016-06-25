@@ -222,13 +222,13 @@ impl<T> Provider<T> {
     }
 }
 
-struct Marcher<'a, T: 'a> {
+pub struct Marcher<'a, T: 'a> {
     index: usize,
     provider: RefMut<'a, ProviderData<T>>,
 }
 
 impl<'a, T> Iterator for Marcher<'a, T> {
-    type Item = &'a mut T;  // The iterator should return a reference to an instance
+    type Item = &'a mut T;
 
     fn next(&mut self) -> Option<Self::Item> {
         let result: Option<Self::Item>;

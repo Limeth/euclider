@@ -158,10 +158,14 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, A: Shape<F, P,
                                where A: 'static, B: 'static {
         vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
         let composed: &ComposableShape<F, P, V, A, B> = shape.as_any().downcast_ref::<ComposableShape<F, P, V, A, B>>().unwrap();
+        let provider_a = intersect(vacuum, &composed.a);
+        let provider_b = intersect(vacuum, &composed.b);
+        let mut intersections_a = provider_a.iter();
+        let mut intersections_b = provider_b.iter();
         match composed.operation {
             SetOperation::Union => {
-                let a_intersection = intersect(vacuum, &composed.a).iter().next();
-                let b_intersection = intersect(vacuum, &composed.b).iter().next();
+                let a_intersection = intersections_a.next();
+                let b_intersection = intersections_b.next();
 
                 if a_intersection.is_some() {
                     if b_intersection.is_some() {
@@ -175,10 +179,18 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, A: Shape<F, P,
                             return Box::new(iter::once(*b_intersection));
                         }
                     } else {
-                        return Box::new(*a_intersection.iter());
+                        if a_intersection.is_some() {
+                            return Box::new(iter::once(*a_intersection.unwrap()));
+                        } else {
+                            return Box::new(iter::empty());
+                        }
                     }
                 } else {
-                    return Box::new(b_intersection.clone().into_iter());
+                    if b_intersection.is_some() {
+                        return Box::new(iter::once(*b_intersection.unwrap()));
+                    } else {
+                        return Box::new(iter::empty());
+                    }
                 }
             }
             SetOperation::Intersection => {
@@ -186,7 +198,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, A: Shape<F, P,
                 // Request and lazily calculate the other intersections
                 // --> [a]   [b]   [a[a+b]b]
 
-                let a_intersection = intersect(vacuum, &composed.a).iter().next();
+                let a_intersection = intersections_a.next();
 
                 if a_intersection.is_some() {
                     let a_intersection = a_intersection.unwrap();
@@ -196,7 +208,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, A: Shape<F, P,
                     }
                 }
 
-                let b_intersection = intersect(vacuum, &composed.b).iter().next();
+                let b_intersection = intersections_b.next();
 
                 if b_intersection.is_some() {
                     let b_intersection = b_intersection.unwrap();

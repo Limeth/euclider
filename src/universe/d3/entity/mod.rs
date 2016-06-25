@@ -5,6 +5,7 @@ use std::any::TypeId;
 use std::fmt;
 use std::fmt::Debug;
 use std::fmt::Display;
+use std::iter;
 use num::traits::NumCast;
 use num::Zero;
 use num::One;
@@ -23,6 +24,7 @@ use palette::RgbHue;
 use universe::entity::*;
 use util::CustomFloat;
 use util::HasId;
+use util::Provider;
 
 #[allow(non_snake_case)]
 pub fn AXIS_Z<F: CustomFloat>() -> Vector3<F> {
@@ -150,10 +152,10 @@ pub fn intersect_void<F: CustomFloat>(location: &Point3<F>,
                                       intersect: &Fn(
                                           &Material<F, Point3<F>, Vector3<F>>,
                                           &Shape<F, Point3<F>, Vector3<F>>
-                                      ) -> Option<Intersection<F, Point3<F>, Vector3<F>>>)
-                                      -> Option<Intersection<F, Point3<F>, Vector3<F>>> {
+                                      ) -> Provider<Intersection<F, Point3<F>, Vector3<F>>>)
+                                      -> Box<Iterator<Item=Intersection<F, Point3<F>, Vector3<F>>>> {
     void.as_any().downcast_ref::<VoidShape>().unwrap();
-    None
+    Box::new(iter::empty())
 }
 
 #[allow(unused_variables)]
@@ -164,8 +166,8 @@ pub fn intersect_sphere_in_vacuum<F: CustomFloat>(location: &Point3<F>,
                                                   intersect: &Fn(
                                                       &Material<F, Point3<F>, Vector3<F>>,
                                                       &Shape<F, Point3<F>, Vector3<F>>
-                                                  ) -> Option<Intersection<F, Point3<F>, Vector3<F>>>)
-                                                  -> Option<Intersection<F, Point3<F>, Vector3<F>>> {
+                                                  ) -> Provider<Intersection<F, Point3<F>, Vector3<F>>>)
+                                                  -> Box<Iterator<Item=Intersection<F, Point3<F>, Vector3<F>>>> {
     // Unsafe cast example:
     // let a = unsafe { &*(a as *const _ as *const Aimpl) };
     vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
@@ -183,7 +185,7 @@ pub fn intersect_sphere_in_vacuum<F: CustomFloat>(location: &Point3<F>,
     let d: F = b * b - <F as NumCast>::from(4.0).unwrap() * a * c;
 
     if d < Cast::from(0.0) {
-        return None;
+        return Box::new(iter::empty());
     }
 
     let d_sqrt = d.sqrt();
@@ -198,7 +200,7 @@ pub fn intersect_sphere_in_vacuum<F: CustomFloat>(location: &Point3<F>,
         if t2 >= Cast::from(0.0) {
             t = t2;
         } else {
-            return None; // Don't trace in the opposite direction
+            return Box::new(iter::empty());  // Don't trace in the opposite direction
         }
     }
 
@@ -210,12 +212,12 @@ pub fn intersect_sphere_in_vacuum<F: CustomFloat>(location: &Point3<F>,
     let mut normal = result_point - sphere.location;
     normal = na::normalize(&normal);
 
-    Some(Intersection::new(
-            result_point,
-            *direction,
-            normal,
-            na::distance_squared(location, &result_point)
-    ))
+    Box::new(iter::once(Intersection::new(
+        result_point,
+        *direction,
+        normal,
+        na::distance_squared(location, &result_point)
+    )))
 }
 
 #[allow(unused_variables)]
@@ -226,8 +228,8 @@ pub fn intersect_plane_in_vacuum<F: CustomFloat>(location: &Point3<F>,
                                                  intersect: &Fn(
                                                      &Material<F, Point3<F>, Vector3<F>>,
                                                      &Shape<F, Point3<F>, Vector3<F>>
-                                                 ) -> Option<Intersection<F, Point3<F>, Vector3<F>>>)
-                                                 -> Option<Intersection<F, Point3<F>, Vector3<F>>> {
+                                                 ) -> Provider<Intersection<F, Point3<F>, Vector3<F>>>)
+                                                 -> Box<Iterator<Item=Intersection<F, Point3<F>, Vector3<F>>>> {
     vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
     let plane: &Plane3<F> = shape.as_any().downcast_ref::<Plane3<F>>().unwrap();
 
@@ -237,7 +239,7 @@ pub fn intersect_plane_in_vacuum<F: CustomFloat>(location: &Point3<F>,
                na::dot(&plane.normal, direction);
 
     if t < Cast::from(0.0) {
-        return None;
+        return Box::new(iter::empty());
     }
 
     let result_vector = *direction * t;
@@ -247,12 +249,12 @@ pub fn intersect_plane_in_vacuum<F: CustomFloat>(location: &Point3<F>,
 
     let normal = plane.normal;
 
-    Some(Intersection::new(
-            result_point,
-            *direction,
-            normal,
-            na::distance_squared(location, &result_point)
-    ))
+    Box::new(iter::once(Intersection::new(
+        result_point,
+        *direction,
+        normal,
+        na::distance_squared(location, &result_point)
+    )))
 }
 
 pub fn intersect_halfspace_in_vacuum<F: CustomFloat>(location: &Point3<F>,
@@ -262,20 +264,22 @@ pub fn intersect_halfspace_in_vacuum<F: CustomFloat>(location: &Point3<F>,
                                                      intersect: &Fn(
                                                          &Material<F, Point3<F>, Vector3<F>>,
                                                          &Shape<F, Point3<F>, Vector3<F>>
-                                                     ) -> Option<Intersection<F, Point3<F>, Vector3<F>>>)
-                                                     -> Option<Intersection<F, Point3<F>, Vector3<F>>> {
+                                                     ) -> Provider<Intersection<F, Point3<F>, Vector3<F>>>)
+                                                     -> Box<Iterator<Item=Intersection<F, Point3<F>, Vector3<F>>>> {
     vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
     let halfspace: &HalfSpace3<F> = shape.as_any().downcast_ref::<HalfSpace3<F>>().unwrap();
-    let mut intersection = intersect_plane_in_vacuum(location, direction, vacuum, &halfspace.plane, intersect);
+    let mut intersection = intersect_plane_in_vacuum(
+        location, direction, vacuum, &halfspace.plane, intersect
+        ).next();
 
     // Works so far, not sure why
     if intersection.is_some() {
-        let mut intersection_unwrapped = intersection.unwrap();
-        intersection_unwrapped.normal *= -halfspace.signum;
-        intersection = Some(intersection_unwrapped);
+        let mut intersection = intersection.unwrap();
+        intersection.normal *= -halfspace.signum;
+        return Box::new(iter::once(intersection));
     }
 
-    intersection
+    Box::new(iter::empty())
 }
 
 pub struct PerlinSurface3<F: CustomFloat> {

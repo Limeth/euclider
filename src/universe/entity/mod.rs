@@ -9,6 +9,8 @@ use std::any::TypeId;
 use std::any::Any;
 use std::collections::HashMap;
 use std::iter;
+use std::rc::Rc;
+use std::sync::Arc;
 use num::traits::NumCast;
 use na::PointAsVector;
 use palette;
@@ -107,15 +109,6 @@ pub trait Surface<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
     fn get_color<'a>(&self, context: TracingContext<'a, F, P, V>) -> Rgba<F>;
 }
 
-pub struct ComposableShape<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
-    pub a: Box<Shape<F, P, V>>,
-    pub b: Box<Shape<F, P, V>>,
-    pub operation: SetOperation,
-    pub float_precision: PhantomData<F>,
-    pub dimensions: PhantomData<P>,
-    pub vector_dimensions: PhantomData<V>,
-}
-
 #[allow(dead_code)]
 #[derive(Debug, Copy, Clone)]
 pub enum SetOperation {
@@ -125,17 +118,132 @@ pub enum SetOperation {
     SymmetricDifference,  // A ^ B
 }
 
+struct UnionIterator<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
+    shape_a: Arc<Shape<F, P, V>>,
+    shape_b: Arc<Shape<F, P, V>>,
+    provider_a: Provider<Intersection<F, P, V>>,
+    provider_b: Provider<Intersection<F, P, V>>,
+    index_a: usize,
+    index_b: usize,
+}
+
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> UnionIterator<F, P, V> {
+    fn new(shape_a: Arc<Shape<F, P, V>>,
+           shape_b: Arc<Shape<F, P, V>>,
+           provider_a: Provider<Intersection<F, P, V>>,
+           provider_b: Provider<Intersection<F, P, V>>) -> UnionIterator<F, P, V> {
+        UnionIterator {
+            shape_a: shape_a,
+            shape_b: shape_b,
+            provider_a: provider_a,
+            provider_b: provider_b,
+            index_a: 0,
+            index_b: 0,
+        }
+    }
+}
+
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+        Iterator for UnionIterator<F, P, V> {
+    type Item = Intersection<F, P, V>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            let intersection_a = self.provider_a[self.index_a];
+            let intersection_b = self.provider_b[self.index_b];
+
+            if intersection_a.is_some() {
+                if intersection_b.is_some() {
+                    let unwrapped_a = intersection_a.unwrap();
+                    let unwrapped_b = intersection_b.unwrap();
+                    let closer: Intersection<F, P, V>;
+                    // let further: Intersection<F, P, V>;
+                    let closer_index: &mut usize;
+                    // let further_index: &mut usize;
+                    // let closer_shape: &Shape<F, P, V>;
+                    let further_shape: &Shape<F, P, V>;
+
+                    if unwrapped_a.distance_squared < unwrapped_b.distance_squared {
+                        closer = unwrapped_a;
+                        // further = unwrapped_b;
+                        closer_index = &mut self.index_a;
+                        // further_index = &mut self.index_b;
+                        // closer_shape = self.shape_a.as_ref();
+                        further_shape = self.shape_b.as_ref();
+                    } else {
+                        closer = unwrapped_b;
+                        // further = unwrapped_a;
+                        closer_index = &mut self.index_b;
+                        // further_index = &mut self.index_a;
+                        // closer_shape = self.shape_b.as_ref();
+                        further_shape = self.shape_a.as_ref();
+                    }
+
+                    if !further_shape.is_point_inside(&closer.location) {
+                        *closer_index += 1;
+                        return Some(closer);
+                    }
+
+                    *closer_index += 1;
+                } else {
+                    self.index_a += 1;
+                    return intersection_a;
+                }
+            } else {
+                if intersection_b.is_some() {
+                    self.index_b += 1;
+                }
+
+                return intersection_b;
+            }
+        }
+        // let mut a_intersection = intersections_a.next();
+        // let mut b_intersection = intersections_b.next();
+
+        // if a_intersection.is_some() {
+        //     if b_intersection.is_some() {
+        //         let a_intersection = a_intersection.unwrap();
+        //         let b_intersection = b_intersection.unwrap();
+
+        //         if a_intersection.distance_squared
+        //                 < b_intersection.distance_squared {
+        //             return Box::new(iter::once(*a_intersection));
+        //         } else {
+        //             return Box::new(iter::once(*b_intersection));
+        //         }
+        //     } else {
+        //         return Box::new(iter::once(*a_intersection.unwrap()));
+        //     }
+        // } else {
+        //     if b_intersection.is_some() {
+        //         return Box::new(iter::once(*b_intersection.unwrap()));
+        //     } else {
+        //         return Box::new(iter::empty());
+        //     }
+        // }
+    }
+}
+
 impl Display for SetOperation {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", self)
     }
 }
 
+pub struct ComposableShape<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
+    pub a: Arc<Shape<F, P, V>>,
+    pub b: Arc<Shape<F, P, V>>,
+    pub operation: SetOperation,
+    pub float_precision: PhantomData<F>,
+    pub dimensions: PhantomData<P>,
+    pub vector_dimensions: PhantomData<V>,
+}
+
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableShape<F, P, V> {
     pub fn new<A: Shape<F, P, V> + 'static, B: Shape<F, P, V> + 'static>(a: A, b: B, operation: SetOperation) -> ComposableShape<F, P, V> {
         ComposableShape {
-            a: Box::new(a),
-            b: Box::new(b),
+            a: Arc::new(a),
+            b: Arc::new(b),
             operation: operation,
             float_precision: PhantomData,
             dimensions: PhantomData,
@@ -157,40 +265,16 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableShap
         let composed: &ComposableShape<F, P, V> = shape.as_any().downcast_ref::<ComposableShape<F, P, V>>().unwrap();
         let provider_a = intersect(vacuum, composed.a.as_ref());
         let provider_b = intersect(vacuum, composed.b.as_ref());
-        let mut intersections_a = provider_a.iter();
-        let mut intersections_b = provider_b.iter();
         match composed.operation {
             SetOperation::Union => {
-                let a_intersection = intersections_a.next();
-                let b_intersection = intersections_b.next();
-
-                if a_intersection.is_some() {
-                    if b_intersection.is_some() {
-                        let a_intersection = a_intersection.unwrap();
-                        let b_intersection = b_intersection.unwrap();
-
-                        if a_intersection.distance_squared
-                                < b_intersection.distance_squared {
-                            return Box::new(iter::once(*a_intersection));
-                        } else {
-                            return Box::new(iter::once(*b_intersection));
-                        }
-                    } else {
-                        if a_intersection.is_some() {
-                            return Box::new(iter::once(*a_intersection.unwrap()));
-                        } else {
-                            return Box::new(iter::empty());
-                        }
-                    }
-                } else {
-                    if b_intersection.is_some() {
-                        return Box::new(iter::once(*b_intersection.unwrap()));
-                    } else {
-                        return Box::new(iter::empty());
-                    }
-                }
+                return Box::new(UnionIterator::new(composed.a.clone(),
+                                                   composed.b.clone(),
+                                                   provider_a,
+                                                   provider_b))
             }
             SetOperation::Intersection => {
+                let mut intersections_a = provider_a.iter();
+                let mut intersections_b = provider_b.iter();
                 // Doesn't currently account for this:
                 // Request and lazily calculate the other intersections
                 // --> [a]   [b]   [a[a+b]b]

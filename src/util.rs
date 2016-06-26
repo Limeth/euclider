@@ -22,6 +22,8 @@ use std::ops::Div;
 use std::ops::Mul;
 use std::ops::Sub;
 use std::ops::Add;
+use std::ops::Index;
+use std::ops::IndexMut;
 use std::convert::From;
 use std::num::One;
 use std::num::Zero;
@@ -193,7 +195,7 @@ pub fn overlay_color<F: CustomFloat>(bottom: Rgb<u8>, top: Rgba<u8>) -> Rgb<u8> 
     }
 }
 
-struct ProviderData<T> {
+pub struct ProviderData<T> {
     items: Vec<Option<T>>,
     iterator: Box<Iterator<Item=T>>,
 }
@@ -219,6 +221,47 @@ impl<T> Provider<T> {
             index: 0,
             provider: self.data.borrow_mut(),
         }
+    }
+
+    unsafe fn iter_index(&self, index: usize) -> Marcher<T> {
+        Marcher {
+            index: index,
+            provider: self.data.borrow_mut(),
+        }
+    }
+}
+
+impl<T> Index<usize> for Provider<T> {
+    type Output = Option<T>;
+
+    fn index<'a>(&'a self, _index: usize) -> &'a Self::Output {
+        let length = self.data.borrow().items.len();
+
+        if _index >= length {
+            let mut iter = unsafe { self.iter_index(length) };
+
+            for _ in 0..(_index + 1 - length) {
+                iter.next();
+            }
+        }
+
+        return unsafe { mem::transmute(&self.data.borrow().items[_index]) };
+    }
+}
+
+impl<T> IndexMut<usize> for Provider<T> {
+    fn index_mut<'a>(&'a mut self, _index: usize) -> &'a mut Self::Output {
+        let length = self.data.borrow().items.len();
+
+        if _index >= length {
+            let mut iter = unsafe { self.iter_index(length) };
+
+            for _ in 0..(_index + 1 - length) {
+                iter.next();
+            }
+        }
+
+        return unsafe { mem::transmute(&mut self.data.borrow_mut().items[_index]) };
     }
 }
 

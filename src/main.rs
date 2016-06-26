@@ -410,16 +410,36 @@ fn run<F: CustomFloat>() {
                                 Cast::from(3.0)),
                                 &Vector3::new(Cast::from(0.0),
                                 Cast::from(3.0),
-                                Cast::from(-1.0)),
+                                Cast::from(1.5)),
                                 &Vector3::new(Cast::from(1.0),
                                 Cast::from(0.0),
                                 Cast::from(0.0)),
                             ),
                             &Point3::new(Cast::from(0.0),
                             Cast::from(0.0),
-                            Cast::from(100.0))
+                            Cast::from(-100.0))
                         ),
-                        SetOperation::Intersection
+                        // HalfSpace3::from_point(
+                        //     // Plane3::from_equation(Cast::from(1.0),
+                        //     //                       Cast::from(0.5),
+                        //     //                       Cast::from(0.0),
+                        //     //                       Cast::from(-1.0)),
+                        //     Plane3::new(
+                        //         &Point3::new(Cast::from(0.0),
+                        //         Cast::from(3.0),
+                        //         Cast::from(3.0)),
+                        //         &Vector3::new(Cast::from(0.0),
+                        //         Cast::from(3.0),
+                        //         Cast::from(-1.0)),
+                        //         &Vector3::new(Cast::from(1.0),
+                        //         Cast::from(0.0),
+                        //         Cast::from(0.0)),
+                        //     ),
+                        //     &Point3::new(Cast::from(0.0),
+                        //     Cast::from(0.0),
+                        //     Cast::from(100.0))
+                        // ),
+                        SetOperation::Union
                         )),
                         Box::new(Vacuum::new()),
                         Some(Box::new(ComposableSurface {

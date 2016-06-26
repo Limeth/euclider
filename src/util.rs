@@ -195,6 +195,35 @@ pub fn overlay_color<F: CustomFloat>(bottom: Rgb<u8>, top: Rgba<u8>) -> Rgb<u8> 
     }
 }
 
+pub struct IterLazy<'a, T> {
+    closures: Vec<Box<Fn() -> Option<T> + 'a>>,
+    index: usize,
+}
+
+impl<'a, T> IterLazy<'a, T> {
+    pub fn new(closures: Vec<Box<Fn() -> Option<T> + 'a>>) -> IterLazy<T> {
+        IterLazy {
+            closures: closures,
+            index: 0,
+        }
+    }
+}
+
+impl<'a, T> Iterator for IterLazy<'a, T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index < self.closures.len() {
+            let closure = &self.closures[self.index];
+            self.index += 1;
+            return closure();
+        }
+
+        self.index += 1;
+        return None;
+    }
+}
+
 pub struct ProviderData<T> {
     items: Vec<Option<T>>,
     iterator: Box<Iterator<Item=T>>,

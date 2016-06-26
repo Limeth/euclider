@@ -25,6 +25,7 @@ use universe::entity::*;
 use util::CustomFloat;
 use util::HasId;
 use util::Provider;
+use util::IterLazy;
 
 #[allow(non_snake_case)]
 pub fn AXIS_Z<F: CustomFloat>() -> Vector3<F> {
@@ -189,35 +190,66 @@ pub fn intersect_sphere_in_vacuum<F: CustomFloat>(location: &Point3<F>,
     }
 
     let d_sqrt = d.sqrt();
-    let t: F; // The smallest non-negative vector modifier
+    let t_first: Option<F> = None;  // The smallest non-negative vector modifier
+    let t_second: Option<F> = None;  // The second smallest non-negative vector modifier
     let t1 = (-b - d_sqrt) / (<F as NumCast>::from(2.0).unwrap() * a);
+    let t2 = (-b + d_sqrt) / (<F as NumCast>::from(2.0).unwrap() * a);
 
     if t1 >= Cast::from(0.0) {
-        t = t1;
-    } else {
-        let t2 = (-b + d_sqrt) / (<F as NumCast>::from(2.0).unwrap() * a);
+        t_first = Some(t1);
 
         if t2 >= Cast::from(0.0) {
-            t = t2;
-        } else {
-            return Box::new(iter::empty());  // Don't trace in the opposite direction
+            t_second = Some(t2);
+        }
+    } else {
+        if t2 >= Cast::from(0.0) {
+            t_first = Some(t2);
         }
     }
 
-    let result_vector = *direction * t;
-    let result_point = Point3::new(location.x + result_vector.x,
-                                   location.y + result_vector.y,
-                                   location.z + result_vector.z);
+    if t_first.is_none() {
+        return Box::new(iter::empty());  // Don't trace in the opposite direction
+    }
 
-    let mut normal = result_point - sphere.location;
-    normal = na::normalize(&normal);
+    let mut closures: Vec<Box<Fn() -> Option<Intersection<F, Point3<F>, Vector3<F>>>>> = Vec::new();
 
-    Box::new(iter::once(Intersection::new(
-        result_point,
-        *direction,
-        normal,
-        na::distance_squared(location, &result_point)
-    )))
+    closures.push(Box::new(move || {
+        let result_vector = *direction * t_first.unwrap();
+        let result_point = Point3::new(location.x + result_vector.x,
+                                       location.y + result_vector.y,
+                                       location.z + result_vector.z);
+
+        let mut normal = result_point - sphere.location;
+        normal = na::normalize(&normal);
+
+        Some(Intersection::new(
+            result_point,
+            *direction,
+            normal,
+            na::distance_squared(location, &result_point)
+        ))
+    }));
+
+    if t_second.is_some() {
+        closures.push(Box::new(move || {
+            let result_vector = *direction * t_second.unwrap();
+            let result_point = Point3::new(location.x + result_vector.x,
+                                           location.y + result_vector.y,
+                                           location.z + result_vector.z);
+
+            let mut normal = result_point - sphere.location;
+            normal = na::normalize(&normal);
+
+            Some(Intersection::new(
+                result_point,
+                *direction,
+                normal,
+                na::distance_squared(location, &result_point)
+            ))
+        }));
+    }
+
+    return Box::new(IterLazy::new(closures));
 }
 
 #[allow(unused_variables)]

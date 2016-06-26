@@ -443,8 +443,8 @@ fn run<F: CustomFloat>() {
                             universe::d3::entity::intersect_plane_in_vacuum);
         intersectors.insert((Vacuum::id_static(), HalfSpace3::<F>::id_static()),
                             universe::d3::entity::intersect_halfspace_in_vacuum);
-        intersectors.insert((Vacuum::id_static(), ComposableShape::<F, Point3<F>, Vector3<F>, HalfSpace3<F>, HalfSpace3<F>>::id_static()),
-                            ComposableShape::<F, Point3<F>, Vector3<F>, HalfSpace3<F>, HalfSpace3<F>>::intersect_in_vacuum);
+        intersectors.insert((Vacuum::id_static(), ComposableShape::<F, Point3<F>, Vector3<F>>::id_static()),
+                            ComposableShape::<F, Point3<F>, Vector3<F>>::intersect_in_vacuum);
     }
 
     {

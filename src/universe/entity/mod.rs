@@ -107,10 +107,9 @@ pub trait Surface<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
     fn get_color<'a>(&self, context: TracingContext<'a, F, P, V>) -> Rgba<F>;
 }
 
-pub struct ComposableShape<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>,
-        A: Shape<F, P, V>, B: Shape<F, P, V>> {
-    pub a: A,
-    pub b: B,
+pub struct ComposableShape<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
+    pub a: Box<Shape<F, P, V>>,
+    pub b: Box<Shape<F, P, V>>,
     pub operation: SetOperation,
     pub float_precision: PhantomData<F>,
     pub dimensions: PhantomData<P>,
@@ -132,12 +131,11 @@ impl Display for SetOperation {
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, A: Shape<F, P, V>, B: Shape<F, P, V>>
-        ComposableShape<F, P, V, A, B> {
-    pub fn new(a: A, b: B, operation: SetOperation) -> ComposableShape<F, P, V, A, B> {
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableShape<F, P, V> {
+    pub fn new<A: Shape<F, P, V> + 'static, B: Shape<F, P, V> + 'static>(a: A, b: B, operation: SetOperation) -> ComposableShape<F, P, V> {
         ComposableShape {
-            a: a,
-            b: b,
+            a: Box::new(a),
+            b: Box::new(b),
             operation: operation,
             float_precision: PhantomData,
             dimensions: PhantomData,
@@ -154,12 +152,11 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, A: Shape<F, P,
                                    &Material<F, P, V>,
                                    &Shape<F, P, V>
                                ) -> Provider<Intersection<F, P, V>>)
-                               -> Box<Iterator<Item=Intersection<F, P, V>>>
-                               where A: 'static, B: 'static {
+                               -> Box<Iterator<Item=Intersection<F, P, V>>> {
         vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
-        let composed: &ComposableShape<F, P, V, A, B> = shape.as_any().downcast_ref::<ComposableShape<F, P, V, A, B>>().unwrap();
-        let provider_a = intersect(vacuum, &composed.a);
-        let provider_b = intersect(vacuum, &composed.b);
+        let composed: &ComposableShape<F, P, V> = shape.as_any().downcast_ref::<ComposableShape<F, P, V>>().unwrap();
+        let provider_a = intersect(vacuum, composed.a.as_ref());
+        let provider_b = intersect(vacuum, composed.b.as_ref());
         let mut intersections_a = provider_a.iter();
         let mut intersections_b = provider_b.iter();
         match composed.operation {
@@ -230,8 +227,8 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, A: Shape<F, P,
     }
 }
 
-impl<F: 'static + CustomFloat, P: 'static + CustomPoint<F, V>, V: 'static + CustomVector<F, P>, A: 'static + Shape<F, P, V>, B: 'static + Shape<F, P, V>> Shape<F, P, V>
-        for ComposableShape<F, P, V, A, B> {
+impl<F: 'static + CustomFloat, P: 'static + CustomPoint<F, V>, V: 'static + CustomVector<F, P>> Shape<F, P, V>
+        for ComposableShape<F, P, V> {
     fn is_point_inside(&self, point: &P) -> bool {
         match self.operation {
             SetOperation::Union =>
@@ -246,26 +243,26 @@ impl<F: 'static + CustomFloat, P: 'static + CustomPoint<F, V>, V: 'static + Cust
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, A: Shape<F, P, V>, B: Shape<F, P, V>> Debug
-        for ComposableShape<F, P, V, A, B> {
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Debug
+        for ComposableShape<F, P, V> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "ComposableShape [ operation: {:?} ]", self.operation)
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, A: Shape<F, P, V>, B: Shape<F, P, V>> Display
-        for ComposableShape<F, P, V, A, B> {
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Display
+        for ComposableShape<F, P, V> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "ComposableShape [ a: {}, b: {}, operation: {} ]", self.a, self.b,
                self.operation)
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, A: Shape<F, P, V>, B: Shape<F, P, V>> Reflect
-        for ComposableShape<F, P, V, A, B> {}
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Reflect
+        for ComposableShape<F, P, V> {}
 
-impl<F: 'static + CustomFloat, P: 'static + CustomPoint<F, V>, V: 'static + CustomVector<F, P>, A: 'static + Shape<F, P, V>, B: 'static + Shape<F, P, V>> HasId
-        for ComposableShape<F, P, V, A, B> {
+impl<F: 'static + CustomFloat, P: 'static + CustomPoint<F, V>, V: 'static + CustomVector<F, P>> HasId
+        for ComposableShape<F, P, V> {
     fn id(&self) -> TypeId {
         Self::id_static()
     }

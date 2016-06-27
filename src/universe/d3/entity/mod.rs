@@ -190,10 +190,10 @@ pub fn intersect_sphere_in_vacuum<F: CustomFloat>(location: &Point3<F>,
     }
 
     let d_sqrt = d.sqrt();
-    let t_first: Option<F> = None;  // The smallest non-negative vector modifier
-    let t_second: Option<F> = None;  // The second smallest non-negative vector modifier
-    let t1 = (-b - d_sqrt) / (<F as NumCast>::from(2.0).unwrap() * a);
-    let t2 = (-b + d_sqrt) / (<F as NumCast>::from(2.0).unwrap() * a);
+    let mut t_first: Option<F> = None;  // The smallest non-negative vector modifier
+    let mut t_second: Option<F> = None;  // The second smallest non-negative vector modifier
+    let t1: F = (-b - d_sqrt) / (<F as NumCast>::from(2.0).unwrap() * a);
+    let t2: F = (-b + d_sqrt) / (<F as NumCast>::from(2.0).unwrap() * a);
 
     if t1 >= Cast::from(0.0) {
         t_first = Some(t1);
@@ -212,41 +212,54 @@ pub fn intersect_sphere_in_vacuum<F: CustomFloat>(location: &Point3<F>,
     }
 
     let mut closures: Vec<Box<Fn() -> Option<Intersection<F, Point3<F>, Vector3<F>>>>> = Vec::new();
+    // Move the following variables inside the closures.
+    // This lets the closures move outside the scope.
+    let direction = *direction;
+    let location = *location;
+    let sphere_location = sphere.location;
 
-    closures.push(Box::new(move || {
-        let result_vector = *direction * t_first.unwrap();
-        let result_point = Point3::new(location.x + result_vector.x,
-                                       location.y + result_vector.y,
-                                       location.z + result_vector.z);
+    closures.push(
+        Box::new(
+            move || {
+                let result_vector = direction * t_first.unwrap();
+                let result_point = Point3::new(location.x + result_vector.x,
+                                               location.y + result_vector.y,
+                                               location.z + result_vector.z);
 
-        let mut normal = result_point - sphere.location;
-        normal = na::normalize(&normal);
+                let mut normal = result_point - sphere_location;
+                normal = na::normalize(&normal);
 
-        Some(Intersection::new(
-            result_point,
-            *direction,
-            normal,
-            na::distance_squared(location, &result_point)
-        ))
-    }));
+                Some(Intersection::new(
+                    result_point,
+                    direction,
+                    normal,
+                    na::distance_squared(&location, &result_point)
+                ))
+            }
+        )
+    );
 
     if t_second.is_some() {
-        closures.push(Box::new(move || {
-            let result_vector = *direction * t_second.unwrap();
-            let result_point = Point3::new(location.x + result_vector.x,
-                                           location.y + result_vector.y,
-                                           location.z + result_vector.z);
+        closures.push(
+            Box::new(
+                move || {
+                    let result_vector = direction * t_second.unwrap();
+                    let result_point = Point3::new(location.x + result_vector.x,
+                                                   location.y + result_vector.y,
+                                                   location.z + result_vector.z);
 
-            let mut normal = result_point - sphere.location;
-            normal = na::normalize(&normal);
+                    let mut normal = result_point - sphere_location;
+                    normal = na::normalize(&normal);
 
-            Some(Intersection::new(
-                result_point,
-                *direction,
-                normal,
-                na::distance_squared(location, &result_point)
-            ))
-        }));
+                    Some(Intersection::new(
+                        result_point,
+                        direction,
+                        normal,
+                        na::distance_squared(&location, &result_point)
+                    ))
+                }
+            )
+        );
     }
 
     return Box::new(IterLazy::new(closures));

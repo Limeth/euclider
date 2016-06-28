@@ -357,7 +357,49 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
     // --> [a] [b] [a[a+b]b]
     //     ^-^ ^-^ ^-^   ^-^
     fn next(&mut self) -> Option<Self::Item> {
-        unimplemented!();
+        loop {
+            let intersection_a = self.data.provider_a[self.data.index_a];
+            let intersection_b = self.data.provider_b[self.data.index_b];
+
+            if intersection_a.is_some() {
+                if intersection_b.is_some() {
+                    let unwrapped_a = intersection_a.unwrap();
+                    let unwrapped_b = intersection_b.unwrap();
+                    let closer: Intersection<F, P, V>;
+                    let closer_index: &mut usize;
+                    let further_shape: &Shape<F, P, V>;
+
+                    if unwrapped_a.distance_squared < unwrapped_b.distance_squared {
+                        closer = unwrapped_a;
+                        closer_index = &mut self.data.index_a;
+                        further_shape = self.data.shape_b.as_ref();
+                    } else {
+                        closer = unwrapped_b;
+                        closer_index = &mut self.data.index_b;
+                        further_shape = self.data.shape_a.as_ref();
+                    }
+
+                    if further_shape.is_point_inside(&closer.location) {
+                        *closer_index += 1;
+                        let mut closer_inverted = closer.clone();
+                        closer_inverted.normal = -closer_inverted.normal;
+                        return Some(closer_inverted);
+                    }
+
+                    *closer_index += 1;
+                    return Some(closer);
+                } else {
+                    self.data.index_a += 1;
+                    return intersection_a;
+                }
+            } else {
+                if intersection_b.is_some() {
+                    self.data.index_b += 1;
+                }
+
+                return intersection_b;
+            }
+        }
     }
 }
 
@@ -422,33 +464,6 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableShap
                         provider_b
                     )
                 );
-                // let mut intersections_a = provider_a.iter();
-                // let mut intersections_b = provider_b.iter();
-                // // Doesn't currently account for this:
-                // // Request and lazily calculate the other intersections
-                // // --> [a]   [b]   [a[a+b]b]
-
-                // let a_intersection = intersections_a.next();
-
-                // if a_intersection.is_some() {
-                //     let a_intersection = a_intersection.unwrap();
-
-                //     if composed.b.is_point_inside(&a_intersection.location) {
-                //         return Box::new(iter::once(*a_intersection));
-                //     }
-                // }
-
-                // let b_intersection = intersections_b.next();
-
-                // if b_intersection.is_some() {
-                //     let b_intersection = b_intersection.unwrap();
-
-                //     if composed.a.is_point_inside(&b_intersection.location) {
-                //         return Box::new(iter::once(*b_intersection));
-                //     }
-                // }
-
-                // return Box::new(iter::empty());
             }
             SetOperation::Complement => {
                 return Box::new(

@@ -385,18 +385,29 @@ fn run<F: CustomFloat>() {
                             Sphere3::<F>::new(
                                 Point3::new(
                                     Cast::from(5.0),
-                                    Cast::from(0.0),
+                                    Cast::from(1.5),
                                     Cast::from(5.0)
                                 ),
                                 Cast::from(3.0)
                             ),
-                            Sphere3::<F>::new(
-                                Point3::new(
-                                    Cast::from(5.0),
-                                    Cast::from(3.0),
-                                    Cast::from(5.0)
+                            ComposableShape::new(
+                                Sphere3::<F>::new(
+                                    Point3::new(
+                                        Cast::from(5.0),
+                                        Cast::from(0.0),
+                                        Cast::from(5.0)
+                                    ),
+                                    Cast::from(3.0)
                                 ),
-                                Cast::from(3.0)
+                                Sphere3::<F>::new(
+                                    Point3::new(
+                                        Cast::from(5.0),
+                                        Cast::from(3.0),
+                                        Cast::from(5.0)
+                                    ),
+                                    Cast::from(3.0)
+                                ),
+                                SetOperation::SymmetricDifference
                             ),
                             SetOperation::Complement
                         ),

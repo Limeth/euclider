@@ -255,19 +255,27 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
                         further_shape = self.data.shape_a.as_ref();
                     }
 
+                    *closer_index += 1;
+
                     if further_shape.is_point_inside(&closer.location) {
-                        *closer_index += 1;
                         return Some(closer);
                     }
-
-                    *closer_index += 1;
                 } else {
                     self.data.index_a += 1;
+
+                    if self.data.shape_b.is_point_inside(&intersection_a.unwrap().location) {
+                        return intersection_a;
+                    }
+
                     return None;
                 }
             } else {
                 if intersection_b.is_some() {
                     self.data.index_b += 1;
+
+                    if self.data.shape_a.is_point_inside(&intersection_b.unwrap().location) {
+                        return intersection_b;
+                    }
                 }
 
                 return None;
@@ -318,16 +326,27 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
                         self.data.index_b += 1;
 
                         if self.data.shape_a.is_point_inside(&unwrapped_b.location) {
-                            let mut inverted_a = unwrapped_a.clone();
-                            inverted_a.normal = -inverted_a.normal;
-                            return Some(inverted_a);
+                            let mut inverted_b = unwrapped_b.clone();
+                            inverted_b.normal = -inverted_b.normal;
+                            return Some(inverted_b);
                         }
                     }
                 } else {
-                    self.data.index_a += 1;
                     return intersection_a;
                 }
             } else {
+                if intersection_b.is_some() {
+                    let unwrapped_b = intersection_b.unwrap();
+
+                    self.data.index_b += 1;
+
+                    if self.data.shape_a.is_point_inside(&unwrapped_b.location) {
+                        let mut inverted_b = unwrapped_b.clone();
+                        inverted_b.normal = -inverted_b.normal;
+                        return Some(inverted_b);
+                    }
+                }
+
                 return None;
             }
         }
@@ -389,12 +408,29 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
                     *closer_index += 1;
                     return Some(closer);
                 } else {
+                    let unwrapped_a = intersection_a.unwrap();
+
                     self.data.index_a += 1;
+
+                    if self.data.shape_b.is_point_inside(&unwrapped_a.location) {
+                        let mut closer_inverted = unwrapped_a.clone();
+                        closer_inverted.normal = -closer_inverted.normal;
+                        return Some(closer_inverted);
+                    }
+
                     return intersection_a;
                 }
             } else {
                 if intersection_b.is_some() {
+                    let unwrapped_b = intersection_b.unwrap();
+
                     self.data.index_b += 1;
+
+                    if self.data.shape_a.is_point_inside(&unwrapped_b.location) {
+                        let mut closer_inverted = unwrapped_b.clone();
+                        closer_inverted.normal = -closer_inverted.normal;
+                        return Some(closer_inverted);
+                    }
                 }
 
                 return intersection_b;

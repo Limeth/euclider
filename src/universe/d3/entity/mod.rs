@@ -424,7 +424,7 @@ impl<F: CustomFloat> Plane3<F> {
                 HalfSpace3::from_point(Plane3::new(&na::translate(&-(y * half_abc), &center), &x, &z), &center),
                 HalfSpace3::from_point(Plane3::new(&na::translate(&(z * half_abc), &center), &x, &y), &center),
                 HalfSpace3::from_point(Plane3::new(&na::translate(&-(z * half_abc), &center), &x, &y), &center)
-        ).into_iter(), SetOperation::Union)
+        ).into_iter(), SetOperation::Intersection)
     }
 }
 

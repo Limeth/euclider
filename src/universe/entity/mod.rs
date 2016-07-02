@@ -430,6 +430,31 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableShap
         }
     }
 
+    pub fn of<S: Shape<F, P, V> + 'static, I: Iterator<Item=S>>(mut shapes: I, operation: SetOperation)
+            -> ComposableShape<F, P, V> {
+        let mut result = ComposableShape {
+            a: Arc::new(shapes.next().unwrap()),
+            b: Arc::new(shapes.next().unwrap()),
+            operation: operation,
+            float_precision: PhantomData,
+            dimensions: PhantomData,
+            vector_dimensions: PhantomData,
+        };
+
+        for shape in shapes {
+            result.b = Arc::new(ComposableShape {
+                a: result.b,
+                b: Arc::new(shape),
+                operation: operation,
+                float_precision: PhantomData,
+                dimensions: PhantomData,
+                vector_dimensions: PhantomData,
+            });
+        }
+
+        result
+    }
+
     #[allow(unused_variables)]
     pub fn intersect_in_vacuum(location: &P,
                                direction: &V,

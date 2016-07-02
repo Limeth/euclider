@@ -377,6 +377,32 @@ fn run<F: CustomFloat>() {
                 //     surface_color: get_surface_color_test,
                 // }))
             )));
+        entities.push(Box::new(Entity3Impl::new(
+                Box::new(
+                    Plane3::cuboid(
+                        Point3::new(
+                            Cast::from(10.0),
+                            Cast::from(10.0),
+                            Cast::from(10.0)
+                        ),
+                        Vector3::new(
+                            Cast::from(4.0),
+                            Cast::from(6.0),
+                            Cast::from(3.0)
+                        )
+                    )
+                ),
+                Box::new(Vacuum::new()),
+                Some(Box::new(PerlinSurface3::rand(
+                            &mut StdRng::new().expect("Could not create a random number generator."),
+                            Cast::from(2.0),
+                            Cast::from(1.0))))
+                // Some(Box::new(ComposableSurface {
+                //     reflection_ratio: get_reflection_ratio_test,
+                //     reflection_direction: get_reflection_direction_test,
+                //     surface_color: get_surface_color_test,
+                // }))
+            )));
         entities.push(
             Box::new(
                 Entity3Impl::new(

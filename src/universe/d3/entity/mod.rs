@@ -411,6 +411,21 @@ impl<F: CustomFloat> Plane3<F> {
     pub fn from_equation(a: F, b: F, c: F, d: F) -> Plane3<F> {
         Self::from_normal(&Vector3::new(a, b, c), d)
     }
+
+    pub fn cuboid(center: Point3<F>, abc: Vector3<F>) -> ComposableShape<F, Point3<F>, Vector3<F>> {
+        let half_abc: Vector3<F> = abc / <F as NumCast>::from(2.0).unwrap();
+        let x = Vector3::new(<F as One>::one(), <F as Zero>::zero(), <F as Zero>::zero());
+        let y = Vector3::new(<F as Zero>::zero(), <F as One>::one(), <F as Zero>::zero());
+        let z = Vector3::new(<F as Zero>::zero(), <F as Zero>::zero(), <F as One>::one());
+        ComposableShape::of(vec!(
+                HalfSpace3::from_point(Plane3::new(&na::translate(&(x * half_abc), &center), &y, &z), &center),
+                HalfSpace3::from_point(Plane3::new(&na::translate(&-(x * half_abc), &center), &y, &z), &center),
+                HalfSpace3::from_point(Plane3::new(&na::translate(&(y * half_abc), &center), &x, &z), &center),
+                HalfSpace3::from_point(Plane3::new(&na::translate(&-(y * half_abc), &center), &x, &z), &center),
+                HalfSpace3::from_point(Plane3::new(&na::translate(&(z * half_abc), &center), &x, &y), &center),
+                HalfSpace3::from_point(Plane3::new(&na::translate(&-(z * half_abc), &center), &x, &y), &center)
+        ).into_iter(), SetOperation::Union)
+    }
 }
 
 impl<F: CustomFloat> HasId for Plane3<F> {

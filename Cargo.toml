@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Jakub Hlusička <jakub.hlusicka@email.cz>"]
 
 [dependencies]
+clippy = "0.*"
 glium = "0.*"
 nalgebra = "0.*"
 image = "0.*"

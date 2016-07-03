@@ -155,7 +155,7 @@ pub trait Universe<F: CustomFloat>
         let mut foreground: Option<Rgba<F>> = None;
         let mut foreground_distance_squared: Option<F> = None;
 
-        if *max_depth <= 0 {
+        if *max_depth == 0 {
             return None;
         }
 
@@ -170,65 +170,68 @@ pub trait Universe<F: CustomFloat>
             let shape = other_traceable.shape();
             let provider = self.intersect(location, rotation, material, shape);
             let mut intersections = provider.iter();
-            let first_intersection = intersections.next();
 
-            match first_intersection {
-                Some(intersection) => {
-                    let surface = other_traceable.surface();
+            if let Some(intersection) = intersections.next() {
+                let surface = other_traceable.surface();
 
-                    if surface.is_none() {
-                        continue; //TODO
-                    }
-
-                    let surface = surface.unwrap();
-                    let exiting: bool;
-                    let closer_normal: <Self::P as PointAsVector>::Vector;
-
-                    if intersection.direction.angle_between(&intersection.normal)
-                            < <F as BaseFloat>::frac_pi_2() {
-                        closer_normal = -intersection.normal;
-                        exiting = true;
-                        continue; //The same behavior as the above TODO
-                    } else {
-                        closer_normal = intersection.normal.clone();
-                        exiting = false;
-                    }
-
-                    if foreground_distance_squared.is_none() ||
-                       foreground_distance_squared.unwrap() > intersection.distance_squared {
-                        let context = TracingContext {
-                            time: time,
-                            depth_remaining: max_depth,
-                            origin_traceable: belongs_to,
-                            intersection_traceable: other_traceable,
-                            intersection: &intersection,
-                            intersection_normal_closer: &closer_normal,
-                            exiting: &exiting,
-                            transitions: self.transitions(),
-                            trace: &|time, traceable, location, direction| {
-                                self.trace(time, &(*max_depth - 1), traceable, location, direction)
-                            },
-                        };
-
-                        // Avoid a stack overflow, where a ray intersects the same location
-                        // repeatedly.
-                        if intersection.distance_squared <=
-                           <F as Consts>::epsilon() * <F as NumCast>::from(1000.0).unwrap() {
-                            continue;
-                        }
-
-                        foreground = Some(surface.get_color(context));
-                        foreground_distance_squared = Some(intersection.distance_squared);
-                    }
+                if surface.is_none() {
+                    continue; //TODO
                 }
-                None => (),
+
+                let surface = surface.unwrap();
+                let exiting: bool;
+                let closer_normal: <Self::P as PointAsVector>::Vector;
+
+                // TODO
+                if intersection.direction.angle_between(&intersection.normal)
+                        < <F as BaseFloat>::frac_pi_2() {
+                    // closer_normal = -intersection.normal;
+                    // exiting = true;
+                    continue; //The same behavior as the above TODO
+                } else {
+                    closer_normal = intersection.normal;
+                    exiting = false;
+                }
+
+                if foreground_distance_squared.is_none() ||
+                   foreground_distance_squared.unwrap() > intersection.distance_squared {
+                    let context = TracingContext {
+                        time: time,
+                        depth_remaining: max_depth,
+                        origin_traceable: belongs_to,
+                        intersection_traceable: other_traceable,
+                        intersection: intersection,
+                        intersection_normal_closer: &closer_normal,
+                        exiting: &exiting,
+                        transitions: self.transitions(),
+                        trace: &|time, traceable, location, direction| {
+                            self.trace(time, &(*max_depth - 1), traceable, location, direction)
+                        },
+                    };
+
+                    // Avoid a stack overflow, where a ray intersects the same location
+                    // repeatedly.
+                    if intersection.distance_squared <=
+                       <F as Consts>::epsilon() * <F as NumCast>::from(1000.0).unwrap() {
+                        continue;
+                    }
+
+                    foreground = Some(surface.get_color(context));
+                    foreground_distance_squared = Some(intersection.distance_squared);
+                }
             }
         }
 
-        foreground.or(Some(Rgba::new(Cast::from(0.0),
-                                     Cast::from(0.0),
-                                     Cast::from(0.0),
-                                     Cast::from(0.0))))
+        foreground.or_else(
+            || Some(
+                Rgba::new(
+                    Cast::from(0.0),
+                    Cast::from(0.0),
+                    Cast::from(0.0),
+                    Cast::from(0.0)
+                )
+            )
+        )
     }
 
     fn trace_first(&self,
@@ -319,9 +322,10 @@ pub trait Universe<F: CustomFloat>
             None => {
                 let checkerboard_size = 8;
 
-                match (screen_x / checkerboard_size + screen_y / checkerboard_size) % 2 == 0 {
-                    true => Rgb::new(Cast::from(0.0), Cast::from(0.0), Cast::from(0.0)),
-                    false => Rgb::new(Cast::from(1.0), Cast::from(0.0), Cast::from(1.0)),
+                if (screen_x / checkerboard_size + screen_y / checkerboard_size) % 2 == 0 {
+                    Rgb::new(Cast::from(0.0), Cast::from(0.0), Cast::from(0.0))
+                } else {
+                    Rgb::new(Cast::from(1.0), Cast::from(0.0), Cast::from(1.0))
                 }
             }
         }

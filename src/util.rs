@@ -78,12 +78,12 @@ impl<T> RemoveIf<T, HashSet<T>> for HashSet<T>
 
         for value in self.iter() {
             if f(value) {
-                removed.insert(value.clone());
+                removed.insert(*value);
             }
         }
 
         for removed_value in &removed {
-            self.remove(&removed_value);
+            self.remove(removed_value);
         }
 
         removed
@@ -220,7 +220,8 @@ impl<'a, T> Iterator for IterLazy<'a, T> {
         }
 
         self.index += 1;
-        return None;
+
+        None
     }
 }
 
@@ -263,7 +264,7 @@ impl<T> Provider<T> {
 impl<T> Index<usize> for Provider<T> {
     type Output = Option<T>;
 
-    fn index<'a>(&'a self, _index: usize) -> &'a Self::Output {
+    fn index(&self, _index: usize) -> &Self::Output {
         let length = self.data.borrow().items.len();
 
         if _index >= length {
@@ -274,12 +275,12 @@ impl<T> Index<usize> for Provider<T> {
             }
         }
 
-        return unsafe { mem::transmute(&self.data.borrow().items[_index]) };
+        unsafe { mem::transmute(&self.data.borrow().items[_index]) }
     }
 }
 
 impl<T> IndexMut<usize> for Provider<T> {
-    fn index_mut<'a>(&'a mut self, _index: usize) -> &'a mut Self::Output {
+    fn index_mut(&mut self, _index: usize) -> &mut Self::Output {
         let length = self.data.borrow().items.len();
 
         if _index >= length {
@@ -290,7 +291,7 @@ impl<T> IndexMut<usize> for Provider<T> {
             }
         }
 
-        return unsafe { mem::transmute(&mut self.data.borrow_mut().items[_index]) };
+        unsafe { mem::transmute(&mut self.data.borrow_mut().items[_index]) }
     }
 }
 
@@ -328,7 +329,7 @@ impl<'a, T> Iterator for Marcher<'a, T> {
 
         self.index += 1;
 
-        return result;
+        result
     }
 }
 

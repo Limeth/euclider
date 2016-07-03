@@ -1,7 +1,10 @@
+#![feature(plugin)]
 #![feature(reflect_marker)]
 #![feature(custom_attribute)]
 #![feature(const_fn)]
 #![feature(zero_one)]
+
+#![plugin(clippy)]
 
 extern crate core;
 extern crate nalgebra as na;
@@ -67,7 +70,7 @@ impl<F: CustomFloat, U: Universe<F>> Simulation<F, U> {
     fn start(mut self) {
         let facade: GlutinFacade = glium::glutin::WindowBuilder::new()
             .with_dimensions(1024, 768)
-            .with_title(format!("Hello world"))
+            .with_title("Hello world".to_string())
             .build_glium()
             .unwrap();
 
@@ -82,9 +85,8 @@ impl<F: CustomFloat, U: Universe<F>> Simulation<F, U> {
         self.render();
 
         'simulation: loop {
-            match self.update() {
-                Err(_) => break 'simulation,
-                _ => (),
+            if let Err(_) = self.update() {
+                break 'simulation;
             }
 
             self.render();
@@ -101,12 +103,8 @@ impl<F: CustomFloat, U: Universe<F>> Simulation<F, U> {
                              &time,
                              &self.context);
 
-        match frame.finish() {
-            Err(error) => {
-                panic!("An error occured while swapping the OpenGL buffers: {:?}",
-                       error)
-            }
-            _ => (),
+        if let Err(error) = frame.finish() {
+            panic!("An error occured while swapping the OpenGL buffers: {:?}", error)
         }
     }
 
@@ -205,9 +203,10 @@ impl SimulationContext {
                                 .remove_if(|tuple: &(u8, Option<VirtualKeyCode>)| {
                                     tuple.0 == character
                                 });
-                            if virtual_code.map_or(false, |virtual_code| {
+                            let is_escape = |virtual_code| {
                                 virtual_code == VirtualKeyCode::Escape
-                            }) {
+                            };
+                            if virtual_code.map_or(false, is_escape) {
                                 return Err(event);
                             }
                         }
@@ -241,10 +240,7 @@ impl SimulationContext {
                     let up: bool;
                     let down: bool;
                     match mouse_scroll_delta {
-                        MouseScrollDelta::LineDelta(delta_x, delta_y) => {
-                            up = delta_y > 0.0;
-                            down = delta_y < 0.0;
-                        }
+                        MouseScrollDelta::LineDelta(delta_x, delta_y) |
                         MouseScrollDelta::PixelDelta(delta_x, delta_y) => {
                             up = delta_y > 0.0;
                             down = delta_y < 0.0;

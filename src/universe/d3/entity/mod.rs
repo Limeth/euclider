@@ -201,10 +201,8 @@ pub fn intersect_sphere_in_vacuum<F: CustomFloat>(location: &Point3<F>,
         if t2 >= Cast::from(0.0) {
             t_second = Some(t2);
         }
-    } else {
-        if t2 >= Cast::from(0.0) {
-            t_first = Some(t2);
-        }
+    } else if t2 >= Cast::from(0.0) {
+        t_first = Some(t2);
     }
 
     if t_first.is_none() {
@@ -262,7 +260,7 @@ pub fn intersect_sphere_in_vacuum<F: CustomFloat>(location: &Point3<F>,
         );
     }
 
-    return Box::new(IterLazy::new(closures));
+    Box::new(IterLazy::new(closures))
 }
 
 #[allow(unused_variables)]
@@ -313,9 +311,9 @@ pub fn intersect_halfspace_in_vacuum<F: CustomFloat>(location: &Point3<F>,
                                                      -> Box<Iterator<Item=Intersection<F, Point3<F>, Vector3<F>>>> {
     vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
     let halfspace: &HalfSpace3<F> = shape.as_any().downcast_ref::<HalfSpace3<F>>().unwrap();
-    let mut intersection = intersect_plane_in_vacuum(
+    let intersection = intersect_plane_in_vacuum(
         location, direction, vacuum, &halfspace.plane, intersect
-        ).next();
+    ).next();
 
     // Works so far, not sure why
     if intersection.is_some() {
@@ -367,8 +365,8 @@ impl<F: CustomFloat> PerlinSurface3<F> {
 }
 
 impl<F: CustomFloat> Surface<F, Point3<F>, Vector3<F>> for PerlinSurface3<F> {
-    fn get_color<'a>(&self, context: TracingContext<'a, F, Point3<F>, Vector3<F>>) -> Rgba<F> {
-        let time_millis: F = Cast::from((context.time.clone() * 1000).as_secs() as f64 / 1000.0);
+    fn get_color(&self, context: TracingContext<F, Point3<F>, Vector3<F>>) -> Rgba<F> {
+        let time_millis: F = Cast::from((*context.time * 1000).as_secs() as f64 / 1000.0);
         let location = [context.intersection.location.x / self.size,
                         context.intersection.location.y / self.size,
                         context.intersection.location.z / self.size,

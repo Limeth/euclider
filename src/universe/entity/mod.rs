@@ -8,8 +8,6 @@ use std::time::Duration;
 use std::any::TypeId;
 use std::any::Any;
 use std::collections::HashMap;
-use std::iter;
-use std::rc::Rc;
 use std::sync::Arc;
 use num::traits::NumCast;
 use na::PointAsVector;
@@ -106,7 +104,7 @@ pub trait Shape<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
 pub trait Material<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> where Self: HasId + Debug + Display {}
 
 pub trait Surface<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
-    fn get_color<'a>(&self, context: TracingContext<'a, F, P, V>) -> Rgba<F>;
+    fn get_color(&self, context: TracingContext<F, P, V>) -> Rgba<F>;
 }
 
 #[allow(dead_code)]
@@ -166,6 +164,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
     // Should return the following intersections:
     // --> [a] [b] [a[a+b]b]
     //     ^-^ ^-^ ^-------^
+    #[allow(useless_let_if_seq)]
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             let intersection_a = self.data.provider_a[self.data.index_a];
@@ -232,6 +231,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
     // Should return the following intersections:
     // --> [a] [b] [a[a+b]b]
     //               ^---^
+    #[allow(useless_let_if_seq)]
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             let intersection_a = self.data.provider_a[self.data.index_a];
@@ -326,7 +326,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
                         self.data.index_b += 1;
 
                         if self.data.shape_a.is_point_inside(&unwrapped_b.location) {
-                            let mut inverted_b = unwrapped_b.clone();
+                            let mut inverted_b = unwrapped_b;
                             inverted_b.normal = -inverted_b.normal;
                             return Some(inverted_b);
                         }
@@ -341,7 +341,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
                     self.data.index_b += 1;
 
                     if self.data.shape_a.is_point_inside(&unwrapped_b.location) {
-                        let mut inverted_b = unwrapped_b.clone();
+                        let mut inverted_b = unwrapped_b;
                         inverted_b.normal = -inverted_b.normal;
                         return Some(inverted_b);
                     }
@@ -375,6 +375,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
     // Should return the following intersections:
     // --> [a] [b] [a[a+b]b]
     //     ^-^ ^-^ ^-^   ^-^
+    #[allow(useless_let_if_seq)]
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             let intersection_a = self.data.provider_a[self.data.index_a];
@@ -400,7 +401,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
 
                     if further_shape.is_point_inside(&closer.location) {
                         *closer_index += 1;
-                        let mut closer_inverted = closer.clone();
+                        let mut closer_inverted = closer;
                         closer_inverted.normal = -closer_inverted.normal;
                         return Some(closer_inverted);
                     }
@@ -413,7 +414,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
                     self.data.index_a += 1;
 
                     if self.data.shape_b.is_point_inside(&unwrapped_a.location) {
-                        let mut closer_inverted = unwrapped_a.clone();
+                        let mut closer_inverted = unwrapped_a;
                         closer_inverted.normal = -closer_inverted.normal;
                         return Some(closer_inverted);
                     }
@@ -427,7 +428,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
                     self.data.index_b += 1;
 
                     if self.data.shape_a.is_point_inside(&unwrapped_b.location) {
-                        let mut closer_inverted = unwrapped_b.clone();
+                        let mut closer_inverted = unwrapped_b;
                         closer_inverted.normal = -closer_inverted.normal;
                         return Some(closer_inverted);
                     }
@@ -507,44 +508,44 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableShap
         let provider_b = intersect(vacuum, composed.b.as_ref());
         match composed.operation {
             SetOperation::Union => {
-                return Box::new(
+                Box::new(
                     UnionIterator::new(
                         composed.a.clone(),
                         composed.b.clone(),
                         provider_a,
                         provider_b
                     )
-                );
+                )
             }
             SetOperation::Intersection => {
-                return Box::new(
+                Box::new(
                     IntersectionIterator::new(
                         composed.a.clone(),
                         composed.b.clone(),
                         provider_a,
                         provider_b
                     )
-                );
+                )
             }
             SetOperation::Complement => {
-                return Box::new(
+                Box::new(
                     ComplementIterator::new(
                         composed.a.clone(),
                         composed.b.clone(),
                         provider_a,
                         provider_b
                     )
-                );
+                )
             }
             SetOperation::SymmetricDifference => {
-                return Box::new(
+                Box::new(
                     SymmetricDifferenceIterator::new(
                         composed.a.clone(),
                         composed.b.clone(),
                         provider_a,
                         provider_b
                     )
-                );
+                )
             }
         }
     }
@@ -739,7 +740,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
         }
 
         Some({
-            let surface_color = self.get_surface_color(&context);
+            let surface_color = self.get_surface_color(context);
             let surface_color_data: [u8; 4] = surface_color.to_pixel();
             let surface_color_alpha = surface_color_data[3];
 
@@ -754,7 +755,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
                                       Make sure to register one.",
                                      origin_material,
                                      intersection_material));
-                let transition_color = transition(origin_material, intersection_material, &context);
+                let transition_color = transition(origin_material, intersection_material, context);
                 let surface_palette: Rgba<F> = palette::Rgba::new_u8(surface_color_data[0],
                                                                      surface_color_data[1],
                                                                      surface_color_data[2],
@@ -783,7 +784,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
             return None;
         }
 
-        let reflection_direction = self.get_reflection_direction(&context);
+        let reflection_direction = self.get_reflection_direction(context);
         let trace = context.trace;
         // // Offset the new origin, so it doesn't hit the same shape over and over
         // let vector_to_point = context.vector_to_point;
@@ -791,11 +792,11 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
         //                  + (vector_to_point(&reflection_direction) * std::F::EPSILON * 8.0)
         //                     .to_vector();
 
-        return trace(context.time,
-                     context.origin_traceable,
-                     &context.intersection.location,
-                     // &new_origin,
-                     &reflection_direction);
+        trace(context.time,
+              context.origin_traceable,
+              &context.intersection.location,
+              // &new_origin,
+              &reflection_direction)
     }
 }
 

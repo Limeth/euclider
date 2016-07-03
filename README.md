@@ -1,5 +1,6 @@
 # euclider
 [![Build Status](https://travis-ci.org/Limeth/euclider.svg?branch=master)](https://travis-ci.org/Limeth/euclider)
+[![Clippy Linting Result](https://clippy.bashy.io/github/Limeth/euclider/master/badge.svg)](https://clippy.bashy.io/github/Limeth/euclider/master/log)
 
 A non-euclidean ray tracing prototype written in Rust.
 

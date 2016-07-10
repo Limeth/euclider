@@ -47,6 +47,11 @@ pub trait Camera<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: E
     fn max_depth(&self) -> u32;
 }
 
+pub type Intersector<'a, F, P, V> = &'a Fn(
+                                       &Material<F, P, V>,
+                                       &Shape<F, P, V>
+                                    ) -> Provider<Intersection<F, P, V>>;
+
 #[derive(Debug, Copy, Clone)]
 pub struct Intersection<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
     pub location: P,
@@ -497,10 +502,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableShap
                                direction: &V,
                                vacuum: &Material<F, P, V>,
                                shape: &Shape<F, P, V>,
-                               intersect: &Fn(
-                                   &Material<F, P, V>,
-                                   &Shape<F, P, V>
-                               ) -> Provider<Intersection<F, P, V>>)
+                               intersect: &Intersector<F, P, V>)
                                -> Box<Iterator<Item=Intersection<F, P, V>>> {
         vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
         let composed: &ComposableShape<F, P, V> = shape.as_any().downcast_ref::<ComposableShape<F, P, V>>().unwrap();

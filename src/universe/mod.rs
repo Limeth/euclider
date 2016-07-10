@@ -69,10 +69,7 @@ pub trait Universe<F: CustomFloat>
                                             &<Self::P as PointAsVector>::Vector,
                                             &Material<F, Self::P, Self::V>,
                                             &Shape<F, Self::P, Self::V>,
-                                            &Fn(
-                                                &Material<F, Self::P, Self::V>,
-                                                &Shape<F, Self::P, Self::V>
-                                            ) -> Provider<Intersection<F, Self::P, Self::V>>)
+                                            Intersector<F, Self::P, Self::V>)
                                             -> Box<Iterator<Item=Intersection<F, Self::P, Self::V>>>>;
     fn intersectors(&self)
                     -> &HashMap<(TypeId, TypeId),
@@ -80,10 +77,7 @@ pub trait Universe<F: CustomFloat>
                                    &<Self::P as PointAsVector>::Vector,
                                    &Material<F, Self::P, Self::V>,
                                    &Shape<F, Self::P, Self::V>,
-                                   &Fn(
-                                       &Material<F, Self::P, Self::V>,
-                                       &Shape<F, Self::P, Self::V>
-                                   ) -> Provider<Intersection<F, Self::P, Self::V>>)
+                                   Intersector<F, Self::P, Self::V>)
                                    -> Box<Iterator<Item=Intersection<F, Self::P, Self::V>>>>;
     fn set_intersectors(&mut self,
                          intersections: HashMap<(TypeId, TypeId),
@@ -91,10 +85,7 @@ pub trait Universe<F: CustomFloat>
                                                    &<Self::P as PointAsVector>::Vector,
                                                    &Material<F, Self::P, Self::V>,
                                                    &Shape<F, Self::P, Self::V>,
-                                                   &Fn(
-                                                       &Material<F, Self::P, Self::V>,
-                                                       &Shape<F, Self::P, Self::V>
-                                                   ) -> Provider<Intersection<F, Self::P, Self::V>>)
+                                                   Intersector<F, Self::P, Self::V>)
                                                    -> Box<Iterator<Item=Intersection<F, Self::P, Self::V>>>>);
     /// Stores the behavior of a ray passing from the first material to the second
     fn transitions_mut(&mut self)
@@ -134,10 +125,7 @@ pub trait Universe<F: CustomFloat>
 
         // let intersector = intersector.unwrap();
 
-        let intersect: &Fn(
-                           &Material<F, Self::P, Self::V>,
-                           &Shape<F, Self::P, Self::V>
-                       ) -> Provider<Intersection<F, Self::P, Self::V>> = &|material, shape| {
+        let intersect: Intersector<F, Self::P, Self::V> = &move |material, shape| {
             self.intersect(location, rotation, material, shape)
         };
 

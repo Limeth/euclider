@@ -21,10 +21,7 @@ pub struct Universe3D<F: CustomFloat> {
                               &Vector3<F>,
                               &Material<F, Point3<F>, Vector3<F>>,
                               &Shape<F, Point3<F>, Vector3<F>>,
-                              &Fn(
-                                  &Material<F, Point3<F>, Vector3<F>>,
-                                  &Shape<F, Point3<F>, Vector3<F>>
-                              ) -> Provider<Intersection<F, Point3<F>, Vector3<F>>>)
+                              Intersector<F, Point3<F>, Vector3<F>>)
                               -> Box<Iterator<Item=Intersection<F, Point3<F>, Vector3<F>>>>>,
     transitions: HashMap<(TypeId, TypeId),
                          fn(&Material<F, Point3<F>, Vector3<F>>,
@@ -88,10 +85,7 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
                                                      &<Self::P as PointAsVector>::Vector,
                                                      &Material<F, Self::P, Self::V>,
                                                      &Shape<F, Self::P, Self::V>,
-                                                     &Fn(
-                                                         &Material<F, Self::P, Self::V>,
-                                                         &Shape<F, Self::P, Self::V>
-                                                     ) -> Provider<Intersection<F, Self::P, Self::V>>)
+                                                     Intersector<F, Self::P, Self::V>)
                                                      -> Box<Iterator<Item=Intersection<F, Self::P, Self::V>>>> {
         &mut self.intersections
     }
@@ -102,10 +96,7 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
                                    &<Self::P as PointAsVector>::Vector,
                                    &Material<F, Self::P, Self::V>,
                                    &Shape<F, Self::P, Self::V>,
-                                   &Fn(
-                                       &Material<F, Self::P, Self::V>,
-                                       &Shape<F, Self::P, Self::V>
-                                   ) -> Provider<Intersection<F, Self::P, Self::V>>)
+                                   Intersector<F, Self::P, Self::V>)
                                    -> Box<Iterator<Item=Intersection<F, Self::P, Self::V>>>> {
         &self.intersections
     }
@@ -116,10 +107,7 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
                                                             &<Self::P as PointAsVector>::Vector,
                                                             &Material<F, Self::P, Self::V>,
                                                             &Shape<F, Self::P, Self::V>,
-                                                            &Fn(
-                                                                &Material<F, Self::P, Self::V>,
-                                                                &Shape<F, Self::P, Self::V>
-                                                            ) -> Provider<Intersection<F, Self::P, Self::V>>)
+                                                            Intersector<F, Self::P, Self::V>)
                                                             -> Box<Iterator<Item=Intersection<F, Self::P, Self::V>>>>) {
         self.intersections = intersections;
     }
@@ -150,3 +138,4 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
         self.transitions = transitions
     }
 }
+

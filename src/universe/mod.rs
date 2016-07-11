@@ -2,12 +2,9 @@ pub mod d3;
 pub mod entity;
 
 use std::time::Duration;
-use std::collections::HashMap;
-use std::any::TypeId;
 use std::borrow::Cow;
 use na::Cast;
 use na::BaseFloat;
-use na::PointAsVector;
 use num::traits::NumCast;
 use glium::Surface as GliumSurface;
 use glium::texture::Texture2d;
@@ -63,21 +60,13 @@ pub trait Universe<F: CustomFloat>
     fn entities(&self) -> &Vec<Box<Entity<F, Self::P, Self::V>>>;
     fn set_entities(&mut self, entities: Vec<Box<Entity<F, Self::P, Self::V>>>);
     /// Calculates the intersection of the shape (second) in the material (first)
-    fn intersectors_mut(&mut self)
-            -> &mut HashMap<(TypeId, TypeId), GeneralIntersector<F, Self::P, Self::V>>;
-    fn intersectors(&self)
-            -> &HashMap<(TypeId, TypeId), GeneralIntersector<F, Self::P, Self::V>>;
-    fn set_intersectors(&mut self,
-                        intersections: HashMap<(TypeId, TypeId),
-                                               GeneralIntersector<F, Self::P, Self::V>>);
+    fn intersectors_mut(&mut self) -> &mut GeneralIntersectors<F, Self::P, Self::V>;
+    fn intersectors(&self) -> &GeneralIntersectors<F, Self::P, Self::V>;
+    fn set_intersectors(&mut self, intersections: GeneralIntersectors<F, Self::P, Self::V>);
     /// Stores the behavior of a ray passing from the first material to the second
-    fn transitions_mut(&mut self)
-            -> &mut HashMap<(TypeId, TypeId), TransitionHandler<F, Self::P, Self::V>>;
-    fn transitions(&self)
-            -> &HashMap<(TypeId, TypeId), TransitionHandler<F, Self::P, Self::V>>;
-    fn set_transitions(&mut self,
-                       transitions: HashMap<(TypeId, TypeId),
-                                            TransitionHandler<F, Self::P, Self::V>>);
+    fn transitions_mut(&mut self) -> &mut TransitionHandlers<F, Self::P, Self::V>;
+    fn transitions(&self) -> &TransitionHandlers<F, Self::P, Self::V>;
+    fn set_transitions(&mut self, transitions: TransitionHandlers<F, Self::P, Self::V>);
 
     fn intersect(&self,
                        location: &Self::P,
@@ -109,7 +98,7 @@ pub trait Universe<F: CustomFloat>
              max_depth: &u32,
              belongs_to: &Traceable<F, Self::P, Self::V>,
              location: &Self::P,
-             rotation: &<Self::P as PointAsVector>::Vector)
+             rotation: &Self::V)
              -> Option<Rgba<F>> {
         let material = belongs_to.material();
         let mut foreground: Option<Rgba<F>> = None;
@@ -140,7 +129,7 @@ pub trait Universe<F: CustomFloat>
 
                 let surface = surface.unwrap();
                 let exiting: bool;
-                let closer_normal: <Self::P as PointAsVector>::Vector;
+                let closer_normal: Self::V;
 
                 // TODO
                 if intersection.direction.angle_between(&intersection.normal)
@@ -199,7 +188,7 @@ pub trait Universe<F: CustomFloat>
                    max_depth: &u32,
                    belongs_to: &Traceable<F, Self::P, Self::V>,
                    location: &Self::P,
-                   rotation: &<Self::P as PointAsVector>::Vector)
+                   rotation: &Self::V)
                    -> Rgba<F> {
         self.trace(time, max_depth, belongs_to, location, rotation)
             .expect("Couldn't send out a ray; None returned.")
@@ -209,7 +198,7 @@ pub trait Universe<F: CustomFloat>
                      time: &Duration,
                      max_depth: &u32,
                      location: &Self::P,
-                     rotation: &<Self::P as PointAsVector>::Vector)
+                     rotation: &Self::V)
                      -> Option<Rgb<F>> {
         let mut belongs_to: Option<&Traceable<F, Self::P, Self::V>> = None;
 

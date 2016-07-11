@@ -10,7 +10,6 @@ use std::any::Any;
 use std::collections::HashMap;
 use std::sync::Arc;
 use num::traits::NumCast;
-use na::PointAsVector;
 use palette;
 use palette::Rgba;
 use palette::Blend;
@@ -43,7 +42,7 @@ pub trait Camera<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: E
                       screen_y: i32,
                       screen_width: i32,
                       screen_height: i32)
-                      -> <P as PointAsVector>::Vector;
+                      -> V;
     fn max_depth(&self) -> u32;
 }
 
@@ -100,10 +99,8 @@ pub struct Intersection<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F,
 }
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Intersection<F, P, V> {
-    pub fn new(location: P, direction: <P as PointAsVector>::Vector,
-               normal: <P as PointAsVector>::Vector,
-               distance_squared: F)
-               -> Intersection<F, P, V> {
+    pub fn new(location: P, direction: V, normal: V, distance_squared: F)
+            -> Intersection<F, P, V> {
         Intersection {
             location: location,
             direction: direction,
@@ -125,9 +122,9 @@ pub struct TracingContext<'a,
     pub origin_traceable: &'a Traceable<F, P, V>,
     pub intersection_traceable: &'a Traceable<F, P, V>,
     pub intersection: &'a Intersection<F, P, V>,
-    pub intersection_normal_closer: &'a <P as PointAsVector>::Vector,
+    pub intersection_normal_closer: &'a V,
     pub exiting: &'a bool,
-    pub transitions: &'a HashMap<(TypeId, TypeId), TransitionHandler<F, P, V>>,
+    pub transitions: &'a TransitionHandlers<F, P, V>,
     pub trace: Tracer<'a, F, P, V>,
 }
 
@@ -757,8 +754,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
     }
 
     fn get_reflection_direction(&self,
-                                context: &TracingContext<F, P, V>)
-                                -> <P as PointAsVector>::Vector {
+                                context: &TracingContext<F, P, V>) -> V {
         let reflection_direction = self.reflection_direction.as_ref();
         reflection_direction(context)
     }
@@ -877,9 +873,9 @@ pub trait Locatable<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
 }
 
 pub trait Rotatable<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
-    fn rotation_mut(&mut self) -> &mut <P as PointAsVector>::Vector;
-    fn rotation(&self) -> &<P as PointAsVector>::Vector;
-    fn set_rotation(&mut self, location: <P as PointAsVector>::Vector);
+    fn rotation_mut(&mut self) -> &mut V;
+    fn rotation(&self) -> &V;
+    fn set_rotation(&mut self, location: V);
 }
 
 // // TODO

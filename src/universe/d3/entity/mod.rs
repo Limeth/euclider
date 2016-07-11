@@ -150,7 +150,7 @@ pub fn intersect_void<F: CustomFloat>(location: &Point3<F>,
                                       material: &Material<F, Point3<F>, Vector3<F>>,
                                       void: &Shape<F, Point3<F>, Vector3<F>>,
                                       intersect: Intersector<F, Point3<F>, Vector3<F>>)
-                                      -> Box<Iterator<Item=Intersection<F, Point3<F>, Vector3<F>>>> {
+                                      -> Box<IntersectionMarcher<F, Point3<F>, Vector3<F>>> {
     void.as_any().downcast_ref::<VoidShape>().unwrap();
     Box::new(iter::empty())
 }
@@ -161,7 +161,7 @@ pub fn intersect_sphere_in_vacuum<F: CustomFloat>(location: &Point3<F>,
                                                   vacuum: &Material<F, Point3<F>, Vector3<F>>,
                                                   sphere: &Shape<F, Point3<F>, Vector3<F>>,
                                                   intersect: Intersector<F, Point3<F>, Vector3<F>>)
-                                                  -> Box<Iterator<Item=Intersection<F, Point3<F>, Vector3<F>>>> {
+                                                  -> Box<IntersectionMarcher<F, Point3<F>, Vector3<F>>> {
     // Unsafe cast example:
     // let a = unsafe { &*(a as *const _ as *const Aimpl) };
     vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
@@ -262,7 +262,7 @@ pub fn intersect_plane_in_vacuum<F: CustomFloat>(location: &Point3<F>,
                                                  vacuum: &Material<F, Point3<F>, Vector3<F>>,
                                                  shape: &Shape<F, Point3<F>, Vector3<F>>,
                                                  intersect: Intersector<F, Point3<F>, Vector3<F>>)
-                                                 -> Box<Iterator<Item=Intersection<F, Point3<F>, Vector3<F>>>> {
+                                                 -> Box<IntersectionMarcher<F, Point3<F>, Vector3<F>>> {
     vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
     let plane: &Plane3<F> = shape.as_any().downcast_ref::<Plane3<F>>().unwrap();
 
@@ -295,7 +295,7 @@ pub fn intersect_halfspace_in_vacuum<F: CustomFloat>(location: &Point3<F>,
                                                      vacuum: &Material<F, Point3<F>, Vector3<F>>,
                                                      shape: &Shape<F, Point3<F>, Vector3<F>>,
                                                      intersect: Intersector<F, Point3<F>, Vector3<F>>)
-                                                     -> Box<Iterator<Item=Intersection<F, Point3<F>, Vector3<F>>>> {
+                                                     -> Box<IntersectionMarcher<F, Point3<F>, Vector3<F>>> {
     vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
     let halfspace: &HalfSpace3<F> = shape.as_any().downcast_ref::<HalfSpace3<F>>().unwrap();
     let intersection = intersect_plane_in_vacuum(

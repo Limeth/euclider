@@ -64,48 +64,20 @@ pub trait Universe<F: CustomFloat>
     fn set_entities(&mut self, entities: Vec<Box<Entity<F, Self::P, Self::V>>>);
     /// Calculates the intersection of the shape (second) in the material (first)
     fn intersectors_mut(&mut self)
-                         -> &mut HashMap<(TypeId, TypeId),
-                                         fn(&Self::P,
-                                            &<Self::P as PointAsVector>::Vector,
-                                            &Material<F, Self::P, Self::V>,
-                                            &Shape<F, Self::P, Self::V>,
-                                            Intersector<F, Self::P, Self::V>)
-                                            -> Box<Iterator<Item=Intersection<F, Self::P, Self::V>>>>;
+            -> &mut HashMap<(TypeId, TypeId), GeneralIntersector<F, Self::P, Self::V>>;
     fn intersectors(&self)
-                    -> &HashMap<(TypeId, TypeId),
-                                fn(&Self::P,
-                                   &<Self::P as PointAsVector>::Vector,
-                                   &Material<F, Self::P, Self::V>,
-                                   &Shape<F, Self::P, Self::V>,
-                                   Intersector<F, Self::P, Self::V>)
-                                   -> Box<Iterator<Item=Intersection<F, Self::P, Self::V>>>>;
+            -> &HashMap<(TypeId, TypeId), GeneralIntersector<F, Self::P, Self::V>>;
     fn set_intersectors(&mut self,
-                         intersections: HashMap<(TypeId, TypeId),
-                                                fn(&Self::P,
-                                                   &<Self::P as PointAsVector>::Vector,
-                                                   &Material<F, Self::P, Self::V>,
-                                                   &Shape<F, Self::P, Self::V>,
-                                                   Intersector<F, Self::P, Self::V>)
-                                                   -> Box<Iterator<Item=Intersection<F, Self::P, Self::V>>>>);
+                        intersections: HashMap<(TypeId, TypeId),
+                                               GeneralIntersector<F, Self::P, Self::V>>);
     /// Stores the behavior of a ray passing from the first material to the second
     fn transitions_mut(&mut self)
-                       -> &mut HashMap<(TypeId, TypeId),
-                                       fn(&Material<F, Self::P, Self::V>,
-                                          &Material<F, Self::P, Self::V>,
-                                          &TracingContext<F, Self::P, Self::V>)
-                                          -> Option<Rgba<F>>>;
+            -> &mut HashMap<(TypeId, TypeId), TransitionHandler<F, Self::P, Self::V>>;
     fn transitions(&self)
-                   -> &HashMap<(TypeId, TypeId),
-                               fn(&Material<F, Self::P, Self::V>,
-                                  &Material<F, Self::P, Self::V>,
-                                  &TracingContext<F, Self::P, Self::V>)
-                                  -> Option<Rgba<F>>>;
+            -> &HashMap<(TypeId, TypeId), TransitionHandler<F, Self::P, Self::V>>;
     fn set_transitions(&mut self,
                        transitions: HashMap<(TypeId, TypeId),
-                                            fn(&Material<F, Self::P, Self::V>,
-                                               &Material<F, Self::P, Self::V>,
-                                               &TracingContext<F, Self::P, Self::V>)
-                                               -> Option<Rgba<F>>>);
+                                            TransitionHandler<F, Self::P, Self::V>>);
 
     fn intersect(&self,
                        location: &Self::P,

@@ -47,10 +47,47 @@ pub trait Camera<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: E
     fn max_depth(&self) -> u32;
 }
 
-pub type Intersector<'a, F, P, V> = &'a Fn(
-                                       &Material<F, P, V>,
-                                       &Shape<F, P, V>
+/// Ties a `Material` the ray is passing through and a `Shape` the ray is intersecting to a
+/// `GeneralIntersector`
+pub type GeneralIntersectors<F, P, V> = TypePairMap<GeneralIntersector<F, P, V>>;
+
+/// Ties two `Material`s (exiting, entering) to a `TransitionHandler`
+pub type TransitionHandlers<F, P, V> = TypePairMap<TransitionHandler<F, P, V>>;
+
+/// Ties a combination of ordered `TypeId`s to a value
+pub type TypePairMap<V> = HashMap<(TypeId, TypeId), V>;
+
+/// Computes the intersections of a ray in a given `Material` with a given `Shape`.
+/// The ray is originating in the given `Point` with a direction of the given `Vector`.
+pub type GeneralIntersector<F, P, V> = fn(&P,
+                                          &V,
+                                          &Material<F, P, V>,
+                                          &Shape<F, P, V>,
+                                          Intersector<F, P, V>
+                                       ) -> Box<IntersectionMarcher<F, P, V>>;
+
+pub type IntersectionMarcher<F, P, V> = Iterator<Item=Intersection<F, P, V>>;
+
+/// Computes the intersections of a ray in a given `Material` with a given `Shape`
+/// with a predefined `Point` of origin and directional `Vector`.
+// TODO: It feels wrong to have a type alias to a reference of another type
+pub type Intersector<'a, F, P, V> = &'a Fn(&Material<F, P, V>,
+                                           &Shape<F, P, V>
                                     ) -> Provider<Intersection<F, P, V>>;
+
+/// Computes the color of the surface (not the reflection).
+pub type TransitionHandler<F, P, V> = fn(&Material<F, P, V>,
+                                         &Material<F, P, V>,
+                                         &TracingContext<F, P, V>
+                                      ) -> Option<Rgba<F>>;
+
+/// Calls the `trace` method on the current Universe and returns the resulting color.
+// TODO: It feels wrong to have a type alias to a reference of another type
+pub type Tracer<'a, F, P, V> = &'a Fn(&Duration,
+                                      &Traceable<F, P, V>,
+                                      &P,
+                                      &V
+                               ) -> Option<Rgba<F>>;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Intersection<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
@@ -90,14 +127,8 @@ pub struct TracingContext<'a,
     pub intersection: &'a Intersection<F, P, V>,
     pub intersection_normal_closer: &'a <P as PointAsVector>::Vector,
     pub exiting: &'a bool,
-    pub transitions: &'a HashMap<(TypeId, TypeId),
-                                 fn(&Material<F, P, V>, &Material<F, P, V>, &TracingContext<F, P, V>)
-                                    -> Option<Rgba<F>>>,
-    pub trace: &'a Fn(&Duration,
-                      &Traceable<F, P, V>,
-                      &P,
-                      &<P as PointAsVector>::Vector)
-                      -> Option<Rgba<F>>,
+    pub transitions: &'a HashMap<(TypeId, TypeId), TransitionHandler<F, P, V>>,
+    pub trace: Tracer<'a, F, P, V>,
 }
 
 pub trait Shape<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>

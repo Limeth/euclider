@@ -1,33 +1,19 @@
 pub mod entity;
 
 use std::collections::HashMap;
-use std::any::TypeId;
-use na::PointAsVector;
 use na::Point3;
 use na::Vector3;
-use palette::Rgba;
 use universe::entity::*;
 use universe::d3::entity::camera::Camera3Impl;
 use universe::Universe;
 use universe::d3::entity::*;
 use util::CustomFloat;
-use util::Provider;
 
 pub struct Universe3D<F: CustomFloat> {
     camera: Box<Camera3<F>>,
     entities: Vec<Box<Entity3<F>>>,
-    intersections: HashMap<(TypeId, TypeId),
-                           fn(&Point3<F>,
-                              &Vector3<F>,
-                              &Material<F, Point3<F>, Vector3<F>>,
-                              &Shape<F, Point3<F>, Vector3<F>>,
-                              Intersector<F, Point3<F>, Vector3<F>>)
-                              -> Box<Iterator<Item=Intersection<F, Point3<F>, Vector3<F>>>>>,
-    transitions: HashMap<(TypeId, TypeId),
-                         fn(&Material<F, Point3<F>, Vector3<F>>,
-                            &Material<F, Point3<F>, Vector3<F>>,
-                            &TracingContext<F, Point3<F>, Vector3<F>>)
-                            -> Option<Rgba<F>>>,
+    intersections: GeneralIntersectors<F, Point3<F>, Vector3<F>>,
+    transitions: TransitionHandlers<F, Point3<F>, Vector3<F>>,
 }
 
 impl<F: CustomFloat> Universe3D<F> {
@@ -79,62 +65,26 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
         self.entities = entities;
     }
 
-    fn intersectors_mut(&mut self)
-                         -> &mut HashMap<(TypeId, TypeId),
-                                         fn(&Self::P,
-                                                     &<Self::P as PointAsVector>::Vector,
-                                                     &Material<F, Self::P, Self::V>,
-                                                     &Shape<F, Self::P, Self::V>,
-                                                     Intersector<F, Self::P, Self::V>)
-                                                     -> Box<Iterator<Item=Intersection<F, Self::P, Self::V>>>> {
+    fn intersectors_mut(&mut self) -> &mut GeneralIntersectors<F, Point3<F>, Vector3<F>> {
         &mut self.intersections
     }
 
-    fn intersectors(&self)
-                    -> &HashMap<(TypeId, TypeId),
-                                fn(&Self::P,
-                                   &<Self::P as PointAsVector>::Vector,
-                                   &Material<F, Self::P, Self::V>,
-                                   &Shape<F, Self::P, Self::V>,
-                                   Intersector<F, Self::P, Self::V>)
-                                   -> Box<Iterator<Item=Intersection<F, Self::P, Self::V>>>> {
+    fn intersectors(&self) -> &GeneralIntersectors<F, Point3<F>, Vector3<F>> {
         &self.intersections
     }
 
-    fn set_intersectors(&mut self,
-                         intersections: HashMap<(TypeId, TypeId),
-                                                fn(&Self::P,
-                                                            &<Self::P as PointAsVector>::Vector,
-                                                            &Material<F, Self::P, Self::V>,
-                                                            &Shape<F, Self::P, Self::V>,
-                                                            Intersector<F, Self::P, Self::V>)
-                                                            -> Box<Iterator<Item=Intersection<F, Self::P, Self::V>>>>) {
+    fn set_intersectors(&mut self, intersections: GeneralIntersectors<F, Point3<F>, Vector3<F>>) {
         self.intersections = intersections;
     }
 
-    fn transitions_mut(&mut self)
-                       -> &mut HashMap<(TypeId, TypeId),
-                                       fn(&Material<F, Self::P, Self::V>,
-                                          &Material<F, Self::P, Self::V>,
-                                          &TracingContext<F, Self::P, Self::V>)
-                                          -> Option<Rgba<F>>> {
+    fn transitions_mut(&mut self) -> &mut TransitionHandlers<F, Self::P, Self::V> {
         &mut self.transitions
     }
 
-    fn transitions(&self)
-                   -> &HashMap<(TypeId, TypeId),
-                               fn(&Material<F, Self::P, Self::V>,
-                                  &Material<F, Self::P, Self::V>,
-                                  &TracingContext<F, Self::P, Self::V>)
-                                  -> Option<Rgba<F>>> {
+    fn transitions(&self) -> &TransitionHandlers<F, Self::P, Self::V> {
         &self.transitions
     }
-    fn set_transitions(&mut self,
-                       transitions: HashMap<(TypeId, TypeId),
-                                            fn(&Material<F, Self::P, Self::V>,
-                                               &Material<F, Self::P, Self::V>,
-                                               &TracingContext<F, Self::P, Self::V>)
-                                               -> Option<Rgba<F>>>) {
+    fn set_transitions(&mut self, transitions: TransitionHandlers<F, Self::P, Self::V>) {
         self.transitions = transitions
     }
 }

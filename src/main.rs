@@ -332,9 +332,9 @@ fn run<F: CustomFloat>() {
                 Box::new(Vacuum::new()),
                 // Some(Box::new(PerlinSurface3::rand(&mut StdRng::new().expect("Could not create a random number generator."), 1.0, 1.0)))
                 Some(Box::new(ComposableSurface {
-                    reflection_ratio: get_reflection_ratio_test,
-                    reflection_direction: get_reflection_direction_test,
-                    surface_color: get_surface_color_test,
+                    reflection_ratio: Box::new(get_reflection_ratio_test),
+                    reflection_direction: Box::new(get_reflection_direction_test),
+                    surface_color: Box::new(get_surface_color_test),
                 }))
             )));
         entities.push(Box::new(Entity3Impl::new(
@@ -394,9 +394,9 @@ fn run<F: CustomFloat>() {
                 ),
                 Box::new(Vacuum::new()),
                 Some(Box::new(ComposableSurface {
-                    reflection_ratio: get_reflection_ratio_test,
-                    reflection_direction: get_reflection_direction_test,
-                    surface_color: get_surface_color_test,
+                    reflection_ratio: Box::new(get_reflection_ratio_test),
+                    reflection_direction: Box::new(get_reflection_direction_test),
+                    surface_color: Box::new(get_surface_color_test),
                 }))
             )));
         entities.push(
@@ -440,9 +440,9 @@ fn run<F: CustomFloat>() {
                     Some(
                         Box::new(
                             ComposableSurface {
-                                reflection_ratio: get_reflection_ratio_test,
-                                reflection_direction: get_reflection_direction_test,
-                                surface_color: get_surface_color_test,
+                                reflection_ratio: Box::new(get_reflection_ratio_test),
+                                reflection_direction: Box::new(get_reflection_direction_test),
+                                surface_color: Box::new(get_surface_color_test),
                             }
                         )
                     )

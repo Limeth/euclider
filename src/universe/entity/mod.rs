@@ -724,10 +724,14 @@ impl<F: 'static + CustomFloat, P: 'static + CustomPoint<F, V>, V: 'static + Cust
 // }
 
 pub struct ComposableSurface<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
-    pub reflection_ratio: fn(&TracingContext<F, P, V>) -> F,
-    pub reflection_direction: fn(&TracingContext<F, P, V>) -> <P as PointAsVector>::Vector,
-    pub surface_color: fn(&TracingContext<F, P, V>) -> Rgba<F>,
+    pub reflection_ratio: Box<ReflectionRatioProvider<F, P, V>>,
+    pub reflection_direction: Box<ReflectionDirectionProvider<F, P, V>>,
+    pub surface_color: Box<SurfaceColorProvider<F, P, V>>,
 }
+
+pub type ReflectionRatioProvider<F, P, V> = Fn(&TracingContext<F, P, V>) -> F;
+pub type ReflectionDirectionProvider<F, P, V> = Fn(&TracingContext<F, P, V>) -> V;
+pub type SurfaceColorProvider<F, P, V> = Fn(&TracingContext<F, P, V>) -> Rgba<F>;
 
 // impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> AbstractSurface<F, P> for ComposableSurface<F, P> {
 //     fn get_reflection_ratio(&self, context: &TracingContext<F, P>) -> F {
@@ -748,19 +752,19 @@ pub struct ComposableSurface<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVect
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurface<F, P, V> {
     fn get_reflection_ratio(&self, context: &TracingContext<F, P, V>) -> F {
-        let reflection_ratio = self.reflection_ratio;
+        let reflection_ratio = self.reflection_ratio.as_ref();
         reflection_ratio(context)
     }
 
     fn get_reflection_direction(&self,
                                 context: &TracingContext<F, P, V>)
                                 -> <P as PointAsVector>::Vector {
-        let reflection_direction = self.reflection_direction;
+        let reflection_direction = self.reflection_direction.as_ref();
         reflection_direction(context)
     }
 
     fn get_surface_color(&self, context: &TracingContext<F, P, V>) -> Rgba<F> {
-        let surface_color = self.surface_color;
+        let surface_color = self.surface_color.as_ref();
         surface_color(context)
     }
 

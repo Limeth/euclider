@@ -51,7 +51,7 @@ pub trait Camera<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: E
 pub type GeneralIntersectors<F, P, V> = TypePairMap<Box<GeneralIntersector<F, P, V>>>;
 
 /// Ties two `Material`s (exiting, entering) to a `TransitionHandler`
-pub type TransitionHandlers<F, P, V> = TypePairMap<TransitionHandler<F, P, V>>;
+pub type TransitionHandlers<F, P, V> = TypePairMap<Box<TransitionHandler<F, P, V>>>;
 
 /// Ties a combination of ordered `TypeId`s to a value
 pub type TypePairMap<V> = HashMap<(TypeId, TypeId), V>;
@@ -76,10 +76,11 @@ pub type Intersector<'a, F, P, V> = &'a Fn(&Material<F, P, V>,
                                     ) -> Provider<Intersection<F, P, V>>;
 
 /// Computes the color of the surface (not the reflection).
-pub type TransitionHandler<F, P, V> = fn(&Material<F, P, V>,
+// Send + Sync must be at the end of the type alias definition.
+pub type TransitionHandler<F, P, V> = Fn(&Material<F, P, V>,
                                          &Material<F, P, V>,
                                          &TracingContext<F, P, V>
-                                      ) -> Option<Rgba<F>>;
+                                      ) -> Option<Rgba<F>> + Send + Sync;
 
 /// Calls the `trace` method on the current Universe and returns the resulting color.
 // TODO: It feels wrong to have a type alias to a reference of another type

@@ -9,15 +9,15 @@ use universe::Universe;
 use universe::d3::entity::*;
 use util::CustomFloat;
 
-pub struct Universe3D<F: CustomFloat> {
+pub struct Universe3D<'a, F: CustomFloat> {
     camera: Box<Camera3<F>>,
     entities: Vec<Box<Entity3<F>>>,
-    intersections: GeneralIntersectors<F, Point3<F>, Vector3<F>>,
+    intersections: GeneralIntersectors<'a, F, Point3<F>, Vector3<F>>,
     transitions: TransitionHandlers<F, Point3<F>, Vector3<F>>,
 }
 
-impl<F: CustomFloat> Universe3D<F> {
-    pub fn new() -> Universe3D<F> {
+impl<'a, F: CustomFloat> Universe3D<'a, F> {
+    pub fn new() -> Universe3D<'a, F> {
         Universe3D {
             camera: Box::new(Camera3Impl::new()),
             entities: Vec::new(),
@@ -27,7 +27,7 @@ impl<F: CustomFloat> Universe3D<F> {
     }
 }
 
-impl<F: CustomFloat> Universe<F> for Universe3D<F> {
+impl<'a, F: CustomFloat> Universe<'a, F> for Universe3D<'a, F> {
     type P = Point3<F>;
     type V = Vector3<F>;
 
@@ -65,15 +65,15 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
         self.entities = entities;
     }
 
-    fn intersectors_mut(&mut self) -> &mut GeneralIntersectors<F, Point3<F>, Vector3<F>> {
+    fn intersectors_mut(&mut self) -> &mut GeneralIntersectors<'a, F, Point3<F>, Vector3<F>> {
         &mut self.intersections
     }
 
-    fn intersectors(&self) -> &GeneralIntersectors<F, Point3<F>, Vector3<F>> {
+    fn intersectors(&self) -> &GeneralIntersectors<'a, F, Point3<F>, Vector3<F>> {
         &self.intersections
     }
 
-    fn set_intersectors(&mut self, intersections: GeneralIntersectors<F, Point3<F>, Vector3<F>>) {
+    fn set_intersectors(&mut self, intersections: GeneralIntersectors<'a, F, Point3<F>, Vector3<F>>) {
         self.intersections = intersections;
     }
 

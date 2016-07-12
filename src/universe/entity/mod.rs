@@ -48,7 +48,7 @@ pub trait Camera<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: E
 
 /// Ties a `Material` the ray is passing through and a `Shape` the ray is intersecting to a
 /// `GeneralIntersector`
-pub type GeneralIntersectors<F, P, V> = TypePairMap<GeneralIntersector<F, P, V>>;
+pub type GeneralIntersectors<'a, F, P, V> = TypePairMap<&'a GeneralIntersector<F, P, V>>;
 
 /// Ties two `Material`s (exiting, entering) to a `TransitionHandler`
 pub type TransitionHandlers<F, P, V> = TypePairMap<TransitionHandler<F, P, V>>;
@@ -58,12 +58,13 @@ pub type TypePairMap<V> = HashMap<(TypeId, TypeId), V>;
 
 /// Computes the intersections of a ray in a given `Material` with a given `Shape`.
 /// The ray is originating in the given `Point` with a direction of the given `Vector`.
-pub type GeneralIntersector<F, P, V> = fn(&P,
+// Send + Sync must be at the end of the type alias definition.
+pub type GeneralIntersector<F, P, V> = Fn(&P,
                                           &V,
                                           &Material<F, P, V>,
                                           &Shape<F, P, V>,
                                           Intersector<F, P, V>
-                                       ) -> Box<IntersectionMarcher<F, P, V>>;
+                                       ) -> Box<IntersectionMarcher<F, P, V>> + Send + Sync;
 
 pub type IntersectionMarcher<F, P, V> = Iterator<Item=Intersection<F, P, V>>;
 

@@ -52,21 +52,23 @@ use na::BaseFloat;
 use num::traits::NumCast;
 use num::Zero;
 
-pub struct Simulation<F: CustomFloat, U: Universe<F>> {
+pub struct Simulation<'a, F: CustomFloat, U: Universe<'a, F>> {
     universe: Box<U>,
     facade: Option<GlutinFacade>,
     start_instant: Option<Instant>,
     last_updated_instant: Option<Instant>,
     context: SimulationContext,
     float_precision: PhantomData<F>,
+    marker_lifetime: PhantomData<&'a ()>,
 }
 
-struct SimulationBuilder<F: CustomFloat, U: Universe<F>> {
+struct SimulationBuilder<'a, F: CustomFloat, U: Universe<'a, F>> {
     universe: Option<Box<U>>,
     float_precision: PhantomData<F>,
+    marker_lifetime: PhantomData<&'a ()>,
 }
 
-impl<F: CustomFloat, U: Universe<F>> Simulation<F, U> {
+impl<'a, F: CustomFloat, U: Universe<'a, F>> Simulation<'a, F, U> {
     fn start(mut self) {
         let facade: GlutinFacade = glium::glutin::WindowBuilder::new()
             .with_dimensions(1024, 768)
@@ -126,21 +128,22 @@ impl<F: CustomFloat, U: Universe<F>> Simulation<F, U> {
         result
     }
 
-    fn builder() -> SimulationBuilder<F, U> {
+    fn builder() -> SimulationBuilder<'a, F, U> {
         SimulationBuilder {
             universe: None,
             float_precision: PhantomData,
+            marker_lifetime: PhantomData,
         }
     }
 }
 
-impl<F: CustomFloat, U: Universe<F>> SimulationBuilder<F, U> {
-    fn universe(mut self, universe: U) -> SimulationBuilder<F, U> {
+impl<'a, F: CustomFloat, U: Universe<'a, F>> SimulationBuilder<'a, F, U> {
+    fn universe(mut self, universe: U) -> SimulationBuilder<'a, F, U> {
         self.universe = Some(Box::new(universe));
         self
     }
 
-    fn build(self) -> Simulation<F, U> {
+    fn build(self) -> Simulation<'a, F, U> {
         Simulation {
             universe: self.universe.unwrap(),
             facade: None,
@@ -148,6 +151,7 @@ impl<F: CustomFloat, U: Universe<F>> SimulationBuilder<F, U> {
             last_updated_instant: None,
             context: SimulationContext::new(),
             float_precision: PhantomData,
+            marker_lifetime: PhantomData,
         }
     }
 }
@@ -318,7 +322,21 @@ fn main() {
 }
 
 fn run<F: CustomFloat>() {
+    let intersect_void = universe::d3::entity::intersect_void;
+    let intersect_sphere_in_vacuum = universe::d3::entity::intersect_sphere_in_vacuum;
+    let intersect_plane_in_vacuum = universe::d3::entity::intersect_plane_in_vacuum;
+    let intersect_halfspace_in_vacuum = universe::d3::entity::intersect_halfspace_in_vacuum;
+    let intersect_composableshape_in_vacuum = ComposableShape::<F, Point3<F>, Vector3<F>>::intersect_in_vacuum;
+    let mut intersectors: GeneralIntersectors<F, Point3<F>, Vector3<F>> = GeneralIntersectors::new();
+
+    intersectors.insert((Vacuum::id_static(), VoidShape::id_static()), &intersect_void);
+    intersectors.insert((Vacuum::id_static(), Sphere3::<F>::id_static()), &intersect_sphere_in_vacuum);
+    intersectors.insert((Vacuum::id_static(), Plane3::<F>::id_static()), &intersect_plane_in_vacuum);
+    intersectors.insert((Vacuum::id_static(), HalfSpace3::<F>::id_static()), &intersect_halfspace_in_vacuum);
+    intersectors.insert((Vacuum::id_static(), ComposableShape::<F, Point3<F>, Vector3<F>>::id_static()), &intersect_composableshape_in_vacuum);
+
     let mut universe: Universe3D<F> = Universe3D::new();
+    universe.set_intersectors(intersectors);
 
     {
         let mut entities = universe.entities_mut();
@@ -521,22 +539,6 @@ fn run<F: CustomFloat>() {
         //                 }))
         //             )));
         entities.push(Box::new(Void::new_with_vacuum()));
-    }
-
-    {
-        let mut intersectors = universe.intersectors_mut();
-        intersectors.insert((Vacuum::id_static(), VoidShape::id_static()),
-                            universe::d3::entity::intersect_void);
-        intersectors.insert((Vacuum::id_static(), Sphere3::<F>::id_static()),
-                            universe::d3::entity::intersect_void);
-        intersectors.insert((Vacuum::id_static(), Sphere3::<F>::id_static()),
-                            universe::d3::entity::intersect_sphere_in_vacuum);
-        intersectors.insert((Vacuum::id_static(), Plane3::<F>::id_static()),
-                            universe::d3::entity::intersect_plane_in_vacuum);
-        intersectors.insert((Vacuum::id_static(), HalfSpace3::<F>::id_static()),
-                            universe::d3::entity::intersect_halfspace_in_vacuum);
-        intersectors.insert((Vacuum::id_static(), ComposableShape::<F, Point3<F>, Vector3<F>>::id_static()),
-                            ComposableShape::<F, Point3<F>, Vector3<F>>::intersect_in_vacuum);
     }
 
     {

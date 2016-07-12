@@ -27,7 +27,7 @@ use util::Consts;
 use util::AngleBetween;
 use util::Provider;
 
-pub trait Universe<F: CustomFloat>
+pub trait Universe<'a, F: CustomFloat>
     where Self: Sync
 {
     type P: CustomPoint<F, Self::V>;
@@ -60,9 +60,9 @@ pub trait Universe<F: CustomFloat>
     fn entities(&self) -> &Vec<Box<Entity<F, Self::P, Self::V>>>;
     fn set_entities(&mut self, entities: Vec<Box<Entity<F, Self::P, Self::V>>>);
     /// Calculates the intersection of the shape (second) in the material (first)
-    fn intersectors_mut(&mut self) -> &mut GeneralIntersectors<F, Self::P, Self::V>;
-    fn intersectors(&self) -> &GeneralIntersectors<F, Self::P, Self::V>;
-    fn set_intersectors(&mut self, intersections: GeneralIntersectors<F, Self::P, Self::V>);
+    fn intersectors_mut(&mut self) -> &mut GeneralIntersectors<'a, F, Self::P, Self::V>;
+    fn intersectors(&self) -> &GeneralIntersectors<'a, F, Self::P, Self::V>;
+    fn set_intersectors(&mut self, intersections: GeneralIntersectors<'a, F, Self::P, Self::V>);
     /// Stores the behavior of a ray passing from the first material to the second
     fn transitions_mut(&mut self) -> &mut TransitionHandlers<F, Self::P, Self::V>;
     fn transitions(&self) -> &TransitionHandlers<F, Self::P, Self::V>;

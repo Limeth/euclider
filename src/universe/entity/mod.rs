@@ -887,12 +887,13 @@ pub trait Rotatable<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
 //     radii: V, // a/b/c...
 // }
 
+#[derive(Default)]
 pub struct Vacuum {
 
 }
 
 impl Vacuum {
-    pub fn new() -> Vacuum {
+    pub fn new() -> Self {
         Vacuum {}
     }
 }
@@ -925,10 +926,11 @@ impl Display for Vacuum {
     }
 }
 
+#[derive(Default)]
 pub struct VoidShape {}
 
 impl VoidShape {
-    pub fn new() -> VoidShape {
+    pub fn new() -> Self {
         VoidShape {}
     }
 }

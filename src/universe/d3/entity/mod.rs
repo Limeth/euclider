@@ -24,6 +24,7 @@ use palette::RgbHue;
 use universe::entity::*;
 use util::CustomFloat;
 use util::HasId;
+use util::VecLazy;
 use util::IterLazy;
 
 #[allow(non_snake_case)]
@@ -202,7 +203,7 @@ pub fn intersect_sphere_in_vacuum<F: CustomFloat>(location: &Point3<F>,
         return Box::new(iter::empty());  // Don't trace in the opposite direction
     }
 
-    let mut closures: Vec<Box<Fn() -> Option<Intersection<F, Point3<F>, Vector3<F>>>>> = Vec::new();
+    let mut closures: VecLazy<Intersection<F, Point3<F>, Vector3<F>>> = Vec::new();
     // Move the following variables inside the closures.
     // This lets the closures move outside the scope.
     let direction = *direction;

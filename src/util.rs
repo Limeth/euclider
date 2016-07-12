@@ -195,13 +195,15 @@ pub fn overlay_color<F: CustomFloat>(bottom: Rgb<u8>, top: Rgba<u8>) -> Rgb<u8> 
     }
 }
 
+pub type VecLazy<'a, T> = Vec<Box<Fn() -> Option<T> + 'a>>;
+
 pub struct IterLazy<'a, T> {
-    closures: Vec<Box<Fn() -> Option<T> + 'a>>,
+    closures: VecLazy<'a, T>,
     index: usize,
 }
 
 impl<'a, T> IterLazy<'a, T> {
-    pub fn new(closures: Vec<Box<Fn() -> Option<T> + 'a>>) -> IterLazy<T> {
+    pub fn new(closures: VecLazy<'a, T>) -> IterLazy<T> {
         IterLazy {
             closures: closures,
             index: 0,

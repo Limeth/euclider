@@ -13,7 +13,7 @@ use universe::d3::entity::*;
 use num::traits::NumCast;
 use num::Zero;
 use num::One;
-use SimulationContext;
+use simulation::SimulationContext;
 use util::CustomFloat;
 
 #[derive(Clone, Copy, PartialEq)]

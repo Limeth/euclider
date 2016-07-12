@@ -13,7 +13,7 @@ use num::traits::NumCast;
 use palette;
 use palette::Rgba;
 use palette::Blend;
-use SimulationContext;
+use simulation::SimulationContext;
 use util;
 use util::CustomFloat;
 use util::CustomPoint;

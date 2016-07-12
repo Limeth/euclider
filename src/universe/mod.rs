@@ -18,7 +18,7 @@ use glium::BlitTarget;
 use glium::texture::RawImage2d;
 use glium::uniforms::MagnifySamplerFilter;
 use scoped_threadpool::Pool;
-use SimulationContext;
+use simulation::SimulationContext;
 use universe::entity::*;
 use util::CustomPoint;
 use util::CustomVector;

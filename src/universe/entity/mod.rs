@@ -48,7 +48,7 @@ pub trait Camera<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: E
 
 /// Ties a `Material` the ray is passing through and a `Shape` the ray is intersecting to a
 /// `GeneralIntersector`
-pub type GeneralIntersectors<'a, F, P, V> = TypePairMap<&'a GeneralIntersector<F, P, V>>;
+pub type GeneralIntersectors<F, P, V> = TypePairMap<Box<GeneralIntersector<F, P, V>>>;
 
 /// Ties two `Material`s (exiting, entering) to a `TransitionHandler`
 pub type TransitionHandlers<F, P, V> = TypePairMap<TransitionHandler<F, P, V>>;

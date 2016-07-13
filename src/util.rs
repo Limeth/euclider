@@ -33,7 +33,7 @@ use std::mem;
 use std::cell::RefCell;
 use std::cell::RefMut;
 use num::Num;
-use num::num_traits::ParseFloatError;
+use num::traits::ParseFloatError;
 use num::traits::NumCast;
 use num::traits::ToPrimitive;
 use palette;

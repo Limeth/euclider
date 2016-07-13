@@ -20,6 +20,8 @@ use palette::Alpha;
 use palette::Rgb;
 use na::BaseFloat;
 use universe::entity::surface::Surface;
+use universe::entity::surface::ReflectionRatioProvider;
+use universe::entity::surface::ReflectionDirectionProvider;
 use universe::entity::shape::TracingContext;
 use universe::d3::entity::AXIS_Z;
 
@@ -78,25 +80,29 @@ impl<F: CustomFloat> Surface<F, Point3<F>, Vector3<F>> for PerlinSurface3<F> {
     }
 }
 
+// TODO: Generalize
 #[allow(unused_variables)]
-pub fn get_reflection_ratio_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, Vector3<F>>)
-                                                 -> F {
-    Cast::from(0.5)
+pub fn reflection_ratio_uniform<F: CustomFloat>(ratio: F)
+        -> Box<ReflectionRatioProvider<F, Point3<F>, Vector3<F>>> {
+    Box::new(move |context: &TracingContext<F, Point3<F>, Vector3<F>>| {
+        ratio
+    })
 }
 
-pub fn get_reflection_direction_test<F: CustomFloat>(context: &TracingContext<F,
-                                                                              Point3<F>,
-                                                                              Vector3<F>>)
-                                                     -> Vector3<F> {
-    // R = 2*(V dot N)*N - V
-    let mut normal = context.intersection.normal;
+// TODO: Generalize
+pub fn reflection_direction_specular<F: CustomFloat>()
+        -> Box<ReflectionDirectionProvider<F, Point3<F>, Vector3<F>>> {
+    Box::new(move |context: &TracingContext<F, Point3<F>, Vector3<F>>| {
+        // R = 2*(V dot N)*N - V
+        let mut normal = context.intersection.normal;
 
-    if na::angle_between(&context.intersection.direction, &normal) > BaseFloat::frac_pi_2() {
-        normal = -normal;
-    }
+        if na::angle_between(&context.intersection.direction, &normal) > BaseFloat::frac_pi_2() {
+            normal = -normal;
+        }
 
-    normal * <F as NumCast>::from(-2.0).unwrap() *
-    na::dot(&context.intersection.direction, &normal) + context.intersection.direction
+        normal * <F as NumCast>::from(-2.0).unwrap() *
+        na::dot(&context.intersection.direction, &normal) + context.intersection.direction
+    })
 }
 
 pub fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, Vector3<F>>)

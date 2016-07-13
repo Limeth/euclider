@@ -55,8 +55,8 @@ fn run<F: CustomFloat>() {
                 Box::new(Vacuum::new()),
                 // Some(Box::new(PerlinSurface3::rand(&mut StdRng::new().expect("Could not create a random number generator."), 1.0, 1.0)))
                 Some(Box::new(ComposableSurface {
-                    reflection_ratio: Box::new(get_reflection_ratio_test),
-                    reflection_direction: Box::new(get_reflection_direction_test),
+                    reflection_ratio: reflection_ratio_uniform(Cast::from(0.5)),
+                    reflection_direction: reflection_direction_specular(),
                     surface_color: Box::new(get_surface_color_test),
                 }))
             )));
@@ -117,8 +117,8 @@ fn run<F: CustomFloat>() {
                 ),
                 Box::new(Vacuum::new()),
                 Some(Box::new(ComposableSurface {
-                    reflection_ratio: Box::new(get_reflection_ratio_test),
-                    reflection_direction: Box::new(get_reflection_direction_test),
+                    reflection_ratio: reflection_ratio_uniform(Cast::from(0.5)),
+                    reflection_direction: reflection_direction_specular(),
                     surface_color: Box::new(get_surface_color_test),
                 }))
             )));
@@ -163,8 +163,8 @@ fn run<F: CustomFloat>() {
                     Some(
                         Box::new(
                             ComposableSurface {
-                                reflection_ratio: Box::new(universe::d3::entity::surface::get_reflection_ratio_test),
-                                reflection_direction: Box::new(universe::d3::entity::surface::get_reflection_direction_test),
+                                reflection_ratio: reflection_ratio_uniform(Cast::from(0.5)),
+                                reflection_direction: reflection_direction_specular(),
                                 surface_color: Box::new(universe::d3::entity::surface::get_surface_color_test),
                             }
                         )

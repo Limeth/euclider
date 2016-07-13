@@ -30,6 +30,7 @@ use universe::entity::material::*;
 use universe::entity::surface::*;
 use universe::d3::Universe3D;
 use universe::d3::entity::Entity3Impl;
+use universe::d3::entity::AXIS_Z;
 use universe::d3::entity::shape::*;
 use universe::d3::entity::surface::*;
 use util::CustomFloat;
@@ -57,7 +58,7 @@ fn run<F: CustomFloat>() {
                 Some(Box::new(ComposableSurface {
                     reflection_ratio: reflection_ratio_uniform(Cast::from(0.5)),
                     reflection_direction: reflection_direction_specular(),
-                    surface_color: Box::new(get_surface_color_test),
+                    surface_color: surface_color_illumination_directional(-AXIS_Z()),
                 }))
             )));
         entities.push(Box::new(Entity3Impl::new(
@@ -119,7 +120,7 @@ fn run<F: CustomFloat>() {
                 Some(Box::new(ComposableSurface {
                     reflection_ratio: reflection_ratio_uniform(Cast::from(0.5)),
                     reflection_direction: reflection_direction_specular(),
-                    surface_color: Box::new(get_surface_color_test),
+                    surface_color: surface_color_illumination_directional(-AXIS_Z()),
                 }))
             )));
         entities.push(
@@ -165,7 +166,7 @@ fn run<F: CustomFloat>() {
                             ComposableSurface {
                                 reflection_ratio: reflection_ratio_uniform(Cast::from(0.5)),
                                 reflection_direction: reflection_direction_specular(),
-                                surface_color: Box::new(universe::d3::entity::surface::get_surface_color_test),
+                                surface_color: surface_color_illumination_directional(-AXIS_Z()),
                             }
                         )
                     )

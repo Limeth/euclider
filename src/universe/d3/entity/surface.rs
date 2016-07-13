@@ -20,10 +20,10 @@ use palette::Alpha;
 use palette::Rgb;
 use na::BaseFloat;
 use universe::entity::surface::Surface;
+use universe::entity::surface::SurfaceColorProvider;
 use universe::entity::surface::ReflectionRatioProvider;
 use universe::entity::surface::ReflectionDirectionProvider;
 use universe::entity::shape::TracingContext;
-use universe::d3::entity::AXIS_Z;
 
 pub type Surface3<F> = Surface<F, Point3<F>, Vector3<F>>;
 
@@ -105,20 +105,23 @@ pub fn reflection_direction_specular<F: CustomFloat>()
     })
 }
 
-pub fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, Vector3<F>>)
-                                              -> Rgba<F> {
-    let mut normal = context.intersection.normal;
+// TODO: Generalize
+pub fn surface_color_illumination_directional<F: CustomFloat>(light_direction: Vector3<F>)
+        -> Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>> {
+    Box::new(move |context: &TracingContext<F, Point3<F>, Vector3<F>>| {
+        let mut normal = context.intersection.normal;
 
-    if na::angle_between(&context.intersection.direction, &normal) > BaseFloat::frac_pi_2() {
-        normal = -normal;
-    }
+        if na::angle_between(&context.intersection.direction, &normal) > BaseFloat::frac_pi_2() {
+            normal = -normal;
+        }
 
-    let angle: F = na::angle_between(&normal, &AXIS_Z());
+        let angle: F = na::angle_between(&normal, &-light_direction);
 
-    Alpha {
-        color: Rgb::from(Hsv::new(RgbHue::from(<F as Zero>::zero()),
-                                  <F as Zero>::zero(),
-                                  <F as NumCast>::from(angle / <F as BaseFloat>::pi()).unwrap())),
-        alpha: Cast::from(0.5),
-    }
+        Alpha {
+            color: Rgb::from(Hsv::new(RgbHue::from(<F as Zero>::zero()),
+                                      <F as Zero>::zero(),
+                                      <F as NumCast>::from(angle / <F as BaseFloat>::pi()).unwrap())),
+            alpha: Cast::from(1.0),
+        }
+    })
 }

@@ -23,72 +23,18 @@ use rand::StdRng;
 use na::Cast;
 use na::Point3;
 use na::Vector3;
-use palette::Alpha;
-use palette::Rgb;
-use palette::Rgba;
-use palette::Hsv;
-use palette::RgbHue;
 use universe::Universe;
-use universe::entity::*;
+use universe::entity::Void;
+use universe::entity::shape::*;
+use universe::entity::material::*;
+use universe::entity::surface::*;
 use universe::d3::Universe3D;
-use universe::d3::entity::*;
+use universe::d3::entity::Entity3Impl;
+use universe::d3::entity::shape::*;
+use universe::d3::entity::surface::*;
 use util::CustomFloat;
 use util::HasId;
 use simulation::Simulation;
-use na::BaseFloat;
-use num::traits::NumCast;
-use num::Zero;
-
-#[allow(unused_variables)]
-fn get_reflection_ratio_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, Vector3<F>>) -> F {
-    Cast::from(0.5)
-}
-
-fn get_reflection_direction_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, Vector3<F>>)
-                                                 -> Vector3<F> {
-    // R = 2*(V dot N)*N - V
-    let mut normal = context.intersection.normal;
-
-    if na::angle_between(&context.intersection.direction, &normal) > BaseFloat::frac_pi_2() {
-        normal = -normal;
-    }
-
-    normal * <F as NumCast>::from(-2.0).unwrap() *
-    na::dot(&context.intersection.direction, &normal) + context.intersection.direction
-}
-
-fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, Vector3<F>>) -> Rgba<F> {
-    let mut normal = context.intersection.normal;
-
-    if na::angle_between(&context.intersection.direction, &normal) > BaseFloat::frac_pi_2() {
-        normal = -normal;
-    }
-
-    let angle: F = na::angle_between(&normal, &universe::d3::entity::AXIS_Z());
-
-    Alpha {
-        color: Rgb::from(
-                    Hsv::new(
-                        RgbHue::from(<F as Zero>::zero()),
-                        <F as Zero>::zero(),
-                        <F as NumCast>::from(angle / <F as BaseFloat>::pi()).unwrap()
-                    )
-               ),
-        alpha: Cast::from(0.5),
-    }
-}
-
-#[allow(unused_variables)]
-fn transition_vacuum_vacuum<F: CustomFloat>(from: &Material<F, Point3<F>, Vector3<F>>,
-                                            to: &Material<F, Point3<F>, Vector3<F>>,
-                                            context: &TracingContext<F, Point3<F>, Vector3<F>>)
-                                            -> Option<Rgba<F>> {
-    let trace = context.trace;
-    trace(context.time,
-          context.intersection_traceable,
-          &context.intersection.location,
-          &context.intersection.direction)
-}
 
 fn main() {
     run::<f64>();
@@ -217,9 +163,9 @@ fn run<F: CustomFloat>() {
                     Some(
                         Box::new(
                             ComposableSurface {
-                                reflection_ratio: Box::new(get_reflection_ratio_test),
-                                reflection_direction: Box::new(get_reflection_direction_test),
-                                surface_color: Box::new(get_surface_color_test),
+                                reflection_ratio: Box::new(universe::d3::entity::surface::get_reflection_ratio_test),
+                                reflection_direction: Box::new(universe::d3::entity::surface::get_reflection_direction_test),
+                                surface_color: Box::new(universe::d3::entity::surface::get_surface_color_test),
                             }
                         )
                     )
@@ -303,16 +249,16 @@ fn run<F: CustomFloat>() {
     {
         let intersectors = universe.intersectors_mut();
 
-        intersectors.insert((Vacuum::id_static(), VoidShape::id_static()), Box::new(universe::d3::entity::intersect_void));
-        intersectors.insert((Vacuum::id_static(), Sphere3::<F>::id_static()), Box::new(universe::d3::entity::intersect_sphere_in_vacuum));
-        intersectors.insert((Vacuum::id_static(), Plane3::<F>::id_static()), Box::new(universe::d3::entity::intersect_plane_in_vacuum));
-        intersectors.insert((Vacuum::id_static(), HalfSpace3::<F>::id_static()), Box::new(universe::d3::entity::intersect_halfspace_in_vacuum));
+        intersectors.insert((Vacuum::id_static(), VoidShape::id_static()), Box::new(universe::d3::entity::shape::intersect_void));
+        intersectors.insert((Vacuum::id_static(), Sphere3::<F>::id_static()), Box::new(Sphere3::<F>::intersect_in_vacuum));
+        intersectors.insert((Vacuum::id_static(), Plane3::<F>::id_static()), Box::new(Plane3::<F>::intersect_in_vacuum));
+        intersectors.insert((Vacuum::id_static(), HalfSpace3::<F>::id_static()), Box::new(HalfSpace3::<F>::intersect_in_vacuum));
         intersectors.insert((Vacuum::id_static(), ComposableShape::<F, Point3<F>, Vector3<F>>::id_static()), Box::new(ComposableShape::<F, Point3<F>, Vector3<F>>::intersect_in_vacuum));
     }
 
     {
         let mut transitions = universe.transitions_mut();
-        transitions.insert((Vacuum::id_static(), Vacuum::id_static()), Box::new(transition_vacuum_vacuum));
+        transitions.insert((Vacuum::id_static(), Vacuum::id_static()), Box::new(universe::d3::entity::material::transition_vacuum_vacuum));
     }
 
     let simulation = Simulation::builder()

@@ -3,10 +3,13 @@ pub mod entity;
 use std::collections::HashMap;
 use na::Point3;
 use na::Vector3;
-use universe::entity::*;
+use universe::entity::Camera;
+use universe::entity::shape::GeneralIntersectors;
+use universe::entity::material::TransitionHandlers;
 use universe::d3::entity::camera::Camera3Impl;
+use universe::d3::entity::Camera3;
+use universe::d3::entity::Entity3;
 use universe::Universe;
-use universe::d3::entity::*;
 use util::CustomFloat;
 
 pub struct Universe3D<F: CustomFloat> {

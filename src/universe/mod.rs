@@ -19,7 +19,16 @@ use glium::texture::RawImage2d;
 use glium::uniforms::MagnifySamplerFilter;
 use scoped_threadpool::Pool;
 use simulation::SimulationContext;
-use universe::entity::*;
+use universe::entity::Entity;
+use universe::entity::Camera;
+use universe::entity::Traceable;
+use universe::entity::material::Material;
+use universe::entity::material::TransitionHandlers;
+use universe::entity::shape::Shape;
+use universe::entity::shape::GeneralIntersectors;
+use universe::entity::shape::Intersection;
+use universe::entity::shape::Intersector;
+use universe::entity::shape::TracingContext;
 use util::CustomPoint;
 use util::CustomVector;
 use util::CustomFloat;
@@ -52,7 +61,6 @@ pub trait Universe<F: CustomFloat>
     //     where F: Fn(M, S) -> Option<F, Self::P, Self::V>,
     //           M: Material<Self::P, Self::V>,
     //           S: Shape<Self::P, Self::V>;
-    /// FIXME: Temporary method, because there is currently no way to do this in nalgebra
     fn camera_mut(&mut self) -> &mut Camera<F, Self::P, Self::V>;
     fn camera(&self) -> &Camera<F, Self::P, Self::V>;
     fn set_camera(&mut self, camera: Box<Camera<F, Self::P, Self::V>>);

@@ -2,6 +2,7 @@ use std;
 use std::any::TypeId;
 use std::any::Any;
 use std::collections::HashSet;
+use std::collections::HashMap;
 use std::hash::Hash;
 use std::u8;
 use std::fmt::UpperExp;
@@ -63,6 +64,9 @@ use na::Vector3;
 use core::iter::FromIterator;
 use core::marker::Reflect;
 use core::ops::DerefMut;
+
+/// Ties a combination of ordered `TypeId`s to a value
+pub type TypePairMap<V> = HashMap<(TypeId, TypeId), V>;
 
 pub trait RemoveIf<T, C> {
     fn remove_if<F>(&mut self, f: F) -> C where F: Fn(&T) -> bool;

@@ -29,8 +29,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
         reflection_ratio(context)
     }
 
-    fn get_reflection_direction(&self,
-                                context: &TracingContext<F, P, V>) -> V {
+    fn get_reflection_direction(&self, context: &TracingContext<F, P, V>) -> V {
         let reflection_direction = self.reflection_direction.as_ref();
         reflection_direction(context)
     }

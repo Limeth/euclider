@@ -22,7 +22,8 @@ pub trait Entity<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
     fn as_traceable(&self) -> Option<&Traceable<F, P, V>>;
 }
 
-pub trait Camera<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: Entity<F, P, V> {
+pub trait Camera<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+    : Entity<F, P, V> {
     fn get_ray_point(&self,
                      screen_x: i32,
                      screen_y: i32,
@@ -38,11 +39,13 @@ pub trait Camera<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: E
     fn max_depth(&self) -> u32;
 }
 
-pub trait Updatable<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: Entity<F, P, V> {
+pub trait Updatable<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+    : Entity<F, P, V> {
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext);
 }
 
-pub trait Traceable<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: Entity<F, P, V> {
+pub trait Traceable<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+    : Entity<F, P, V> {
     fn shape(&self) -> &Shape<F, P, V>;
     fn material(&self) -> &Material<F, P, V>;
     fn surface(&self) -> Option<&Surface<F, P, V>>;
@@ -98,7 +101,9 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Entity<F, P, V
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Traceable<F, P, V> for Void<F, P, V> {
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Traceable<F, P, V> for Void<F,
+                                                                                              P,
+                                                                                              V> {
     fn shape(&self) -> &Shape<F, P, V> {
         self.shape.as_ref()
     }

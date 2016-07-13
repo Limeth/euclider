@@ -249,16 +249,23 @@ fn run<F: CustomFloat>() {
     {
         let intersectors = universe.intersectors_mut();
 
-        intersectors.insert((Vacuum::id_static(), VoidShape::id_static()), Box::new(universe::d3::entity::shape::intersect_void));
-        intersectors.insert((Vacuum::id_static(), Sphere3::<F>::id_static()), Box::new(Sphere3::<F>::intersect_in_vacuum));
-        intersectors.insert((Vacuum::id_static(), Plane3::<F>::id_static()), Box::new(Plane3::<F>::intersect_in_vacuum));
-        intersectors.insert((Vacuum::id_static(), HalfSpace3::<F>::id_static()), Box::new(HalfSpace3::<F>::intersect_in_vacuum));
-        intersectors.insert((Vacuum::id_static(), ComposableShape::<F, Point3<F>, Vector3<F>>::id_static()), Box::new(ComposableShape::<F, Point3<F>, Vector3<F>>::intersect_in_vacuum));
+        intersectors.insert((Vacuum::id_static(), VoidShape::id_static()),
+                            Box::new(universe::d3::entity::shape::intersect_void));
+        intersectors.insert((Vacuum::id_static(), Sphere3::<F>::id_static()),
+                            Box::new(Sphere3::<F>::intersect_in_vacuum));
+        intersectors.insert((Vacuum::id_static(), Plane3::<F>::id_static()),
+                            Box::new(Plane3::<F>::intersect_in_vacuum));
+        intersectors.insert((Vacuum::id_static(), HalfSpace3::<F>::id_static()),
+                            Box::new(HalfSpace3::<F>::intersect_in_vacuum));
+        intersectors.insert((Vacuum::id_static(),
+                     ComposableShape::<F, Point3<F>, Vector3<F>>::id_static()),
+                    Box::new(ComposableShape::<F, Point3<F>, Vector3<F>>::intersect_in_vacuum));
     }
 
     {
         let mut transitions = universe.transitions_mut();
-        transitions.insert((Vacuum::id_static(), Vacuum::id_static()), Box::new(universe::d3::entity::material::transition_vacuum_vacuum));
+        transitions.insert((Vacuum::id_static(), Vacuum::id_static()),
+                           Box::new(universe::d3::entity::material::transition_vacuum_vacuum));
     }
 
     let simulation = Simulation::builder()

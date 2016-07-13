@@ -77,11 +77,11 @@ pub trait Universe<F: CustomFloat>
     fn set_transitions(&mut self, transitions: TransitionHandlers<F, Self::P, Self::V>);
 
     fn intersect(&self,
-                       location: &Self::P,
-                       rotation: &Self::V,
-                       material: &Material<F, Self::P, Self::V>,
-                       shape: &Shape<F, Self::P, Self::V>)
-                       -> Provider<Intersection<F, Self::P, Self::V>> {
+                 location: &Self::P,
+                 rotation: &Self::V,
+                 material: &Material<F, Self::P, Self::V>,
+                 shape: &Shape<F, Self::P, Self::V>)
+                 -> Provider<Intersection<F, Self::P, Self::V>> {
         let material_id = material.id();
         let shape_id = shape.id();
         let intersector = self.intersectors().get(&(material_id, shape_id));
@@ -94,9 +94,8 @@ pub trait Universe<F: CustomFloat>
 
         // let intersector = intersector.unwrap();
 
-        let intersect: Intersector<F, Self::P, Self::V> = &move |material, shape| {
-            self.intersect(location, rotation, material, shape)
-        };
+        let intersect: Intersector<F, Self::P, Self::V> =
+            &move |material, shape| self.intersect(location, rotation, material, shape);
 
         Provider::new(intersector(location, rotation, material, shape, intersect))
     }
@@ -140,8 +139,8 @@ pub trait Universe<F: CustomFloat>
                 let closer_normal: Self::V;
 
                 // TODO
-                if intersection.direction.angle_between(&intersection.normal)
-                        < <F as BaseFloat>::frac_pi_2() {
+                if intersection.direction.angle_between(&intersection.normal) <
+                   <F as BaseFloat>::frac_pi_2() {
                     // closer_normal = -intersection.normal;
                     // exiting = true;
                     continue; //The same behavior as the above TODO
@@ -179,16 +178,12 @@ pub trait Universe<F: CustomFloat>
             }
         }
 
-        foreground.or_else(
-            || Some(
-                Rgba::new(
-                    Cast::from(0.0),
-                    Cast::from(0.0),
-                    Cast::from(0.0),
-                    Cast::from(0.0)
-                )
-            )
-        )
+        foreground.or_else(|| {
+            Some(Rgba::new(Cast::from(0.0),
+                           Cast::from(0.0),
+                           Cast::from(0.0),
+                           Cast::from(0.0)))
+        })
     }
 
     fn trace_first(&self,
@@ -229,24 +224,13 @@ pub trait Universe<F: CustomFloat>
         }
 
         if belongs_to.is_some() {
-            let background = Rgba::from(
-                                Rgb::new(
-                                    Cast::from(1.0),
-                                    Cast::from(1.0),
-                                    Cast::from(1.0)
-                                )
-                             ).into_premultiplied();
-            let foreground = self.trace_first(time,
-                                              max_depth,
-                                              belongs_to.unwrap(),
-                                              location,
-                                              rotation)
-                                 .into_premultiplied();
-            Some(
-                Rgb::from_premultiplied(
-                    foreground.over(background)
-                )
-            )
+            let background =
+                Rgba::from(Rgb::new(Cast::from(1.0), Cast::from(1.0), Cast::from(1.0)))
+                    .into_premultiplied();
+            let foreground =
+                self.trace_first(time, max_depth, belongs_to.unwrap(), location, rotation)
+                    .into_premultiplied();
+            Some(Rgb::from_premultiplied(foreground.over(background)))
             // Some(util::overlay_color::<F>(background, foreground))
         } else {
             None
@@ -313,9 +297,7 @@ pub trait Universe<F: CustomFloat>
                                                         y as i32,
                                                         buffer_width as i32,
                                                         buffer_height as i32);
-                    let color = image::Rgb {
-                        data: color.to_pixel(),
-                    };
+                    let color = image::Rgb { data: color.to_pixel() };
 
                     for (i, result) in chunk.iter_mut().enumerate() {
                         *result = color.data[i];

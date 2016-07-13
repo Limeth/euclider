@@ -21,7 +21,10 @@ pub type TransitionHandler<F, P, V> = Fn(&Material<F, P, V>,
                                          &TracingContext<F, P, V>
                                       ) -> Option<Rgba<F>> + Send + Sync;
 
-pub trait Material<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> where Self: HasId + Debug + Display {}
+pub trait Material<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+    where Self: HasId + Debug + Display
+{
+}
 
 #[derive(Default)]
 pub struct Vacuum {}

@@ -70,7 +70,8 @@ impl<F: CustomFloat, U: Universe<F>> Simulation<F, U> {
                              &self.context);
 
         if let Err(error) = frame.finish() {
-            panic!("An error occured while swapping the OpenGL buffers: {:?}", error)
+            panic!("An error occured while swapping the OpenGL buffers: {:?}",
+                   error)
         }
     }
 
@@ -169,9 +170,7 @@ impl SimulationContext {
                                 .remove_if(|tuple: &(u8, Option<VirtualKeyCode>)| {
                                     tuple.0 == character
                                 });
-                            let is_escape = |virtual_code| {
-                                virtual_code == VirtualKeyCode::Escape
-                            };
+                            let is_escape = |virtual_code| virtual_code == VirtualKeyCode::Escape;
                             if virtual_code.map_or(false, is_escape) {
                                 return Err(event);
                             }

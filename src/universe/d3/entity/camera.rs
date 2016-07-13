@@ -65,7 +65,9 @@ impl<F: CustomFloat> Camera3Impl<F> {
         *up = na::cross(&axis_h, forward).normalize();
     }
 
-    fn rotate_y_static(forward: &mut Vector3<F>, up: &mut Vector3<F>, angle: F/*, snap: bool*/) {
+    fn rotate_y_static(forward: &mut Vector3<F>,
+                       up: &mut Vector3<F>,
+                       angle: F /* , snap: bool */) {
         let axis_h = na::cross(forward, &AXIS_Z()).normalize();
 
         // TODO snap to the Z axis
@@ -101,7 +103,7 @@ impl<F: CustomFloat> Camera3Impl<F> {
     }
 
     fn rotate_y(&mut self, angle: F) {
-        Camera3Impl::rotate_y_static(&mut self.forward, &mut self.up, angle/*, true*/);
+        Camera3Impl::rotate_y_static(&mut self.forward, &mut self.up, angle /* , true */);
     }
 
     fn get_left(&self) -> Vector3<F> {
@@ -176,8 +178,8 @@ impl<F: CustomFloat> Updatable<F, Point3<F>, Vector3<F>> for Camera3Impl<F> {
         self.update_rotation(context);
 
         let pressed_keys: &HashSet<(u8, Option<VirtualKeyCode>)> = context.pressed_keys();
-        let delta_millis = <F as NumCast>::from((*delta_time * 1000u32).as_secs())
-            .unwrap() / Cast::from(1000.0);
+        let delta_millis = <F as NumCast>::from((*delta_time * 1000u32).as_secs()).unwrap() /
+                           Cast::from(1000.0);
 
         for pressed_key in pressed_keys {
             if pressed_key.1.is_none() {

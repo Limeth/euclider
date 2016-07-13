@@ -79,12 +79,15 @@ impl<F: CustomFloat> Surface<F, Point3<F>, Vector3<F>> for PerlinSurface3<F> {
 }
 
 #[allow(unused_variables)]
-pub fn get_reflection_ratio_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, Vector3<F>>) -> F {
+pub fn get_reflection_ratio_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, Vector3<F>>)
+                                                 -> F {
     Cast::from(0.5)
 }
 
-pub fn get_reflection_direction_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, Vector3<F>>)
-                                                 -> Vector3<F> {
+pub fn get_reflection_direction_test<F: CustomFloat>(context: &TracingContext<F,
+                                                                              Point3<F>,
+                                                                              Vector3<F>>)
+                                                     -> Vector3<F> {
     // R = 2*(V dot N)*N - V
     let mut normal = context.intersection.normal;
 
@@ -96,7 +99,8 @@ pub fn get_reflection_direction_test<F: CustomFloat>(context: &TracingContext<F,
     na::dot(&context.intersection.direction, &normal) + context.intersection.direction
 }
 
-pub fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, Vector3<F>>) -> Rgba<F> {
+pub fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3<F>, Vector3<F>>)
+                                              -> Rgba<F> {
     let mut normal = context.intersection.normal;
 
     if na::angle_between(&context.intersection.direction, &normal) > BaseFloat::frac_pi_2() {
@@ -106,13 +110,9 @@ pub fn get_surface_color_test<F: CustomFloat>(context: &TracingContext<F, Point3
     let angle: F = na::angle_between(&normal, &AXIS_Z());
 
     Alpha {
-        color: Rgb::from(
-                    Hsv::new(
-                        RgbHue::from(<F as Zero>::zero()),
-                        <F as Zero>::zero(),
-                        <F as NumCast>::from(angle / <F as BaseFloat>::pi()).unwrap()
-                    )
-               ),
+        color: Rgb::from(Hsv::new(RgbHue::from(<F as Zero>::zero()),
+                                  <F as Zero>::zero(),
+                                  <F as NumCast>::from(angle / <F as BaseFloat>::pi()).unwrap())),
         alpha: Cast::from(0.5),
     }
 }

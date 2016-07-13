@@ -91,4 +91,3 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
         self.transitions = transitions
     }
 }
-

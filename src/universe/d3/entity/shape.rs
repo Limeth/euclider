@@ -55,7 +55,8 @@ impl<F: CustomFloat> Sphere3<F> {
         let rel_x: F = location.x - sphere.location.x;
         let rel_y: F = location.y - sphere.location.y;
         let rel_z: F = location.z - sphere.location.z;
-        let a: F = direction.x * direction.x + direction.y * direction.y + direction.z * direction.z;
+        let a: F = direction.x * direction.x + direction.y * direction.y +
+                   direction.z * direction.z;
         let b: F = <F as NumCast>::from(2.0).unwrap() *
                    (direction.x * rel_x + direction.y * rel_y + direction.z * rel_z);
         let c: F = rel_x * rel_x + rel_y * rel_y + rel_z * rel_z - sphere.radius * sphere.radius;
@@ -94,48 +95,36 @@ impl<F: CustomFloat> Sphere3<F> {
         let location = *location;
         let sphere_location = sphere.location;
 
-        closures.push(
-            Box::new(
-                move || {
-                    let result_vector = direction * t_first.unwrap();
-                    let result_point = Point3::new(location.x + result_vector.x,
-                                                   location.y + result_vector.y,
-                                                   location.z + result_vector.z);
+        closures.push(Box::new(move || {
+            let result_vector = direction * t_first.unwrap();
+            let result_point = Point3::new(location.x + result_vector.x,
+                                           location.y + result_vector.y,
+                                           location.z + result_vector.z);
 
-                    let mut normal = result_point - sphere_location;
-                    normal = na::normalize(&normal);
+            let mut normal = result_point - sphere_location;
+            normal = na::normalize(&normal);
 
-                    Some(Intersection::new(
-                        result_point,
-                        direction,
-                        normal,
-                        na::distance_squared(&location, &result_point)
-                    ))
-                }
-            )
-        );
+            Some(Intersection::new(result_point,
+                                   direction,
+                                   normal,
+                                   na::distance_squared(&location, &result_point)))
+        }));
 
         if t_second.is_some() {
-            closures.push(
-                Box::new(
-                    move || {
-                        let result_vector = direction * t_second.unwrap();
-                        let result_point = Point3::new(location.x + result_vector.x,
-                                                       location.y + result_vector.y,
-                                                       location.z + result_vector.z);
+            closures.push(Box::new(move || {
+                let result_vector = direction * t_second.unwrap();
+                let result_point = Point3::new(location.x + result_vector.x,
+                                               location.y + result_vector.y,
+                                               location.z + result_vector.z);
 
-                        let mut normal = result_point - sphere_location;
-                        normal = na::normalize(&normal);
+                let mut normal = result_point - sphere_location;
+                normal = na::normalize(&normal);
 
-                        Some(Intersection::new(
-                            result_point,
-                            direction,
-                            normal,
-                            na::distance_squared(&location, &result_point)
-                        ))
-                    }
-                )
-            );
+                Some(Intersection::new(result_point,
+                                       direction,
+                                       normal,
+                                       na::distance_squared(&location, &result_point)))
+            }));
         }
 
         Box::new(IterLazy::new(closures))
@@ -164,13 +153,19 @@ impl<F: CustomFloat> Shape<F, Point3<F>, Vector3<F>> for Sphere3<F> {
 
 impl<F: CustomFloat> Debug for Sphere3<F> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Sphere3 [ location: {:?}, radius: {:?} ]", self.location, self.radius)
+        write!(f,
+               "Sphere3 [ location: {:?}, radius: {:?} ]",
+               self.location,
+               self.radius)
     }
 }
 
 impl<F: CustomFloat> Display for Sphere3<F> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Sphere3 [ location: {}, radius: {} ]", self.location, self.radius)
+        write!(f,
+               "Sphere3 [ location: {}, radius: {} ]",
+               self.location,
+               self.radius)
     }
 }
 
@@ -211,14 +206,44 @@ impl<F: CustomFloat> Plane3<F> {
         let x = Vector3::new(<F as One>::one(), <F as Zero>::zero(), <F as Zero>::zero());
         let y = Vector3::new(<F as Zero>::zero(), <F as One>::one(), <F as Zero>::zero());
         let z = Vector3::new(<F as Zero>::zero(), <F as Zero>::zero(), <F as One>::one());
-        ComposableShape::of(vec!(
-                HalfSpace3::from_point(Plane3::new(&na::translate(&(x * half_abc), &center), &y, &z), &center),
-                HalfSpace3::from_point(Plane3::new(&na::translate(&-(x * half_abc), &center), &y, &z), &center),
-                HalfSpace3::from_point(Plane3::new(&na::translate(&(y * half_abc), &center), &x, &z), &center),
-                HalfSpace3::from_point(Plane3::new(&na::translate(&-(y * half_abc), &center), &x, &z), &center),
-                HalfSpace3::from_point(Plane3::new(&na::translate(&(z * half_abc), &center), &x, &y), &center),
-                HalfSpace3::from_point(Plane3::new(&na::translate(&-(z * half_abc), &center), &x, &y), &center)
-        ).into_iter(), SetOperation::Intersection)
+        ComposableShape::of(vec![HalfSpace3::from_point(Plane3::new(&na::translate(&(x *
+                                                                                     half_abc),
+                                                                                   &center),
+                                                                    &y,
+                                                                    &z),
+                                                        &center),
+                                 HalfSpace3::from_point(Plane3::new(&na::translate(&-(x *
+                                                                                      half_abc),
+                                                                                   &center),
+                                                                    &y,
+                                                                    &z),
+                                                        &center),
+                                 HalfSpace3::from_point(Plane3::new(&na::translate(&(y *
+                                                                                     half_abc),
+                                                                                   &center),
+                                                                    &x,
+                                                                    &z),
+                                                        &center),
+                                 HalfSpace3::from_point(Plane3::new(&na::translate(&-(y *
+                                                                                      half_abc),
+                                                                                   &center),
+                                                                    &x,
+                                                                    &z),
+                                                        &center),
+                                 HalfSpace3::from_point(Plane3::new(&na::translate(&(z *
+                                                                                     half_abc),
+                                                                                   &center),
+                                                                    &x,
+                                                                    &y),
+                                                        &center),
+                                 HalfSpace3::from_point(Plane3::new(&na::translate(&-(z *
+                                                                                      half_abc),
+                                                                                   &center),
+                                                                    &x,
+                                                                    &y),
+                                                        &center)]
+                                .into_iter(),
+                            SetOperation::Intersection)
     }
 
     #[allow(unused_variables)]
@@ -247,12 +272,10 @@ impl<F: CustomFloat> Plane3<F> {
 
         let normal = plane.normal;
 
-        Box::new(iter::once(Intersection::new(
-            result_point,
-            *direction,
-            normal,
-            na::distance_squared(location, &result_point)
-        )))
+        Box::new(iter::once(Intersection::new(result_point,
+                                              *direction,
+                                              normal,
+                                              na::distance_squared(location, &result_point))))
     }
 }
 
@@ -279,13 +302,19 @@ impl<F: CustomFloat> Shape<F, Point3<F>, Vector3<F>> for Plane3<F> {
 
 impl<F: CustomFloat> Debug for Plane3<F> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Plane3 [ normal: {:?}, constant: {:?} ]", self.normal, self.constant)
+        write!(f,
+               "Plane3 [ normal: {:?}, constant: {:?} ]",
+               self.normal,
+               self.constant)
     }
 }
 
 impl<F: CustomFloat> Display for Plane3<F> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Plane3 [ normal: {}, constant: {} ]", self.normal, self.constant)
+        write!(f,
+               "Plane3 [ normal: {}, constant: {} ]",
+               self.normal,
+               self.constant)
     }
 }
 
@@ -318,9 +347,12 @@ impl<F: CustomFloat> HalfSpace3<F> {
                                -> Box<IntersectionMarcher<F, Point3<F>, Vector3<F>>> {
         vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
         let halfspace: &HalfSpace3<F> = shape.as_any().downcast_ref::<HalfSpace3<F>>().unwrap();
-        let intersection = Plane3::<F>::intersect_in_vacuum(
-            location, direction, vacuum, &halfspace.plane, intersect
-        ).next();
+        let intersection = Plane3::<F>::intersect_in_vacuum(location,
+                                                            direction,
+                                                            vacuum,
+                                                            &halfspace.plane,
+                                                            intersect)
+            .next();
 
         // Works so far, not sure why
         if intersection.is_some() {
@@ -359,13 +391,19 @@ impl<F: CustomFloat> Shape<F, Point3<F>, Vector3<F>> for HalfSpace3<F> {
 
 impl<F: CustomFloat> Debug for HalfSpace3<F> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "HalfSpace3 [ plane: {:?}, signum: {:?} ]", self.plane, self.signum)
+        write!(f,
+               "HalfSpace3 [ plane: {:?}, signum: {:?} ]",
+               self.plane,
+               self.signum)
     }
 }
 
 impl<F: CustomFloat> Display for HalfSpace3<F> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "HalfSpace3 [ plane: {}, signum: {} ]", self.plane, self.signum)
+        write!(f,
+               "HalfSpace3 [ plane: {}, signum: {} ]",
+               self.plane,
+               self.signum)
     }
 }
 

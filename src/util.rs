@@ -126,31 +126,22 @@ pub fn combine_color<F: CustomFloat>(a: Rgba<u8>, b: Rgba<u8>, a_ratio: F) -> Rg
     }
 }
 
-pub fn combine_palette_color<F: CustomFloat>(a: palette::Rgba<F>, b: palette::Rgba<F>, a_ratio: F) -> palette::Rgba<F> {
+pub fn combine_palette_color<F: CustomFloat>(a: palette::Rgba<F>,
+                                             b: palette::Rgba<F>,
+                                             a_ratio: F)
+                                             -> palette::Rgba<F> {
     if a_ratio <= Cast::from(0.0) {
         b
     } else if a_ratio >= Cast::from(1.0) {
         a
     } else {
-        let a_data = [
-            a.color.red,
-            a.color.green,
-            a.color.blue,
-            a.alpha,
-        ];
-        let b_data = [
-            b.color.red,
-            b.color.green,
-            b.color.blue,
-            b.alpha,
-        ];
-        let data: Vec<F> = a_data
-            .iter()
+        let a_data = [a.color.red, a.color.green, a.color.blue, a.alpha];
+        let b_data = [b.color.red, b.color.green, b.color.blue, b.alpha];
+        let data: Vec<F> = a_data.iter()
             .zip(b_data.iter())
             .map(|(a, b)| {
                 <F as NumCast>::from(*a).unwrap() * a_ratio +
-                <F as NumCast>::from(*b).unwrap() *
-                (<F as One>::one() - a_ratio)
+                <F as NumCast>::from(*b).unwrap() * (<F as One>::one() - a_ratio)
             })
             .collect();
         palette::Rgba::new(data[0], data[1], data[2], data[3])
@@ -233,7 +224,7 @@ impl<'a, T> Iterator for IterLazy<'a, T> {
 
 pub struct ProviderData<T> {
     items: Vec<Option<T>>,
-    iterator: Box<Iterator<Item=T>>,
+    iterator: Box<Iterator<Item = T>>,
 }
 
 pub struct Provider<T> {
@@ -243,9 +234,9 @@ pub struct Provider<T> {
 impl<T> Provider<T> {
     // Create an object that provides iterators which lazily compute values
     // that have not been requested yet
-    pub fn new<I: Iterator<Item=T> + 'static>(a: I) -> Provider<T> {
+    pub fn new<I: Iterator<Item = T> + 'static>(a: I) -> Provider<T> {
         Provider {
-        data: RefCell::new(ProviderData {
+            data: RefCell::new(ProviderData {
                 items: Vec::new(),
                 iterator: Box::new(a),
             }),
@@ -318,18 +309,16 @@ impl<'a, T> Iterator for Marcher<'a, T> {
             if item.is_some() {
                 self.provider.items.push(item);
                 let index = self.provider.items.len() - 1;
-                let provider: &'a mut ProviderData<T> = unsafe {
-                    mem::transmute(self.provider.deref_mut())
-                };
+                let provider: &'a mut ProviderData<T> =
+                    unsafe { mem::transmute(self.provider.deref_mut()) };
                 result = provider.items[index].as_mut();
             } else {
                 self.provider.items.push(None);
                 result = None;
             }
         } else {
-            let provider: &'a mut ProviderData<T> = unsafe {
-                mem::transmute(self.provider.deref_mut())
-            };
+            let provider: &'a mut ProviderData<T> =
+                unsafe { mem::transmute(self.provider.deref_mut()) };
             result = provider.items[self.index].as_mut();
         }
 
@@ -340,7 +329,7 @@ impl<'a, T> Iterator for Marcher<'a, T> {
 }
 
 pub trait CustomPoint<F: CustomFloat, V: CustomVector<F, Self>>:
-    // Rotate<O> +
+// Rotate<O> +
     PartialOrder +
     Div<F, Output=Self> +
     DivAssign<F> +
@@ -350,14 +339,14 @@ pub trait CustomPoint<F: CustomFloat, V: CustomVector<F, Self>>:
     AddAssign<F> +
     Sub<F, Output=Self> +
     SubAssign<F> +
-    // Cast<Self> +
-    // Implement for generic array lengths
-    // AsRef<[N; 3]>
-    // AsMut<[N; 3]>
-    // From<&'a [N; 3]>
-    // From<&'a mut [N; 3]>
-    // Index<Output=[N]::Output> +
-    // IndexMut<Output=[N]::Output> +
+// Cast<Self> +
+// Implement for generic array lengths
+// AsRef<[N; 3]>
+// AsMut<[N; 3]>
+// From<&'a [N; 3]>
+// From<&'a mut [N; 3]>
+// Index<Output=[N]::Output> +
+// IndexMut<Output=[N]::Output> +
     Shape<usize> +
     Indexable<usize, F> +
     Repeat<F> +
@@ -371,33 +360,33 @@ pub trait CustomPoint<F: CustomFloat, V: CustomVector<F, Self>>:
     SubAssign<V> +
     ApproxEq<F> +
     FromIterator<F> +
-    // Bounded +
+// Bounded +
     Axpy<F> +
     Iterable<F> +
     IterableMut<F> +
-    // ToHomogeneous<Point4<N>>
-    // FromHomogeneous<Point4<N>>
+// ToHomogeneous<Point4<N>>
+// FromHomogeneous<Point4<N>>
     NumPoint<F> +
     FloatPoint<F> +
-    // Arbitrary +
-    // Rand +
+// Arbitrary +
+// Rand +
     Display +
-    // Mul<UnitQuaternion<F>>
-    // MulAssign<UnitQuaternion<F>>
-    // Mul<Rotation3<F>>
-    // MulAssign<Rotation3<F>>
+// Mul<UnitQuaternion<F>>
+// MulAssign<UnitQuaternion<F>>
+// Mul<Rotation3<F>>
+// MulAssign<Rotation3<F>>
     Copy +
     Debug +
-    // Hash +
+// Hash +
     Clone +
-    // Decodable +
-    // Encodable +
+// Decodable +
+// Encodable +
     PartialEq +
-    // Eq +
+// Eq +
     'static {}
 
 pub trait CustomVector<F: CustomFloat, P: CustomPoint<F, Self>>:
-    // Rotate<O> +
+// Rotate<O> +
     AngleBetween<F> +
     PartialOrder +
     Div<F, Output=Self> +
@@ -408,14 +397,14 @@ pub trait CustomVector<F: CustomFloat, P: CustomPoint<F, Self>>:
     AddAssign<F> +
     Sub<F, Output=Self> +
     SubAssign<F> +
-    // Cast<Self> +
-    // Implement for generic array lengths
-    // AsRef<[N; 3]>
-    // AsMut<[N; 3]>
-    // From<&'a [N; 3]>
-    // From<&'a mut [N; 3]>
-    // Index<Output=[N]::Output> +
-    // IndexMut<Output=[N]::Output> +
+// Cast<Self> +
+// Implement for generic array lengths
+// AsRef<[N; 3]>
+// AsMut<[N; 3]>
+// From<&'a [N; 3]>
+// From<&'a mut [N; 3]>
+// Index<Output=[N]::Output> +
+// IndexMut<Output=[N]::Output> +
     Shape<usize> +
     Indexable<usize, F> +
     Repeat<F> +
@@ -430,30 +419,30 @@ pub trait CustomVector<F: CustomFloat, P: CustomPoint<F, Self>>:
     SubAssign<Self> +
     ApproxEq<F> +
     FromIterator<F> +
-    // Bounded +
+// Bounded +
     Axpy<F> +
     Iterable<F> +
     IterableMut<F> +
-    // ToHomogeneous<Point4<N>>
-    // FromHomogeneous<Point4<N>>
+// ToHomogeneous<Point4<N>>
+// FromHomogeneous<Point4<N>>
     NumVector<F> +
     FloatVector<F> +
-    // Arbitrary +
-    // Rand +
+// Arbitrary +
+// Rand +
     Display +
-    // Mul<UnitQuaternion<F>>
-    // MulAssign<UnitQuaternion<F>>
-    // Mul<Rotation3<F>>
-    // MulAssign<Rotation3<F>>
+// Mul<UnitQuaternion<F>>
+// MulAssign<UnitQuaternion<F>>
+// Mul<Rotation3<F>>
+// MulAssign<Rotation3<F>>
     VectorAsPoint +
     Copy +
     Debug +
-    // Hash +
+// Hash +
     Clone +
-    // Decodable +
-    // Encodable +
+// Decodable +
+// Encodable +
     PartialEq +
-    // Eq +
+// Eq +
     'static {}
 
 pub trait VectorAsPoint {
@@ -478,9 +467,7 @@ impl<F: CustomFloat> VectorAsPoint for Vector3<F> {
     }
 
     fn as_point(&self) -> &Self::Point {
-        unsafe {
-            mem::transmute(self)
-        }
+        unsafe { mem::transmute(self) }
     }
 
     fn set_coords(&mut self, coords: Self::Point) {
@@ -492,9 +479,7 @@ impl<F: CustomFloat> VectorAsPoint for Vector3<F> {
 
 impl<F: CustomFloat> AngleBetween<F> for Vector3<F> {
     fn angle_between(&self, other: &Self) -> F {
-        F::acos(
-            na::dot(self, other) / (self.norm() * other.norm())
-        )
+        F::acos(na::dot(self, other) / (self.norm() * other.norm()))
     }
 }
 

@@ -385,7 +385,6 @@ pub trait CustomPoint<F: CustomFloat, V: CustomVector<F, Self>>:
 // Eq +
     'static {}
 
-use na::RotationTo;
 pub trait CustomVector<F: CustomFloat, P: CustomPoint<F, Self>>:
 // Rotate<O> +
     AngleBetween<F> +

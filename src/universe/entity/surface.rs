@@ -139,6 +139,14 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Surface<F, P, 
     }
 }
 
+#[allow(unused_variables)]
+pub fn reflection_ratio_uniform<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>(ratio: F)
+        -> Box<ReflectionRatioProvider<F, P, V>> {
+    Box::new(move |context: &TracingContext<F, P, V>| {
+        ratio
+    })
+}
+
 pub fn reflection_direction_specular<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>()
         -> Box<ReflectionDirectionProvider<F, P, V>> {
     Box::new(move |context: &TracingContext<F, P, V>| {

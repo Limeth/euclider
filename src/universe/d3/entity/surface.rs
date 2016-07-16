@@ -14,7 +14,6 @@ use palette::RgbHue;
 use util::CustomFloat;
 use util::HasId;
 use universe::entity::surface::Surface;
-use universe::entity::surface::ReflectionRatioProvider;
 use universe::entity::shape::TracingContext;
 
 pub type Surface3<F> = Surface<F, Point3<F>, Vector3<F>>;
@@ -70,13 +69,4 @@ impl<F: CustomFloat> Surface<F, Point3<F>, Vector3<F>> for PerlinSurface3<F> {
                                      Cast::from(1.0),
                                      Cast::from(1.0)))
     }
-}
-
-// TODO: Generalize
-#[allow(unused_variables)]
-pub fn reflection_ratio_uniform<F: CustomFloat>(ratio: F)
-        -> Box<ReflectionRatioProvider<F, Point3<F>, Vector3<F>>> {
-    Box::new(move |context: &TracingContext<F, Point3<F>, Vector3<F>>| {
-        ratio
-    })
 }

@@ -682,13 +682,6 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Display for Sp
     }
 }
 
-// // TODO
-// // ((x-m)^2)/(a^2) + ((y-n)^2)/(b^2) = 1
-// pub struct Sphere<P: CustomPoint<F, V>, V: CustomVector<F, P>> {
-//     location: P, // m/n/o...
-//     radii: V, // a/b/c...
-// }
-
 #[allow(unused_variables)]
 pub fn intersect_void<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>(
                                       location: &P,

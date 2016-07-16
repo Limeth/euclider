@@ -265,7 +265,7 @@ fn run<F: CustomFloat>() {
     {
         let mut transitions = universe.transitions_mut();
         transitions.insert((Vacuum::id_static(), Vacuum::id_static()),
-                           Box::new(universe::d3::entity::material::transition_vacuum_vacuum));
+                           Box::new(transition_vacuum_vacuum));
     }
 
     let simulation = Simulation::builder()

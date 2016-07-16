@@ -62,3 +62,17 @@ impl Display for Vacuum {
         write!(f, "Vacuum")
     }
 }
+
+// TODO: Possibly causing problems, should ignore the shape it is currently entering/exiting
+#[allow(unused_variables)]
+pub fn transition_vacuum_vacuum<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>(
+                from: &Material<F, P, V>,
+                to: &Material<F, P, V>,
+                context: &TracingContext<F, P, V>)
+                -> Option<Rgba<F>> {
+    let trace = context.trace;
+    trace(context.time,
+          context.intersection_traceable,
+          &context.intersection.location,
+          &context.intersection.direction)
+}

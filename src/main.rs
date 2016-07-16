@@ -81,7 +81,7 @@ fn run<F: CustomFloat>() {
         entities.push(Box::new(Entity3Impl::new(
                 Box::new(Sphere3::<F>::new(
                         Point3::new(Cast::from(2.0),
-                                    Cast::from(10.5), // FIXME: The Y-coordinate seems to be flipped.
+                                    Cast::from(10.5),
                                     Cast::from(0.0)),
                         Cast::from(2.25)
                         )),

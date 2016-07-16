@@ -1,7 +1,6 @@
 use std::any::Any;
 use std::any::TypeId;
 use num::traits::NumCast;
-use num::Zero;
 use rand::Rng;
 use rand::Rand;
 use na;
@@ -16,11 +15,8 @@ use palette::Hsv;
 use palette::RgbHue;
 use util::CustomFloat;
 use util::HasId;
-use palette::Alpha;
-use palette::Rgb;
 use na::BaseFloat;
 use universe::entity::surface::Surface;
-use universe::entity::surface::SurfaceColorProvider;
 use universe::entity::surface::ReflectionRatioProvider;
 use universe::entity::surface::ReflectionDirectionProvider;
 use universe::entity::shape::TracingContext;
@@ -102,26 +98,5 @@ pub fn reflection_direction_specular<F: CustomFloat>()
 
         normal * <F as NumCast>::from(-2.0).unwrap() *
         na::dot(&context.intersection.direction, &normal) + context.intersection.direction
-    })
-}
-
-// TODO: Generalize
-pub fn surface_color_illumination_directional<F: CustomFloat>(light_direction: Vector3<F>)
-        -> Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>> {
-    Box::new(move |context: &TracingContext<F, Point3<F>, Vector3<F>>| {
-        let mut normal = context.intersection.normal;
-
-        if na::angle_between(&context.intersection.direction, &normal) > BaseFloat::frac_pi_2() {
-            normal = -normal;
-        }
-
-        let angle: F = na::angle_between(&normal, &-light_direction);
-
-        Alpha {
-            color: Rgb::from(Hsv::new(RgbHue::from(<F as Zero>::zero()),
-                                      <F as Zero>::zero(),
-                                      <F as NumCast>::from(angle / <F as BaseFloat>::pi()).unwrap())),
-            alpha: Cast::from(1.0),
-        }
     })
 }

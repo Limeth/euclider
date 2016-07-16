@@ -8,6 +8,13 @@ use util;
 use util::CustomFloat;
 use util::CustomPoint;
 use util::CustomVector;
+use num::Zero;
+use na::Cast;
+use palette::Hsv;
+use palette::RgbHue;
+use palette::Alpha;
+use palette::Rgb;
+use na::BaseFloat;
 
 pub type ReflectionRatioProvider<F, P, V> = Fn(&TracingContext<F, P, V>) -> F;
 pub type ReflectionDirectionProvider<F, P, V> = Fn(&TracingContext<F, P, V>) -> V;
@@ -129,4 +136,24 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Surface<F, P, 
                                     intersection_color.unwrap(),
                                     reflection_ratio)
     }
+}
+
+pub fn surface_color_illumination_directional<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>(light_direction: V)
+        -> Box<SurfaceColorProvider<F, P, V>> {
+    Box::new(move |context: &TracingContext<F, P, V>| {
+        let mut normal = context.intersection.normal;
+
+        if context.intersection.direction.angle_between(&normal) > BaseFloat::frac_pi_2() {
+            normal = -normal;
+        }
+
+        let angle: F = normal.angle_between(&-light_direction);
+
+        Alpha {
+            color: Rgb::from(Hsv::new(RgbHue::from(<F as Zero>::zero()),
+                                      <F as Zero>::zero(),
+                                      <F as NumCast>::from(angle / <F as BaseFloat>::pi()).unwrap())),
+            alpha: Cast::from(1.0),
+        }
+    })
 }

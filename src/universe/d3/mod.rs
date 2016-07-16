@@ -34,16 +34,6 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
     type P = Point3<F>;
     type V = Vector3<F>;
 
-    // fn trace(&self, location: &Point3<F>, rotation: &Vector3<F>) -> Option<Rgb<u8>> {
-    //     Some(Rgb {
-    //         data: [
-    //             ((rotation.x + 1.0) * 255.0 / 2.0) as u8,
-    //             ((rotation.y + 1.0) * 255.0 / 2.0) as u8,
-    //             ((rotation.z + 1.0) * 255.0 / 2.0) as u8,
-    //         ],
-    //     })
-    // }
-
     fn camera_mut(&mut self) -> &mut Camera<F, Point3<F>, Vector3<F>> {
         &mut *self.camera
     }

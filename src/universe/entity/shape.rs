@@ -19,6 +19,7 @@ use util::CustomVector;
 use util::HasId;
 use util::Provider;
 use util::TypePairMap;
+use na;
 
 /// Ties a `Material` the ray is passing through and a `Shape` the ray is intersecting to a
 /// `GeneralIntersector`
@@ -625,6 +626,59 @@ impl Debug for VoidShape {
 impl Display for VoidShape {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "VoidShape")
+    }
+}
+
+pub struct Sphere<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
+    pub location: P,
+    pub radius: F,
+    marker_vector: PhantomData<V>,
+}
+
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Sphere<F, P, V> {
+    pub fn new(location: P, radius: F) -> Sphere<F, P, V> {
+        Sphere {
+            location: location,
+            radius: radius,
+            marker_vector: PhantomData,
+        }
+    }
+}
+
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Reflect for Sphere<F, P, V> {}
+
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> HasId for Sphere<F, P, V> {
+    fn id(&self) -> TypeId {
+        Self::id_static()
+    }
+
+    fn as_any(&self) -> &Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut Any {
+        self
+    }
+}
+
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V> for Sphere<F, P, V> {
+    fn is_point_inside(&self, point: &P) -> bool {
+        na::distance_squared(&self.location, point) <= self.radius * self.radius
+    }
+}
+
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Debug for Sphere<F, P, V> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f,
+               "Sphere [ location: {:?}, radius: {:?} ]",
+               self.location,
+               self.radius)
+    }
+}
+
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Display for Sphere<F, P, V> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Sphere")
     }
 }
 

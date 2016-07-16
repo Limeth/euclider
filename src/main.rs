@@ -46,7 +46,7 @@ fn run<F: CustomFloat>() {
     {
         let mut entities = universe.entities_mut();
         entities.push(Box::new(Entity3Impl::new(
-                Box::new(Sphere3::<F>::new(
+                Box::new(Sphere::new(
                     Point3::new(Cast::from(2.0),
                                 Cast::from(1.0),
                                 Cast::from(0.0)),
@@ -61,7 +61,7 @@ fn run<F: CustomFloat>() {
                 }))
             )));
         entities.push(Box::new(Entity3Impl::new(
-                Box::new(Sphere3::<F>::new(
+                Box::new(Sphere::new(
                         Point3::new(Cast::from(2.0),
                                     Cast::from(-1.5),
                                     Cast::from(0.0)),
@@ -79,7 +79,7 @@ fn run<F: CustomFloat>() {
                 // }))
             )));
         entities.push(Box::new(Entity3Impl::new(
-                Box::new(Sphere3::<F>::new(
+                Box::new(Sphere::new(
                         Point3::new(Cast::from(2.0),
                                     Cast::from(10.5),
                                     Cast::from(0.0)),
@@ -127,7 +127,7 @@ fn run<F: CustomFloat>() {
                 Entity3Impl::new(
                     Box::new(
                         ComposableShape::new(
-                            Sphere3::<F>::new(
+                            Sphere::new(
                                 Point3::new(
                                     Cast::from(5.0),
                                     Cast::from(1.5),
@@ -136,7 +136,7 @@ fn run<F: CustomFloat>() {
                                 Cast::from(3.0)
                             ),
                             ComposableShape::new(
-                                Sphere3::<F>::new(
+                                Sphere::new(
                                     Point3::new(
                                         Cast::from(5.0),
                                         Cast::from(0.0),
@@ -144,7 +144,7 @@ fn run<F: CustomFloat>() {
                                     ),
                                     Cast::from(3.0)
                                 ),
-                                Sphere3::<F>::new(
+                                Sphere::new(
                                     Point3::new(
                                         Cast::from(5.0),
                                         Cast::from(3.0),
@@ -251,8 +251,8 @@ fn run<F: CustomFloat>() {
 
         intersectors.insert((Vacuum::id_static(), VoidShape::id_static()),
                             Box::new(intersect_void));
-        intersectors.insert((Vacuum::id_static(), Sphere3::<F>::id_static()),
-                            Box::new(Sphere3::<F>::intersect_in_vacuum));
+        intersectors.insert((Vacuum::id_static(), Sphere::<F, Point3<F>, Vector3<F>>::id_static()),
+                            Box::new(intersect_sphere3_in_vacuum));
         intersectors.insert((Vacuum::id_static(), Plane3::<F>::id_static()),
                             Box::new(Plane3::<F>::intersect_in_vacuum));
         intersectors.insert((Vacuum::id_static(), HalfSpace3::<F>::id_static()),

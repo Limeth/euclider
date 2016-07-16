@@ -41,26 +41,7 @@ pub trait Universe<F: CustomFloat>
 {
     type P: CustomPoint<F, Self::V>;
     type V: CustomVector<F, Self::P>;
-    // Generics hell I might need in the future:
-    //
-    // fn camera_mut<C>(&mut self) -> &mut C where C: Camera<Self::P, Self::V>;
-    // fn camera<C>(&self) -> &C where C: Camera<Self::P, Self::V>;
-    // fn set_camera<C>(&mut self, camera: C) where C: Camera<Self::P, Self::V>;
-    // fn entities_mut<E>(&mut self) -> &mut Vec<Box<E>> where E: Entity<Self::P, Self::V>;
-    // fn entities<E>(&self) -> &Vec<Box<E>> where E: Entity<Self::P, Self::V>;
-    // fn set_entities<E>(&mut self, entities: Vec<Box<E>>) where E: Entity<Self::P, Self::V>;
-    // fn intersections_mut<F, M, S>(&mut self) -> &mut HashMap<(TypeId, TypeId), F>
-    //     where F: Fn(M, S) -> Option<F, Self::P, Self::V>,
-    //           M: Material<Self::P, Self::V>,
-    //           S: Shape<Self::P, Self::V>;
-    // fn intersections<F, M, S>(&self) -> &HashMap<(TypeId, TypeId), F>
-    //     where F: Fn(M, S) -> Option<F, Self::P, Self::V>,
-    //           M: Material<Self::P, Self::V>,
-    //           S: Shape<Self::P, Self::V>;
-    // fn set_intersections<F, M, S>(&mut self, intersections: &mut HashMap<(TypeId, TypeId), F>)
-    //     where F: Fn(M, S) -> Option<F, Self::P, Self::V>,
-    //           M: Material<Self::P, Self::V>,
-    //           S: Shape<Self::P, Self::V>;
+
     fn camera_mut(&mut self) -> &mut Camera<F, Self::P, Self::V>;
     fn camera(&self) -> &Camera<F, Self::P, Self::V>;
     fn set_camera(&mut self, camera: Box<Camera<F, Self::P, Self::V>>);

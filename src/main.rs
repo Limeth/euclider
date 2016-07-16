@@ -250,7 +250,7 @@ fn run<F: CustomFloat>() {
         let intersectors = universe.intersectors_mut();
 
         intersectors.insert((Vacuum::id_static(), VoidShape::id_static()),
-                            Box::new(universe::d3::entity::shape::intersect_void));
+                            Box::new(intersect_void));
         intersectors.insert((Vacuum::id_static(), Sphere3::<F>::id_static()),
                             Box::new(Sphere3::<F>::intersect_in_vacuum));
         intersectors.insert((Vacuum::id_static(), Plane3::<F>::id_static()),

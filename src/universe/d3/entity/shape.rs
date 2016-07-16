@@ -21,7 +21,6 @@ use universe::entity::shape::Shape;
 use universe::entity::shape::Intersector;
 use universe::entity::shape::IntersectionMarcher;
 use universe::entity::shape::Intersection;
-use universe::entity::shape::VoidShape;
 use universe::entity::shape::ComposableShape;
 use universe::entity::shape::SetOperation;
 
@@ -405,16 +404,4 @@ impl<F: CustomFloat> Display for HalfSpace3<F> {
                self.plane,
                self.signum)
     }
-}
-
-// TODO: Is it possible to make this more generic?
-#[allow(unused_variables)]
-pub fn intersect_void<F: CustomFloat>(location: &Point3<F>,
-                                      direction: &Vector3<F>,
-                                      material: &Material<F, Point3<F>, Vector3<F>>,
-                                      void: &Shape<F, Point3<F>, Vector3<F>>,
-                                      intersect: Intersector<F, Point3<F>, Vector3<F>>)
-                                      -> Box<IntersectionMarcher<F, Point3<F>, Vector3<F>>> {
-    void.as_any().downcast_ref::<VoidShape>().unwrap();
-    Box::new(iter::empty())
 }

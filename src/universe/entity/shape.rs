@@ -7,6 +7,7 @@ use std::time::Duration;
 use std::any::TypeId;
 use std::any::Any;
 use std::sync::Arc;
+use std::iter;
 use palette::Rgba;
 use universe::entity::Traceable;
 use universe::entity::material::Material;
@@ -633,3 +634,15 @@ impl Display for VoidShape {
 //     location: P, // m/n/o...
 //     radii: V, // a/b/c...
 // }
+
+#[allow(unused_variables)]
+pub fn intersect_void<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>(
+                                      location: &P,
+                                      direction: &V,
+                                      material: &Material<F, P, V>,
+                                      void: &Shape<F, P, V>,
+                                      intersect: Intersector<F, P, V>)
+                                      -> Box<IntersectionMarcher<F, P, V>> {
+    void.as_any().downcast_ref::<VoidShape>().unwrap();
+    Box::new(iter::empty())
+}

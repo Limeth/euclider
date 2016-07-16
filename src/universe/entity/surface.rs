@@ -9,6 +9,7 @@ use util::CustomFloat;
 use util::CustomPoint;
 use util::CustomVector;
 use num::Zero;
+use na;
 use na::Cast;
 use palette::Hsv;
 use palette::RgbHue;
@@ -136,6 +137,21 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Surface<F, P, 
                                     intersection_color.unwrap(),
                                     reflection_ratio)
     }
+}
+
+pub fn reflection_direction_specular<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>()
+        -> Box<ReflectionDirectionProvider<F, P, V>> {
+    Box::new(move |context: &TracingContext<F, P, V>| {
+        // R = 2*(V dot N)*N - V
+        let mut normal = context.intersection.normal;
+
+        if context.intersection.direction.angle_between(&normal) > BaseFloat::frac_pi_2() {
+            normal = -normal;
+        }
+
+        normal * <F as NumCast>::from(-2.0).unwrap() *
+        na::dot(&context.intersection.direction, &normal) + context.intersection.direction
+    })
 }
 
 pub fn surface_color_illumination_directional<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>(light_direction: V)

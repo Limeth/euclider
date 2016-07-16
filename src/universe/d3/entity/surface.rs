@@ -1,9 +1,7 @@
 use std::any::Any;
 use std::any::TypeId;
-use num::traits::NumCast;
 use rand::Rng;
 use rand::Rand;
-use na;
 use na::Cast;
 use na::Point3;
 use na::Vector3;
@@ -15,10 +13,8 @@ use palette::Hsv;
 use palette::RgbHue;
 use util::CustomFloat;
 use util::HasId;
-use na::BaseFloat;
 use universe::entity::surface::Surface;
 use universe::entity::surface::ReflectionRatioProvider;
-use universe::entity::surface::ReflectionDirectionProvider;
 use universe::entity::shape::TracingContext;
 
 pub type Surface3<F> = Surface<F, Point3<F>, Vector3<F>>;
@@ -82,21 +78,5 @@ pub fn reflection_ratio_uniform<F: CustomFloat>(ratio: F)
         -> Box<ReflectionRatioProvider<F, Point3<F>, Vector3<F>>> {
     Box::new(move |context: &TracingContext<F, Point3<F>, Vector3<F>>| {
         ratio
-    })
-}
-
-// TODO: Generalize
-pub fn reflection_direction_specular<F: CustomFloat>()
-        -> Box<ReflectionDirectionProvider<F, Point3<F>, Vector3<F>>> {
-    Box::new(move |context: &TracingContext<F, Point3<F>, Vector3<F>>| {
-        // R = 2*(V dot N)*N - V
-        let mut normal = context.intersection.normal;
-
-        if na::angle_between(&context.intersection.direction, &normal) > BaseFloat::frac_pi_2() {
-            normal = -normal;
-        }
-
-        normal * <F as NumCast>::from(-2.0).unwrap() *
-        na::dot(&context.intersection.direction, &normal) + context.intersection.direction
     })
 }

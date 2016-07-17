@@ -10,6 +10,7 @@ use util::CustomVector;
 use util::HasId;
 use util::TypePairMap;
 use universe::entity::shape::TracingContext;
+use na::Cast;
 
 /// Ties two `Material`s (exiting, entering) to a `TransitionHandler`
 pub type TransitionHandlers<F, P, V> = TypePairMap<Box<TransitionHandler<F, P, V>>>;
@@ -71,8 +72,13 @@ pub fn transition_vacuum_vacuum<F: CustomFloat, P: CustomPoint<F, V>, V: CustomV
                 context: &TracingContext<F, P, V>)
                 -> Option<Rgba<F>> {
     let trace = context.trace;
+    // Offset the new origin, so it doesn't hit the same shape over and over
+    // The question is -- is there a better way? I think not.
+    let new_origin = context.intersection.location
+                     + -*context.intersection_normal_closer * F::epsilon() * Cast::from(128.0);
+
     trace(context.time,
           context.intersection_traceable,
-          &context.intersection.location,
+          &new_origin,
           &context.intersection.direction)
 }

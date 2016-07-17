@@ -146,13 +146,6 @@ pub trait Universe<F: CustomFloat>
                         },
                     };
 
-                    // Avoid a stack overflow, where a ray intersects the same location
-                    // repeatedly.
-                    if intersection.distance_squared <=
-                       <F as Consts>::epsilon() * <F as NumCast>::from(1000.0).unwrap() {
-                        continue;
-                    }
-
                     foreground = Some(surface.get_color(context));
                     foreground_distance_squared = Some(intersection.distance_squared);
                 }

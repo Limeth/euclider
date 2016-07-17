@@ -15,6 +15,7 @@ use num::Zero;
 use num::One;
 use simulation::SimulationContext;
 use util::CustomFloat;
+use util::AngleBetween;
 
 #[derive(Clone, Copy, PartialEq)]
 pub struct Camera3Impl<F: CustomFloat> {
@@ -59,39 +60,34 @@ impl<F: CustomFloat> Camera3Impl<F> {
     }
 
     fn rotate_x_static(forward: &mut Vector3<F>, up: &mut Vector3<F>, angle: F) {
-        let axis_h = na::cross(forward, &AXIS_Z()).normalize();
         let quaternion = UnitQuaternion::new(AXIS_Z() * angle);
         *forward = quaternion.rotate(forward).normalize();
-        *up = na::cross(&axis_h, forward).normalize();
+        *up = quaternion.rotate(up).normalize();
     }
 
     fn rotate_y_static(forward: &mut Vector3<F>,
                        up: &mut Vector3<F>,
-                       angle: F /* , snap: bool */) {
-        let axis_h = na::cross(forward, &AXIS_Z()).normalize();
+                       angle: F,
+                       snap: bool) {
+        let axis_h = na::cross(forward, up).normalize();
 
-        // TODO snap to the Z axis
-        // if snap {
-        //     let result_angle = (na::dot(&forward.clone(), &AXIS_Z()) /
-        //                         (na::distance(&na::origin(), &forward.to_point()) *
-        //                          na::distance(&na::origin(), &AXIS_Z().to_point())))
-        //         .acos();
+        println!("y pass 0: forward: {}", forward);
+        println!("y pass 0: up: {}", up);
+        println!("y pass 0: axis_h: {}", axis_h);
 
-        //     println!("dot: {}", na::dot(&forward.clone(), &AXIS_Z()).abs());
-        //     println!("{} < {}", result_angle, angle);
+        if snap {
+            let result_angle = forward.angle_between(&AXIS_Z());
 
-        //     if result_angle < angle {
-        //         // angle = result_angle;
-        //         *forward = AXIS_Z();
-        //         *up = na::cross(&axis_h, forward).normalize();
-        //         return;
-        //     } else if result_angle - <F as BaseFloat>::pi() > angle {
-        //         // angle = result_angle - std::F::consts::PI;
-        //         *forward = -AXIS_Z();
-        //         *up = na::cross(&axis_h, forward).normalize();
-        //         return;
-        //     }
-        // }
+            if result_angle < angle {
+                *forward = AXIS_Z();
+                *up = na::cross(&axis_h, forward).normalize();
+                return;
+            } else if <F as BaseFloat>::pi() - result_angle < -angle {
+                *forward = -AXIS_Z();
+                *up = na::cross(&axis_h, forward).normalize();
+                return;
+            }
+        }
 
         let quaternion = UnitQuaternion::new(axis_h * angle);
         *forward = quaternion.rotate(forward).normalize();
@@ -103,7 +99,7 @@ impl<F: CustomFloat> Camera3Impl<F> {
     }
 
     fn rotate_y(&mut self, angle: F) {
-        Camera3Impl::rotate_y_static(&mut self.forward, &mut self.up, angle /* , true */);
+        Camera3Impl::rotate_y_static(&mut self.forward, &mut self.up, angle, true);
     }
 
     fn get_left(&self) -> Vector3<F> {

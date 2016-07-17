@@ -102,16 +102,14 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
 
         let reflection_direction = self.get_reflection_direction(context);
         let trace = context.trace;
-        // // Offset the new origin, so it doesn't hit the same shape over and over
-        // let vector_to_point = context.vector_to_point;
-        // let new_origin = context.intersection.location
-        //                  + (vector_to_point(&reflection_direction) * std::F::EPSILON * 8.0)
-        //                     .to_vector();
+        // Offset the new origin, so it doesn't hit the same shape over and over
+        // The question is -- is there a better way? I think not.
+        let new_origin = context.intersection.location
+                         + (reflection_direction * F::epsilon() * Cast::from(128.0));
 
         trace(context.time,
               context.origin_traceable,
-              &context.intersection.location,
-              // &new_origin,
+              &new_origin,
               &reflection_direction)
     }
 }

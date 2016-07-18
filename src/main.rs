@@ -43,6 +43,19 @@ fn main() {
 fn run<F: CustomFloat>() {
     let mut universe: Universe3D<F> = Universe3D::new();
 
+    universe.set_background(
+        Box::new(
+            MappedTextureImpl::new(
+                uv_sphere(
+                    na::origin()
+                ),
+                texture_image(
+                    image::open("./resources/universe_dim.jpg").unwrap()
+                )
+            )
+        )
+    );
+
     {
         let mut entities = universe.entities_mut();
         entities.push(Box::new(Entity3Impl::new(

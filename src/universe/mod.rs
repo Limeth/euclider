@@ -156,10 +156,7 @@ pub trait Universe<F: CustomFloat>
         }
 
         foreground.unwrap_or_else(|| {
-            Rgba::new(Cast::from(0.0),
-                      Cast::from(0.0),
-                      Cast::from(0.0),
-                      Cast::from(0.0))
+            self.background().get_color(rotation.as_point())
         })
     }
 

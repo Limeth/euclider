@@ -16,6 +16,15 @@ A non-euclidean ray tracing prototype written in Rust.
 * [`W`/`A`/`S`/`D`/`Shift`/`Control`] - camera movement
 * [`Esc`] - exit
 
+# Preview of version 0.9.0
+
+![Reflection](preview_3_deep_reflection.png)
+A reflection chamber.
+
+![Reflection](preview_4_textures.png)
+Universe background and a textured sphere. Thank you, NASA for providing the
+materials.
+
 # Preview of version 0.5.0
 
 ![Reflection](preview_2_reflection.png)

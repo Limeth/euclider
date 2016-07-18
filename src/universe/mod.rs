@@ -5,7 +5,6 @@ use std::time::Duration;
 use std::borrow::Cow;
 use na::Cast;
 use na::BaseFloat;
-use num::traits::NumCast;
 use glium::Surface as GliumSurface;
 use glium::texture::Texture2d;
 use glium::backend::Facade;
@@ -32,7 +31,6 @@ use universe::entity::shape::TracingContext;
 use util::CustomPoint;
 use util::CustomVector;
 use util::CustomFloat;
-use util::Consts;
 use util::AngleBetween;
 use util::Provider;
 

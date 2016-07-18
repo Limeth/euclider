@@ -1,8 +1,11 @@
 use std;
 use num::traits::NumCast;
+use std::marker::PhantomData;
 use palette;
 use palette::Rgba;
 use palette::Blend;
+use image::DynamicImage;
+use image::GenericImage;
 use universe::entity::shape::TracingContext;
 use util;
 use util::CustomFloat;
@@ -11,6 +14,7 @@ use util::CustomVector;
 use num::Zero;
 use na;
 use na::Cast;
+use na::Point2;
 use palette::Hsv;
 use palette::RgbHue;
 use palette::Alpha;
@@ -177,5 +181,48 @@ pub fn surface_color_illumination_directional<F: CustomFloat, P: CustomPoint<F, 
                                       <F as NumCast>::from(angle / <F as BaseFloat>::pi()).unwrap())),
             alpha: Cast::from(1.0),
         }
+    })
+}
+
+pub type UVFn<F, P> = Fn(&P) -> Point2<F>;
+pub type Texture<F> = Fn(&Point2<F>) -> Rgba<F>;
+
+pub fn texture_image<F: CustomFloat>(dynamic_image: DynamicImage) -> Box<Texture<F>> {
+    Box::new(move |point: &Point2<F>| {
+        let (width, height) = dynamic_image.dimensions();
+        let (x, y) = (point.x * <F as NumCast>::from(width).unwrap(),
+                      point.y * <F as NumCast>::from(height).unwrap());
+        let pixel = dynamic_image.get_pixel(<u32 as NumCast>::from(x).unwrap(),
+                                            <u32 as NumCast>::from(y).unwrap());
+        
+        Rgba::new_u8(pixel.data[0], pixel.data[1], pixel.data[2], pixel.data[3])
+    })
+}
+
+pub struct MappedTexture<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
+    pub uvfn: Box<UVFn<F, P>>,
+    pub texture: Box<Texture<F>>,
+    marker_vector: PhantomData<V>,
+}
+
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> MappedTexture<F, P, V> {
+    pub fn new(uvfn: Box<UVFn<F, P>>, texture: Box<Texture<F>>) -> Self {
+        MappedTexture {
+            uvfn: uvfn,
+            texture: texture,
+            marker_vector: PhantomData,
+        }
+    }
+
+    pub fn get_color(&self, point: &P) -> Rgba<F> {
+        let texture = &self.texture;
+        let uvfn = &self.uvfn;
+        texture(&uvfn(point))
+    }
+}
+
+pub fn surface_color_texture<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>(mapped_texture: MappedTexture<F, P, V>) -> Box<SurfaceColorProvider<F, P, V>> {
+    Box::new(move |context: &TracingContext<F, P, V>| {
+        mapped_texture.get_color(&context.intersection.location)
     })
 }

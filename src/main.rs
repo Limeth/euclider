@@ -86,15 +86,26 @@ fn run<F: CustomFloat>() {
                         Cast::from(2.25)
                         )),
                 Box::new(Vacuum::new()),
-                Some(Box::new(PerlinSurface3::rand(
-                            &mut StdRng::new().expect("Could not create a random number generator."),
-                            Cast::from(2.0),
-                            Cast::from(1.0))))
-                // Some(Box::new(ComposableSurface {
-                //     reflection_ratio: get_reflection_ratio_test,
-                //     reflection_direction: get_reflection_direction_test,
-                //     surface_color: get_surface_color_test,
-                // }))
+                Some(
+                    Box::new(
+                        ComposableSurface {
+                            reflection_ratio: reflection_ratio_uniform(Cast::from(0.5)),
+                            reflection_direction: reflection_direction_specular(),
+                            surface_color: surface_color_texture(
+                                MappedTexture::new(
+                                    uv_sphere(
+                                        Point3::new(Cast::from(2.0),
+                                                    Cast::from(10.5),
+                                                    Cast::from(0.0))
+                                    ),
+                                    texture_image(
+                                        image::open("./resources/universe_bright.jpg").unwrap()
+                                    )
+                                )
+                            ),
+                        }
+                    )
+                )
             )));
         entities.push(Box::new(Entity3Impl::new(
                 Box::new(
@@ -172,77 +183,6 @@ fn run<F: CustomFloat>() {
                 )
             )
         );
-        // entities.push(Box::new(Entity3Impl::new(
-        //             Box::new(ComposableShape::new(
-        //                 HalfSpace3::from_point(
-        //                     // Plane3::from_equation(Cast::from(1.0),
-        //                     //                       Cast::from(0.5),
-        //                     //                       Cast::from(0.0),
-        //                     //                       Cast::from(-1.0)),
-        //                     Plane3::new(
-        //                         &Point3::new(Cast::from(0.0),
-        //                         Cast::from(3.0),
-        //                         Cast::from(3.0)),
-        //                         &Vector3::new(Cast::from(0.0),
-        //                         Cast::from(3.0),
-        //                         Cast::from(1.0)),
-        //                         &Vector3::new(Cast::from(1.0),
-        //                         Cast::from(0.0),
-        //                         Cast::from(0.0)),
-        //                     ),
-        //                     &Point3::new(Cast::from(0.0),
-        //                     Cast::from(0.0),
-        //                     Cast::from(-100.0))
-        //                 ),
-        //                 // HalfSpace3::from_point(
-        //                 //     // Plane3::from_equation(Cast::from(1.0),
-        //                 //     //                       Cast::from(0.5),
-        //                 //     //                       Cast::from(0.0),
-        //                 //     //                       Cast::from(-1.0)),
-        //                 //     Plane3::new(
-        //                 //         &Point3::new(Cast::from(0.0),
-        //                 //         Cast::from(3.0),
-        //                 //         Cast::from(3.0)),
-        //                 //         &Vector3::new(Cast::from(0.0),
-        //                 //         Cast::from(3.0),
-        //                 //         Cast::from(1.5)),
-        //                 //         &Vector3::new(Cast::from(1.0),
-        //                 //         Cast::from(0.0),
-        //                 //         Cast::from(0.0)),
-        //                 //     ),
-        //                 //     &Point3::new(Cast::from(0.0),
-        //                 //     Cast::from(0.0),
-        //                 //     Cast::from(-100.0))
-        //                 // ),
-        //                 HalfSpace3::from_point(
-        //                     // Plane3::from_equation(Cast::from(1.0),
-        //                     //                       Cast::from(0.5),
-        //                     //                       Cast::from(0.0),
-        //                     //                       Cast::from(-1.0)),
-        //                     Plane3::new(
-        //                         &Point3::new(Cast::from(0.0),
-        //                         Cast::from(3.0),
-        //                         Cast::from(3.0)),
-        //                         &Vector3::new(Cast::from(0.0),
-        //                         Cast::from(3.0),
-        //                         Cast::from(-1.0)),
-        //                         &Vector3::new(Cast::from(1.0),
-        //                         Cast::from(0.0),
-        //                         Cast::from(0.0)),
-        //                     ),
-        //                     &Point3::new(Cast::from(0.0),
-        //                     Cast::from(0.0),
-        //                     Cast::from(100.0))
-        //                 ),
-        //                 SetOperation::Union
-        //                 )),
-        //                 Box::new(Vacuum::new()),
-        //                 Some(Box::new(ComposableSurface {
-        //                     reflection_ratio: get_reflection_ratio_test,
-        //                     reflection_direction: get_reflection_direction_test,
-        //                     surface_color: get_surface_color_test,
-        //                 }))
-        //             )));
         entities.push(Box::new(Void::new_with_vacuum()));
     }
 

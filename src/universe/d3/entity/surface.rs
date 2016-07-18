@@ -1,10 +1,13 @@
 use std::any::Any;
 use std::any::TypeId;
+use num::traits::NumCast;
 use rand::Rng;
 use rand::Rand;
 use na::Cast;
+use na::Point2;
 use na::Point3;
 use na::Vector3;
+use na::Norm;
 use noise::perlin4;
 use noise::Seed;
 use palette;
@@ -69,4 +72,13 @@ impl<F: CustomFloat> Surface<F, Point3<F>, Vector3<F>> for PerlinSurface3<F> {
                                      Cast::from(1.0),
                                      Cast::from(1.0)))
     }
+}
+
+pub fn uv_sphere<F: CustomFloat>(center_location: Point3<F>) -> Box<Fn(&Point3<F>) -> Point2<F>> {
+    Box::new(move |point: &Point3<F>| {
+        let point = *point - center_location;
+        let point = point.normalize();
+        Point2::new(<F as NumCast>::from(0.5).unwrap() + point.y.atan2(point.x) / (<F as NumCast>::from(2.0).unwrap() * F::pi()),
+                    <F as NumCast>::from(0.5).unwrap() - point.z.asin() / F::pi())
+    })
 }

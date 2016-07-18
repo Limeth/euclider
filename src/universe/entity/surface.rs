@@ -209,6 +209,7 @@ impl MappedTextureTransparent {
 }
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> MappedTexture<F, P, V> for MappedTextureTransparent {
+    #[allow(unused_variables)]
     fn get_color(&self, point: &P) -> Rgba<F> {
         Rgba::new(Zero::zero(), Zero::zero(), Zero::zero(), Zero::zero())
     }

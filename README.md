@@ -18,10 +18,10 @@ A non-euclidean ray tracing prototype written in Rust.
 
 # Preview of version 0.9.0
 
-![Reflection](preview_3_deep_reflection.png)
+![Deep Reflection](preview_3_deep_reflection.png)
 A reflection chamber.
 
-![Reflection](preview_4_textures.png)
+![Textures](preview_4_textures.png)
 Universe background and a textured sphere. Thank you NASA for providing the
 materials.
 

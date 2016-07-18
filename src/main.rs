@@ -55,7 +55,7 @@ fn run<F: CustomFloat>() {
                 Box::new(Vacuum::new()),
                 // Some(Box::new(PerlinSurface3::rand(&mut StdRng::new().expect("Could not create a random number generator."), 1.0, 1.0)))
                 Some(Box::new(ComposableSurface {
-                    reflection_ratio: reflection_ratio_uniform(Cast::from(0.5)),
+                    reflection_ratio: reflection_ratio_uniform(Cast::from(1.0)),
                     reflection_direction: reflection_direction_specular(),
                     surface_color: surface_color_illumination_directional(-AXIS_Z()),
                 }))
@@ -92,14 +92,16 @@ fn run<F: CustomFloat>() {
                             reflection_ratio: reflection_ratio_uniform(Cast::from(0.5)),
                             reflection_direction: reflection_direction_specular(),
                             surface_color: surface_color_texture(
-                                MappedTexture::new(
-                                    uv_sphere(
-                                        Point3::new(Cast::from(2.0),
-                                                    Cast::from(10.5),
-                                                    Cast::from(0.0))
-                                    ),
-                                    texture_image(
-                                        image::open("./resources/universe_bright.jpg").unwrap()
+                                Box::new(
+                                    MappedTextureImpl::new(
+                                        uv_sphere(
+                                            Point3::new(Cast::from(2.0),
+                                                        Cast::from(10.5),
+                                                        Cast::from(0.0))
+                                        ),
+                                        texture_image(
+                                            image::open("./resources/universe_bright.jpg").unwrap()
+                                        )
                                     )
                                 )
                             ),

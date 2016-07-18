@@ -80,16 +80,11 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
                                                                      surface_color_data[1],
                                                                      surface_color_data[2],
                                                                      surface_color_data[3]);
-                let transition_palette = if transition_color.is_some() {
-                    let transition_color: [u8; 4] = transition_color.unwrap().to_pixel();
-
-                    palette::Rgba::new_u8(transition_color[0],
-                                          transition_color[1],
-                                          transition_color[2],
-                                          transition_color[3])
-                } else {
-                    palette::Rgba::new_u8(0, 0, 0, 0)
-                };
+                let transition_color: [u8; 4] = transition_color.to_pixel();
+                let transition_palette = palette::Rgba::new_u8(transition_color[0],
+                                                               transition_color[1],
+                                                               transition_color[2],
+                                                               transition_color[3]);
 
                 surface_palette.plus(transition_palette)
             }
@@ -111,10 +106,10 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
         let new_origin = context.intersection.location
                          + (reflection_direction * F::epsilon() * Cast::from(128.0));
 
-        trace(context.time,
-              context.origin_traceable,
-              &new_origin,
-              &reflection_direction)
+        Some(trace(context.time,
+                   context.origin_traceable,
+                   &new_origin,
+                   &reflection_direction))
     }
 }
 
@@ -184,9 +179,10 @@ pub fn surface_color_illumination_directional<F: CustomFloat, P: CustomPoint<F, 
     })
 }
 
-pub type UVFn<F, P> = Fn(&P) -> Point2<F>;
-pub type Texture<F> = Fn(&Point2<F>) -> Rgba<F>;
+pub type UVFn<F, P> = (Fn(&P) -> Point2<F>) + Send + Sync;
+pub type Texture<F> = (Fn(&Point2<F>) -> Rgba<F>) + Send + Sync;
 
+// TODO: Add anti-aliasing
 pub fn texture_image<F: CustomFloat>(dynamic_image: DynamicImage) -> Box<Texture<F>> {
     Box::new(move |point: &Point2<F>| {
         let (width, height) = dynamic_image.dimensions();
@@ -199,29 +195,50 @@ pub fn texture_image<F: CustomFloat>(dynamic_image: DynamicImage) -> Box<Texture
     })
 }
 
-pub struct MappedTexture<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
+pub trait MappedTexture<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: Send + Sync {
+    fn get_color(&self, point: &P) -> Rgba<F>;
+}
+
+#[derive(Default)]
+pub struct MappedTextureTransparent;
+
+impl MappedTextureTransparent {
+    pub fn new() -> Self {
+        MappedTextureTransparent {}
+    }
+}
+
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> MappedTexture<F, P, V> for MappedTextureTransparent {
+    fn get_color(&self, point: &P) -> Rgba<F> {
+        Rgba::new(Zero::zero(), Zero::zero(), Zero::zero(), Zero::zero())
+    }
+}
+
+pub struct MappedTextureImpl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
     pub uvfn: Box<UVFn<F, P>>,
     pub texture: Box<Texture<F>>,
     marker_vector: PhantomData<V>,
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> MappedTexture<F, P, V> {
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> MappedTextureImpl<F, P, V> {
     pub fn new(uvfn: Box<UVFn<F, P>>, texture: Box<Texture<F>>) -> Self {
-        MappedTexture {
+        MappedTextureImpl {
             uvfn: uvfn,
             texture: texture,
             marker_vector: PhantomData,
         }
     }
+}
 
-    pub fn get_color(&self, point: &P) -> Rgba<F> {
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> MappedTexture<F, P, V> for MappedTextureImpl<F, P, V> {
+    fn get_color(&self, point: &P) -> Rgba<F> {
         let texture = &self.texture;
         let uvfn = &self.uvfn;
         texture(&uvfn(point))
     }
 }
 
-pub fn surface_color_texture<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>(mapped_texture: MappedTexture<F, P, V>) -> Box<SurfaceColorProvider<F, P, V>> {
+pub fn surface_color_texture<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>(mapped_texture: Box<MappedTexture<F, P, V>>) -> Box<SurfaceColorProvider<F, P, V>> {
     Box::new(move |context: &TracingContext<F, P, V>| {
         mapped_texture.get_color(&context.intersection.location)
     })

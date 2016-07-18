@@ -383,6 +383,8 @@ pub trait CustomPoint<F: CustomFloat, V: CustomVector<F, Self>>:
 // Encodable +
     PartialEq +
 // Eq +
+    Send +
+    Sync +
     'static {}
 
 pub trait CustomVector<F: CustomFloat, P: CustomPoint<F, Self>>:
@@ -434,7 +436,7 @@ pub trait CustomVector<F: CustomFloat, P: CustomPoint<F, Self>>:
 // MulAssign<UnitQuaternion<F>>
 // Mul<Rotation3<F>>
 // MulAssign<Rotation3<F>>
-    VectorAsPoint +
+    VectorAsPoint<Point=P> +
     Copy +
     Debug +
 // Hash +
@@ -443,6 +445,8 @@ pub trait CustomVector<F: CustomFloat, P: CustomPoint<F, Self>>:
 // Encodable +
     PartialEq +
 // Eq +
+    Send +
+    Sync +
     'static {}
 
 pub trait VectorAsPoint {
@@ -518,6 +522,8 @@ pub trait CustomFloat:
     Zero +
     NumCast +
     ToPrimitive +
+    Send +
+    Sync +
     'static {}
 
 impl CustomFloat for f64 {}

@@ -17,6 +17,7 @@ use palette::RgbHue;
 use util::CustomFloat;
 use util::HasId;
 use universe::entity::surface::Surface;
+use universe::entity::surface::UVFn;
 use universe::entity::shape::TracingContext;
 
 pub type Surface3<F> = Surface<F, Point3<F>, Vector3<F>>;
@@ -74,7 +75,7 @@ impl<F: CustomFloat> Surface<F, Point3<F>, Vector3<F>> for PerlinSurface3<F> {
     }
 }
 
-pub fn uv_sphere<F: CustomFloat>(center_location: Point3<F>) -> Box<Fn(&Point3<F>) -> Point2<F>> {
+pub fn uv_sphere<F: CustomFloat>(center_location: Point3<F>) -> Box<UVFn<F, Point3<F>>> {
     Box::new(move |point: &Point3<F>| {
         let point = *point - center_location;
         let point = point.normalize();

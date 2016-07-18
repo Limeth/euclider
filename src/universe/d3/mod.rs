@@ -6,6 +6,8 @@ use na::Vector3;
 use universe::entity::Camera;
 use universe::entity::shape::GeneralIntersectors;
 use universe::entity::material::TransitionHandlers;
+use universe::entity::surface::MappedTexture;
+use universe::entity::surface::MappedTextureTransparent;
 use universe::d3::entity::camera::Camera3Impl;
 use universe::d3::entity::Camera3;
 use universe::d3::entity::Entity3;
@@ -17,6 +19,7 @@ pub struct Universe3D<F: CustomFloat> {
     entities: Vec<Box<Entity3<F>>>,
     intersections: GeneralIntersectors<F, Point3<F>, Vector3<F>>,
     transitions: TransitionHandlers<F, Point3<F>, Vector3<F>>,
+    background: Box<MappedTexture<F, Point3<F>, Vector3<F>>>,
 }
 
 impl<F: CustomFloat> Universe3D<F> {
@@ -26,6 +29,7 @@ impl<F: CustomFloat> Universe3D<F> {
             entities: Vec::new(),
             intersections: HashMap::new(),
             transitions: HashMap::new(),
+            background: Box::new(MappedTextureTransparent::new()),
         }
     }
 }
@@ -77,7 +81,20 @@ impl<F: CustomFloat> Universe<F> for Universe3D<F> {
     fn transitions(&self) -> &TransitionHandlers<F, Self::P, Self::V> {
         &self.transitions
     }
+
     fn set_transitions(&mut self, transitions: TransitionHandlers<F, Self::P, Self::V>) {
-        self.transitions = transitions
+        self.transitions = transitions;
+    }
+
+    fn background_mut(&mut self) -> &mut Box<MappedTexture<F, Self::P, Self::V>> {
+        &mut self.background
+    }
+
+    fn background(&self) -> &Box<MappedTexture<F, Self::P, Self::V>> {
+        &self.background
+    }
+
+    fn set_background(&mut self, background: Box<MappedTexture<F, Self::P, Self::V>>) {
+        self.background = background;
     }
 }

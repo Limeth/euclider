@@ -28,9 +28,11 @@ use universe::entity::shape::GeneralIntersectors;
 use universe::entity::shape::Intersection;
 use universe::entity::shape::Intersector;
 use universe::entity::shape::TracingContext;
+use universe::entity::surface::MappedTexture;
 use util::CustomPoint;
 use util::CustomVector;
 use util::CustomFloat;
+use util::VectorAsPoint;
 use util::AngleBetween;
 use util::Provider;
 
@@ -54,6 +56,9 @@ pub trait Universe<F: CustomFloat>
     fn transitions_mut(&mut self) -> &mut TransitionHandlers<F, Self::P, Self::V>;
     fn transitions(&self) -> &TransitionHandlers<F, Self::P, Self::V>;
     fn set_transitions(&mut self, transitions: TransitionHandlers<F, Self::P, Self::V>);
+    fn background_mut(&mut self) -> &mut Box<MappedTexture<F, Self::P, Self::V>>;
+    fn background(&self) -> &Box<MappedTexture<F, Self::P, Self::V>>;
+    fn set_background(&mut self, background: Box<MappedTexture<F, Self::P, Self::V>>);
 
     fn intersect(&self,
                  location: &Self::P,
@@ -85,13 +90,13 @@ pub trait Universe<F: CustomFloat>
              belongs_to: &Traceable<F, Self::P, Self::V>,
              location: &Self::P,
              rotation: &Self::V)
-             -> Option<Rgba<F>> {
+             -> Rgba<F> {
         let material = belongs_to.material();
         let mut foreground: Option<Rgba<F>> = None;
         let mut foreground_distance_squared: Option<F> = None;
 
         if *max_depth == 0 {
-            return None;
+            return self.background().get_color(rotation.as_point());
         }
 
         for other in self.entities() {
@@ -150,23 +155,12 @@ pub trait Universe<F: CustomFloat>
             }
         }
 
-        foreground.or_else(|| {
-            Some(Rgba::new(Cast::from(0.0),
-                           Cast::from(0.0),
-                           Cast::from(0.0),
-                           Cast::from(0.0)))
+        foreground.unwrap_or_else(|| {
+            Rgba::new(Cast::from(0.0),
+                      Cast::from(0.0),
+                      Cast::from(0.0),
+                      Cast::from(0.0))
         })
-    }
-
-    fn trace_first(&self,
-                   time: &Duration,
-                   max_depth: &u32,
-                   belongs_to: &Traceable<F, Self::P, Self::V>,
-                   location: &Self::P,
-                   rotation: &Self::V)
-                   -> Rgba<F> {
-        self.trace(time, max_depth, belongs_to, location, rotation)
-            .expect("Couldn't send out a ray; None returned.")
     }
 
     fn trace_unknown(&self,
@@ -200,7 +194,7 @@ pub trait Universe<F: CustomFloat>
                 Rgba::from(Rgb::new(Cast::from(1.0), Cast::from(1.0), Cast::from(1.0)))
                     .into_premultiplied();
             let foreground =
-                self.trace_first(time, max_depth, belongs_to.unwrap(), location, rotation)
+                self.trace(time, max_depth, belongs_to.unwrap(), location, rotation)
                     .into_premultiplied();
             Some(Rgb::from_premultiplied(foreground.over(background)))
             // Some(util::overlay_color::<F>(background, foreground))

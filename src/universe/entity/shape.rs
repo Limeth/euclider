@@ -45,7 +45,7 @@ pub type Intersector<'a, F, P, V> = &'a Fn(&Material<F, P, V>, &Shape<F, P, V>)
 
 /// Calls the `trace` method on the current Universe and returns the resulting color.
 // TODO: It feels wrong to have a type alias to a reference of another type
-pub type Tracer<'a, F, P, V> = &'a Fn(&Duration, &Traceable<F, P, V>, &P, &V) -> Option<Rgba<F>>;
+pub type Tracer<'a, F, P, V> = &'a Fn(&Duration, &Traceable<F, P, V>, &P, &V) -> Rgba<F>;
 
 pub trait Shape<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
     where Self: HasId + Debug + Display

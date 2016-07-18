@@ -20,7 +20,7 @@ pub type TransitionHandlers<F, P, V> = TypePairMap<Box<TransitionHandler<F, P, V
 pub type TransitionHandler<F, P, V> = Fn(&Material<F, P, V>,
                                          &Material<F, P, V>,
                                          &TracingContext<F, P, V>
-                                      ) -> Option<Rgba<F>> + Send + Sync;
+                                      ) -> Rgba<F> + Send + Sync;
 
 pub trait Material<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
     where Self: HasId + Debug + Display
@@ -69,7 +69,7 @@ pub fn transition_vacuum_vacuum<F: CustomFloat, P: CustomPoint<F, V>, V: CustomV
                 from: &Material<F, P, V>,
                 to: &Material<F, P, V>,
                 context: &TracingContext<F, P, V>)
-                -> Option<Rgba<F>> {
+                -> Rgba<F> {
     let trace = context.trace;
     // Offset the new origin, so it doesn't hit the same shape over and over
     // The question is -- is there a better way? I think not.

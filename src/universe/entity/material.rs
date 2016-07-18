@@ -64,7 +64,6 @@ impl Display for Vacuum {
     }
 }
 
-// TODO: Possibly causing problems, should ignore the shape it is currently entering/exiting
 #[allow(unused_variables)]
 pub fn transition_vacuum_vacuum<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>(
                 from: &Material<F, P, V>,

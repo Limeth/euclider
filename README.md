@@ -4,6 +4,11 @@
 
 A non-euclidean ray tracing prototype written in Rust.
 
+# Installation
+1. Install the Rust language via [Rustup](https://www.rustup.rs/)
+2. Clone this repository and `cd` into it
+3. Run `cargo run --release`
+
 # Controls
 
 * Mouse - camera rotation

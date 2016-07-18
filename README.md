@@ -22,7 +22,7 @@ A non-euclidean ray tracing prototype written in Rust.
 A reflection chamber.
 
 ![Reflection](preview_4_textures.png)
-Universe background and a textured sphere. Thank you, NASA for providing the
+Universe background and a textured sphere. Thank you NASA for providing the
 materials.
 
 # Preview of version 0.5.0

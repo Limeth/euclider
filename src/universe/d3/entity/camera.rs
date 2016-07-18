@@ -71,10 +71,6 @@ impl<F: CustomFloat> Camera3Impl<F> {
                        snap: bool) {
         let axis_h = na::cross(forward, up).normalize();
 
-        println!("y pass 0: forward: {}", forward);
-        println!("y pass 0: up: {}", up);
-        println!("y pass 0: axis_h: {}", axis_h);
-
         if snap {
             let result_angle = forward.angle_between(&AXIS_Z());
 

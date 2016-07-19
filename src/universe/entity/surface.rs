@@ -12,6 +12,7 @@ use util::CustomFloat;
 use util::CustomPoint;
 use util::CustomVector;
 use num::Zero;
+use num::One;
 use na;
 use na::Cast;
 use na::Point2;
@@ -182,16 +183,47 @@ pub fn surface_color_illumination_directional<F: CustomFloat, P: CustomPoint<F, 
 pub type UVFn<F, P> = (Fn(&P) -> Point2<F>) + Send + Sync;
 pub type Texture<F> = (Fn(&Point2<F>) -> Rgba<F>) + Send + Sync;
 
-// TODO: Add anti-aliasing
 pub fn texture_image<F: CustomFloat>(dynamic_image: DynamicImage) -> Box<Texture<F>> {
     Box::new(move |point: &Point2<F>| {
         let (width, height) = dynamic_image.dimensions();
-        let (x, y) = (point.x * <F as NumCast>::from(width).unwrap(),
-                      point.y * <F as NumCast>::from(height).unwrap());
-        let pixel = dynamic_image.get_pixel(<u32 as NumCast>::from(x).unwrap(),
-                                            <u32 as NumCast>::from(y).unwrap());
-        
-        Rgba::new_u8(pixel.data[0], pixel.data[1], pixel.data[2], pixel.data[3])
+        let (x, y) = (point.x * <F as NumCast>::from(width).unwrap() - Cast::from(0.5),
+                      point.y * <F as NumCast>::from(height).unwrap() - Cast::from(0.5));
+        let (offset_x, offset_y) = (x - x.floor(),
+                                    y - y.floor());
+        let mut pixels: [[u8; 4]; 4] = [[0u8; 4]; 4];
+        const PIXEL_OFFSETS: [[u32; 2]; 4] = [
+            [0, 0],
+            [1, 0],
+            [0, 1],
+            [1, 1]
+        ];
+
+        for (index, pixel) in pixels.iter_mut().enumerate() {
+            *pixel = dynamic_image.get_pixel(
+                        <u32 as NumCast>::from(
+                            util::remainder(x + <F as NumCast>::from(PIXEL_OFFSETS[index][0]).unwrap(),
+                                            <F as NumCast>::from(width).unwrap())
+                                ).unwrap(),
+                        <u32 as NumCast>::from(
+                            util::remainder(y + <F as NumCast>::from(PIXEL_OFFSETS[index][1]).unwrap(),
+                                            <F as NumCast>::from(height).unwrap())
+                                ).unwrap(),
+                    ).data;
+        }
+
+        let mut data: [F; 4] = [Cast::from(0.0); 4];
+
+        for (index, color) in data.iter_mut().enumerate() {
+            *color = ((<F as NumCast>::from(pixels[0][index]).unwrap() * (<F as One>::one() - offset_x)
+                + <F as NumCast>::from(pixels[1][index]).unwrap() * offset_x)
+                * (<F as One>::one() - offset_y)
+                + (<F as NumCast>::from(pixels[2][index]).unwrap() * (<F as One>::one() - offset_x)
+                + <F as NumCast>::from(pixels[3][index]).unwrap() * offset_x)
+                * offset_y)
+                / <F as NumCast>::from(std::u8::MAX).unwrap();
+        }
+
+        Rgba::new(data[0], data[1], data[2], data[3])
     })
 }
 

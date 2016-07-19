@@ -104,8 +104,8 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
         let trace = context.trace;
         // Offset the new origin, so it doesn't hit the same shape over and over
         // The question is -- is there a better way? I think not.
-        let new_origin = context.intersection.location
-                         + (reflection_direction * F::epsilon() * Cast::from(128.0));
+        let new_origin = context.intersection.location +
+                         (reflection_direction * F::epsilon() * Cast::from(128.0));
 
         Some(trace(context.time,
                    context.origin_traceable,
@@ -138,15 +138,16 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Surface<F, P, 
 }
 
 #[allow(unused_variables)]
-pub fn reflection_ratio_uniform<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>(ratio: F)
-        -> Box<ReflectionRatioProvider<F, P, V>> {
-    Box::new(move |context: &TracingContext<F, P, V>| {
-        ratio
-    })
+pub fn reflection_ratio_uniform<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+    (ratio: F)
+     -> Box<ReflectionRatioProvider<F, P, V>> {
+    Box::new(move |context: &TracingContext<F, P, V>| ratio)
 }
 
-pub fn reflection_direction_specular<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>()
-        -> Box<ReflectionDirectionProvider<F, P, V>> {
+pub fn reflection_direction_specular<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+    ()
+    -> Box<ReflectionDirectionProvider<F, P, V>>
+{
     Box::new(move |context: &TracingContext<F, P, V>| {
         // R = 2*(V dot N)*N - V
         let mut normal = context.intersection.normal;
@@ -160,8 +161,11 @@ pub fn reflection_direction_specular<F: CustomFloat, P: CustomPoint<F, V>, V: Cu
     })
 }
 
-pub fn surface_color_illumination_directional<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>(light_direction: V)
-        -> Box<SurfaceColorProvider<F, P, V>> {
+pub fn surface_color_illumination_directional<F: CustomFloat,
+                                              P: CustomPoint<F, V>,
+                                              V: CustomVector<F, P>>
+    (light_direction: V)
+     -> Box<SurfaceColorProvider<F, P, V>> {
     Box::new(move |context: &TracingContext<F, P, V>| {
         let mut normal = context.intersection.normal;
 
@@ -172,9 +176,10 @@ pub fn surface_color_illumination_directional<F: CustomFloat, P: CustomPoint<F, 
         let angle: F = normal.angle_between(&-light_direction);
 
         Alpha {
-            color: Rgb::from(Hsv::new(RgbHue::from(<F as Zero>::zero()),
-                                      <F as Zero>::zero(),
-                                      <F as NumCast>::from(angle / <F as BaseFloat>::pi()).unwrap())),
+            color:
+                Rgb::from(Hsv::new(RgbHue::from(<F as Zero>::zero()),
+                                   <F as Zero>::zero(),
+                                   <F as NumCast>::from(angle / <F as BaseFloat>::pi()).unwrap())),
             alpha: Cast::from(1.0),
         }
     })
@@ -188,15 +193,9 @@ pub fn texture_image<F: CustomFloat>(dynamic_image: DynamicImage) -> Box<Texture
         let (width, height) = dynamic_image.dimensions();
         let (x, y) = (point.x * <F as NumCast>::from(width).unwrap() - Cast::from(0.5),
                       point.y * <F as NumCast>::from(height).unwrap() - Cast::from(0.5));
-        let (offset_x, offset_y) = (x - x.floor(),
-                                    y - y.floor());
+        let (offset_x, offset_y) = (x - x.floor(), y - y.floor());
         let mut pixels: [[u8; 4]; 4] = [[0u8; 4]; 4];
-        const PIXEL_OFFSETS: [[u32; 2]; 4] = [
-            [0, 0],
-            [1, 0],
-            [0, 1],
-            [1, 1]
-        ];
+        const PIXEL_OFFSETS: [[u32; 2]; 4] = [[0, 0], [1, 0], [0, 1], [1, 1]];
 
         for (index, pixel) in pixels.iter_mut().enumerate() {
             *pixel = dynamic_image.get_pixel(
@@ -214,20 +213,21 @@ pub fn texture_image<F: CustomFloat>(dynamic_image: DynamicImage) -> Box<Texture
         let mut data: [F; 4] = [Cast::from(0.0); 4];
 
         for (index, color) in data.iter_mut().enumerate() {
-            *color = ((<F as NumCast>::from(pixels[0][index]).unwrap() * (<F as One>::one() - offset_x)
-                + <F as NumCast>::from(pixels[1][index]).unwrap() * offset_x)
-                * (<F as One>::one() - offset_y)
-                + (<F as NumCast>::from(pixels[2][index]).unwrap() * (<F as One>::one() - offset_x)
-                + <F as NumCast>::from(pixels[3][index]).unwrap() * offset_x)
-                * offset_y)
-                / <F as NumCast>::from(std::u8::MAX).unwrap();
+            *color =
+                ((<F as NumCast>::from(pixels[0][index]).unwrap() * (<F as One>::one() - offset_x) +
+                  <F as NumCast>::from(pixels[1][index]).unwrap() * offset_x) *
+                 (<F as One>::one() - offset_y) +
+                 (<F as NumCast>::from(pixels[2][index]).unwrap() * (<F as One>::one() - offset_x) +
+                  <F as NumCast>::from(pixels[3][index]).unwrap() * offset_x) *
+                 offset_y) / <F as NumCast>::from(std::u8::MAX).unwrap();
         }
 
         Rgba::new(data[0], data[1], data[2], data[3])
     })
 }
 
-pub trait MappedTexture<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: Send + Sync {
+pub trait MappedTexture<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+    : Send + Sync {
     fn get_color(&self, point: &P) -> Rgba<F>;
 }
 
@@ -271,7 +271,9 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> MappedTexture<
     }
 }
 
-pub fn surface_color_texture<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>(mapped_texture: Box<MappedTexture<F, P, V>>) -> Box<SurfaceColorProvider<F, P, V>> {
+pub fn surface_color_texture<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+    (mapped_texture: Box<MappedTexture<F, P, V>>)
+     -> Box<SurfaceColorProvider<F, P, V>> {
     Box::new(move |context: &TracingContext<F, P, V>| {
         mapped_texture.get_color(&context.intersection.location)
     })

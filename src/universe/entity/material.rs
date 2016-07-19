@@ -65,16 +65,16 @@ impl Display for Vacuum {
 }
 
 #[allow(unused_variables)]
-pub fn transition_vacuum_vacuum<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>(
-                from: &Material<F, P, V>,
-                to: &Material<F, P, V>,
-                context: &TracingContext<F, P, V>)
-                -> Rgba<F> {
+pub fn transition_vacuum_vacuum<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+    (from: &Material<F, P, V>,
+     to: &Material<F, P, V>,
+     context: &TracingContext<F, P, V>)
+     -> Rgba<F> {
     let trace = context.trace;
     // Offset the new origin, so it doesn't hit the same shape over and over
     // The question is -- is there a better way? I think not.
-    let new_origin = context.intersection.location
-                     + -*context.intersection_normal_closer * F::epsilon() * Cast::from(128.0);
+    let new_origin = context.intersection.location +
+                     -*context.intersection_normal_closer * F::epsilon() * Cast::from(128.0);
 
     trace(context.time,
           context.intersection_traceable,

@@ -79,7 +79,8 @@ pub fn uv_sphere<F: CustomFloat>(center_location: Point3<F>) -> Box<UVFn<F, Poin
     Box::new(move |point: &Point3<F>| {
         let point = *point - center_location;
         let point = point.normalize();
-        Point2::new(<F as NumCast>::from(0.5).unwrap() + point.y.atan2(point.x) / (<F as NumCast>::from(2.0).unwrap() * F::pi()),
+        Point2::new(<F as NumCast>::from(0.5).unwrap() +
+                    point.y.atan2(point.x) / (<F as NumCast>::from(2.0).unwrap() * F::pi()),
                     <F as NumCast>::from(0.5).unwrap() - point.z.asin() / F::pi())
     })
 }

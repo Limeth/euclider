@@ -155,9 +155,7 @@ pub trait Universe<F: CustomFloat>
             }
         }
 
-        foreground.unwrap_or_else(|| {
-            self.background().get_color(rotation.as_point())
-        })
+        foreground.unwrap_or_else(|| self.background().get_color(rotation.as_point()))
     }
 
     fn trace_unknown(&self,
@@ -190,9 +188,8 @@ pub trait Universe<F: CustomFloat>
             let background =
                 Rgba::from(Rgb::new(Cast::from(1.0), Cast::from(1.0), Cast::from(1.0)))
                     .into_premultiplied();
-            let foreground =
-                self.trace(time, max_depth, belongs_to.unwrap(), location, rotation)
-                    .into_premultiplied();
+            let foreground = self.trace(time, max_depth, belongs_to.unwrap(), location, rotation)
+                .into_premultiplied();
             Some(Rgb::from_premultiplied(foreground.over(background)))
             // Some(util::overlay_color::<F>(background, foreground))
         } else {

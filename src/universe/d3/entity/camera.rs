@@ -65,10 +65,7 @@ impl<F: CustomFloat> Camera3Impl<F> {
         *up = quaternion.rotate(up).normalize();
     }
 
-    fn rotate_y_static(forward: &mut Vector3<F>,
-                       up: &mut Vector3<F>,
-                       angle: F,
-                       snap: bool) {
+    fn rotate_y_static(forward: &mut Vector3<F>, up: &mut Vector3<F>, angle: F, snap: bool) {
         let axis_h = na::cross(forward, up).normalize();
 
         if snap {

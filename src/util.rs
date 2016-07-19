@@ -190,6 +190,18 @@ pub fn overlay_color<F: CustomFloat>(bottom: Rgb<u8>, top: Rgba<u8>) -> Rgb<u8> 
     }
 }
 
+pub fn remainder<T: Add<Output=T> + Rem<Output=T> + PartialOrd<T> + Zero + Copy>(a: T, b: T) -> T {
+    let rem = a % b;
+    
+    if rem == <T as Zero>::zero() {
+        <T as Zero>::zero()
+    } else if a < <T as Zero>::zero() {
+        b + rem
+    } else {
+        rem
+    }
+}
+
 pub type VecLazy<'a, T> = Vec<Box<Fn() -> Option<T> + 'a>>;
 
 pub struct IterLazy<'a, T> {

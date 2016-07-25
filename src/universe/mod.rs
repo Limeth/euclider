@@ -196,6 +196,67 @@ pub trait Universe<F: CustomFloat>
             None
         }
     }
+}
+
+pub trait Environment<F: CustomFloat>: Sync {
+    fn max_depth(&self) -> u32;
+    fn trace_screen_point(&self,
+                          time: &Duration,
+                          max_depth: &u32,
+                          screen_x: i32,
+                          screen_y: i32,
+                          screen_width: i32,
+                          screen_height: i32)
+                          -> Rgb<F>;
+    fn render(&self,
+              facade: &Facade,
+              dimensions: (u32, u32),
+              time: &Duration,
+              context: &SimulationContext) -> RawImage2d<u8> {
+        let (width, height) = dimensions;
+        const COLOR_DIM: usize = 3;
+        let buffer_width = width / context.resolution;
+        let buffer_height = height / context.resolution;
+        let max_depth = self.max_depth();
+        let mut data: Vec<u8> = vec!(0; (buffer_width * buffer_height) as usize * COLOR_DIM);
+        let mut pool = Pool::new(4);
+
+        pool.scoped(|scope| {
+            for (index, chunk) in &mut data.chunks_mut(COLOR_DIM).enumerate() {
+                scope.execute(move || {
+                    let x = index as u32 % buffer_width;
+                    let y = index as u32 / buffer_width;
+                    let color = self.trace_screen_point(time,
+                                                        &max_depth,
+                                                        x as i32,
+                                                        y as i32,
+                                                        buffer_width as i32,
+                                                        buffer_height as i32);
+                    let color = image::Rgb { data: color.to_pixel() };
+
+                    for (i, result) in chunk.iter_mut().enumerate() {
+                        *result = color.data[i];
+                    }
+                });
+            }
+        });
+
+        RawImage2d {
+            data: Cow::Owned(data),
+            width: buffer_width,
+            height: buffer_height,
+            format: ClientFormat::U8U8U8,
+        }
+    }
+
+    fn update(&mut self, delta_time: &Duration, context: &SimulationContext);
+}
+
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, U: Universe<F, P=P, V=V>>
+        Environment<F> for U {
+    fn max_depth(&self) -> u32 {
+        self.camera().max_depth()
+    }
 
     fn trace_screen_point(&self,
                           time: &Duration,
@@ -230,58 +291,6 @@ pub trait Universe<F: CustomFloat>
                 }
             }
         }
-    }
-
-    fn render<E: Facade, S: GliumSurface>(&self,
-                                          facade: &E,
-                                          surface: &mut S,
-                                          time: &Duration,
-                                          context: &SimulationContext) {
-        let (width, height) = surface.get_dimensions();
-        // let mut buffer: DynamicImage = DynamicImage::new_rgb8(width, height);
-        const COLOR_DIM: usize = 3;
-        let buffer_width = width / context.resolution;
-        let buffer_height = height / context.resolution;
-        let max_depth = self.camera().max_depth();
-        let mut data: Vec<u8> = vec!(0; (buffer_width * buffer_height) as usize * COLOR_DIM);
-        let mut pool = Pool::new(4);
-
-        pool.scoped(|scope| {
-            for (index, chunk) in &mut data.chunks_mut(COLOR_DIM).enumerate() {
-                scope.execute(move || {
-                    let x = index as u32 % buffer_width;
-                    let y = index as u32 / buffer_width;
-                    let color = self.trace_screen_point(time,
-                                                        &max_depth,
-                                                        x as i32,
-                                                        y as i32,
-                                                        buffer_width as i32,
-                                                        buffer_height as i32);
-                    let color = image::Rgb { data: color.to_pixel() };
-
-                    for (i, result) in chunk.iter_mut().enumerate() {
-                        *result = color.data[i];
-                    }
-                });
-            }
-        });
-
-        let image = RawImage2d {
-            data: Cow::Owned(data),
-            width: buffer_width,
-            height: buffer_height,
-            format: ClientFormat::U8U8U8,
-        };
-        let texture = Texture2d::new(facade, image).unwrap();
-        let image_surface = texture.as_surface();
-        let blit_target = BlitTarget {
-            left: 0,
-            bottom: 0,
-            width: width as i32,
-            height: height as i32,
-        };
-
-        image_surface.blit_whole_color_to(surface, &blit_target, MagnifySamplerFilter::Nearest);
     }
 
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext) {

@@ -224,7 +224,7 @@ fn run<F: CustomFloat>() {
     }
 
     let simulation = Simulation::builder()
-        .universe(universe)
+        .environment(Box::new(universe))
         .build();
 
     simulation.start();

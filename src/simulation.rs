@@ -7,6 +7,7 @@ use na::Point2;
 use na::Vector2;
 use glium::DisplayBuild;
 use glium::backend::glutin_backend::GlutinFacade;
+use glium::Surface as GliumSurface;
 use glium::glutin::VirtualKeyCode;
 use glium::glutin::MouseButton;
 use glium::glutin::ElementState;
@@ -14,12 +15,17 @@ use glium::glutin::Event;
 use glium::glutin::CursorState;
 use glium::glutin::MouseScrollDelta;
 use glium::glutin::WindowBuilder;
+use glium::BlitTarget;
+use glium::texture::Texture2d;
+use glium::texture::RawImage2d;
+use glium::uniforms::MagnifySamplerFilter;
+use universe::Environment;
 use universe::Universe;
 use util::RemoveIf;
 use util::CustomFloat;
 
-pub struct Simulation<F: CustomFloat, U: Universe<F>> {
-    universe: Box<U>,
+pub struct Simulation<F: CustomFloat> {
+    environment: Box<Environment<F>>,
     facade: Option<GlutinFacade>,
     start_instant: Option<Instant>,
     last_updated_instant: Option<Instant>,
@@ -27,12 +33,12 @@ pub struct Simulation<F: CustomFloat, U: Universe<F>> {
     float_precision: PhantomData<F>,
 }
 
-pub struct SimulationBuilder<F: CustomFloat, U: Universe<F>> {
-    universe: Option<Box<U>>,
+pub struct SimulationBuilder<F: CustomFloat> {
+    environment: Option<Box<Environment<F>>>,
     float_precision: PhantomData<F>,
 }
 
-impl<F: CustomFloat, U: Universe<F>> Simulation<F, U> {
+impl<F: CustomFloat> Simulation<F> {
     pub fn start(mut self) {
         let facade: GlutinFacade = WindowBuilder::new()
             .with_dimensions(1024, 768)
@@ -61,13 +67,26 @@ impl<F: CustomFloat, U: Universe<F>> Simulation<F, U> {
 
     fn render(&mut self) {
         let mut frame = self.facade.as_mut().unwrap().draw();
+        let readable_facade = self.facade.as_ref().unwrap();
+        let dimensions = frame.get_dimensions();
+        let (width, height) = dimensions;
         let now = Instant::now();
         let time = now - self.start_instant.unwrap();
 
-        self.universe.render(self.facade.as_ref().unwrap(),
-                             &mut frame,
-                             &time,
-                             &self.context);
+        let image = self.environment.render(readable_facade,
+                                            dimensions,
+                                            &time,
+                                            &self.context);
+
+        let texture = Texture2d::new(readable_facade, image).unwrap();
+        let image_surface = texture.as_surface();
+        let blit_target = BlitTarget {
+            left: 0,
+            bottom: 0,
+            width: width as i32,
+            height: height as i32,
+        };
+        image_surface.blit_whole_color_to(&frame, &blit_target, MagnifySamplerFilter::Nearest);
 
         if let Err(error) = frame.finish() {
             panic!("An error occured while swapping the OpenGL buffers: {:?}",
@@ -88,28 +107,28 @@ impl<F: CustomFloat, U: Universe<F>> Simulation<F, U> {
         self.last_updated_instant = Some(now);
 
         let result = self.context.update(self.facade.as_mut().unwrap());
-        self.universe.update(&delta, &self.context);
+        self.environment.update(&delta, &self.context);
 
         result
     }
 
-    pub fn builder() -> SimulationBuilder<F, U> {
+    pub fn builder() -> SimulationBuilder<F> {
         SimulationBuilder {
-            universe: None,
+            environment: None,
             float_precision: PhantomData,
         }
     }
 }
 
-impl<F: CustomFloat, U: Universe<F>> SimulationBuilder<F, U> {
-    pub fn universe(mut self, universe: U) -> SimulationBuilder<F, U> {
-        self.universe = Some(Box::new(universe));
+impl<F: CustomFloat> SimulationBuilder<F> {
+    pub fn environment(mut self, environment: Box<Environment<F>>) -> SimulationBuilder<F> {
+        self.environment = Some(environment);
         self
     }
 
-    pub fn build(self) -> Simulation<F, U> {
+    pub fn build(self) -> Simulation<F> {
         Simulation {
-            universe: self.universe.unwrap(),
+            environment: self.environment.unwrap(),
             facade: None,
             start_instant: None,
             last_updated_instant: None,

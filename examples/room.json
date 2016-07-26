@@ -1,0 +1,110 @@
+{
+  "environment": "Universe3D",
+  "entities": [
+    {
+      "Entity3Impl::new": [
+        {
+          "Sphere::new": [
+            {
+              "Point3::new": [
+                5,
+                1.5,
+                5
+              ]
+            },
+            3
+          ]
+        },
+        {
+          "Vacuum::new": []
+        },
+        {
+          "ComposableSurface": {
+            "reflection_ratio": {
+              "reflection_ratio_uniform": [
+                0.5
+              ]
+            },
+            "reflection_direction": {
+              "reflection_direction_specular": []
+            },
+            "surface_color": {
+              "surface_color_texture": [
+                {
+                  "MappedTextureImpl::new": [
+                    {
+                      "uv_sphere": [
+                        {
+                          "Point3::new": [
+                            2,
+                            10.5,
+                            0
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "texture_image": "resources/universe_bright.jpg"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "background": {
+    "MappedTextureImpl::new": [
+      {
+        "uv_sphere": [
+          {
+            "Point3::new": [
+              0,
+              0,
+              0
+            ]
+          }
+        ]
+      },
+      {
+        "texture_image": "./resources/universe_dim.jpg"
+      }
+    ]
+  },
+  "intersectors": [
+    {
+      "material": "Vacuum",
+      "shape": "VoidShape",
+      "intersector": "intersect_void"
+    },
+    {
+      "material": "Vacuum",
+      "shape": "Sphere3",
+      "intersector": "intersect_sphere3_in_vacuum"
+    },
+    {
+      "material": "Vacuum",
+      "shape": "Plane3",
+      "intersector": "Plane3::intersect_in_vacuum"
+    },
+    {
+      "material": "Vacuum",
+      "shape": "HalfSpace3",
+      "intersector": "HalfSpace3::intersect_in_vacuum"
+    },
+    {
+      "material": "Vacuum",
+      "shape": "ComposableShape",
+      "intersector": "ComposableShape::intersect_in_vacuum"
+    }
+  ],
+  "transitions": [
+    {
+      "from": "Vacuum",
+      "to": "Vacuum",
+      "transition": "transition_vacuum_vacuum"
+    }
+  ]
+}

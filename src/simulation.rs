@@ -17,10 +17,8 @@ use glium::glutin::MouseScrollDelta;
 use glium::glutin::WindowBuilder;
 use glium::BlitTarget;
 use glium::texture::Texture2d;
-use glium::texture::RawImage2d;
 use glium::uniforms::MagnifySamplerFilter;
 use universe::Environment;
-use universe::Universe;
 use util::RemoveIf;
 use util::CustomFloat;
 
@@ -66,15 +64,14 @@ impl<F: CustomFloat> Simulation<F> {
     }
 
     fn render(&mut self) {
-        let mut frame = self.facade.as_mut().unwrap().draw();
+        let frame = self.facade.as_mut().unwrap().draw();
         let readable_facade = self.facade.as_ref().unwrap();
         let dimensions = frame.get_dimensions();
         let (width, height) = dimensions;
         let now = Instant::now();
         let time = now - self.start_instant.unwrap();
 
-        let image = self.environment.render(readable_facade,
-                                            dimensions,
+        let image = self.environment.render(dimensions,
                                             &time,
                                             &self.context);
 

@@ -3,19 +3,15 @@ pub mod entity;
 
 use std::time::Duration;
 use std::borrow::Cow;
+use std::marker::Reflect;
 use na::Cast;
 use na::BaseFloat;
-use glium::Surface as GliumSurface;
-use glium::texture::Texture2d;
-use glium::backend::Facade;
 use glium::texture::ClientFormat;
 use image;
 use palette::Blend;
 use palette::Rgb;
 use palette::Rgba;
-use glium::BlitTarget;
 use glium::texture::RawImage2d;
-use glium::uniforms::MagnifySamplerFilter;
 use scoped_threadpool::Pool;
 use simulation::SimulationContext;
 use universe::entity::Entity;
@@ -37,7 +33,7 @@ use util::AngleBetween;
 use util::Provider;
 
 pub trait Universe<F: CustomFloat>
-    where Self: Sync
+    where Self: Sync + Reflect + 'static
 {
     type P: CustomPoint<F, Self::V>;
     type V: CustomVector<F, Self::P>;
@@ -209,7 +205,6 @@ pub trait Environment<F: CustomFloat>: Sync {
                           screen_height: i32)
                           -> Rgb<F>;
     fn render(&self,
-              facade: &Facade,
               dimensions: (u32, u32),
               time: &Duration,
               context: &SimulationContext) -> RawImage2d<u8> {

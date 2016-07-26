@@ -104,7 +104,7 @@
     {
       "from": "Vacuum",
       "to": "Vacuum",
-      "transition": "transition_vacuum_vacuum"
+      "transition": "transition_3d_vacuum_vacuum"
     }
   ]
 }

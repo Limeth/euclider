@@ -215,7 +215,11 @@ impl Parser {
 
             deserializers.insert("texture_image",
                                  Box::new(|json: &JsonValue, parser: &Parser| {
-                                     let path = try!(json.as_str()
+                                     let mut members: Members = json.members();
+                                     let path = try!(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
+                                                        description: "Missing a path to the image as the first argument.".to_owned(),
+                                                        json: json.clone()
+                                                     })).as_str()
                                                      .ok_or_else(|| ParserError::InvalidStructure {
                                                          description: "The `texture_image` must be a string.".to_owned(),
                                                          json: json.clone(),

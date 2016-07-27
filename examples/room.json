@@ -44,7 +44,9 @@
                         ]
                       },
                       {
-                        "texture_image": "resources/universe_bright.jpg"
+                        "texture_image": [
+                          "resources/universe_bright.jpg"
+                        ]
                       }
                     ]
                   }
@@ -72,7 +74,9 @@
           ]
         },
         {
-          "texture_image": "./resources/universe_dim.jpg"
+          "texture_image": [
+            "./resources/universe_dim.jpg"
+          ]
         }
       ]
     }

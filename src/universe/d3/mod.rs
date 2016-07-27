@@ -16,7 +16,7 @@ use universe::Universe;
 use util::CustomFloat;
 use util::HasId;
 
-pub struct Universe3D<F: CustomFloat> {
+pub struct Universe3<F: CustomFloat> {
     pub camera: Box<Camera3<F>>,
     pub entities: Vec<Box<Entity3<F>>>,
     pub intersections: GeneralIntersectors<F, Point3<F>, Vector3<F>>,
@@ -24,8 +24,8 @@ pub struct Universe3D<F: CustomFloat> {
     pub background: Box<MappedTexture<F, Point3<F>, Vector3<F>>>,
 }
 
-impl<F: CustomFloat> Universe3D<F> {
-    pub fn default() -> Universe3D<F> {
+impl<F: CustomFloat> Universe3<F> {
+    pub fn default() -> Universe3<F> {
         let mut intersectors: GeneralIntersectors<F, Point3<F>, Vector3<F>> = HashMap::new();
 
         intersectors.insert((Vacuum::id_static(), VoidShape::id_static()),
@@ -45,7 +45,7 @@ impl<F: CustomFloat> Universe3D<F> {
         transitions.insert((Vacuum::id_static(), Vacuum::id_static()),
                            Box::new(transition_vacuum_vacuum));
 
-        Universe3D {
+        Universe3 {
             camera: Box::new(Camera3Impl::new()),
             entities: Vec::new(),
             intersections: intersectors,
@@ -55,7 +55,7 @@ impl<F: CustomFloat> Universe3D<F> {
     }
 }
 
-impl<F: CustomFloat> Universe<F> for Universe3D<F> {
+impl<F: CustomFloat> Universe<F> for Universe3<F> {
     type P = Point3<F>;
     type V = Vector3<F>;
 

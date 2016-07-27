@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use util::CustomFloat;
 use universe::Environment;
 use universe::Universe;
-use universe::d3::Universe3D;
+use universe::d3::Universe3;
 use json;
 use json::JsonValue;
 use json::iterators::Members;
@@ -366,7 +366,7 @@ impl Parser {
                                      Ok(result)
                                  }));
 
-            deserializers.insert("Universe3D",
+            deserializers.insert("Universe3",
                                  Box::new(|json: &JsonValue, parser: &Parser| {
                                      let object: &Object = if let JsonValue::Object(ref object) = *json {
                                          object
@@ -377,7 +377,7 @@ impl Parser {
                                          });
                                      };
 
-                                     let mut universe = Universe3D::<F>::default();
+                                     let mut universe = Universe3::<F>::default();
 
                                      {
                                          let mut entities = universe.entities_mut();

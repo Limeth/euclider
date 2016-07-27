@@ -1,5 +1,5 @@
 {
-  "Universe3D": {
+  "Universe3": {
     "entities": [
       {
         "Entity3Impl::new": [

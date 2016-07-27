@@ -566,13 +566,17 @@ pub trait JsonFloat {
 }
 
 impl JsonFloat for f32 {
-    fn float_from_json(val: &JsonValue) -> Option<Self> where Self: Sized {
+    fn float_from_json(val: &JsonValue) -> Option<Self>
+        where Self: Sized
+    {
         val.as_f32()
     }
 }
 
 impl JsonFloat for f64 {
-    fn float_from_json(val: &JsonValue) -> Option<Self> where Self: Sized {
+    fn float_from_json(val: &JsonValue) -> Option<Self>
+        where Self: Sized
+    {
         val.as_f64()
     }
 }

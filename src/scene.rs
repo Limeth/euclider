@@ -42,7 +42,7 @@ pub enum ParserError {
     },
     MissingType {
         type_str: String,
-    }
+    },
 }
 
 pub trait Deserializable: mopa::Any {
@@ -56,9 +56,7 @@ pub struct Parser {
 
 impl Parser {
     pub fn empty() -> Self {
-        Parser {
-            deserializers: HashMap::new(),
-        }
+        Parser { deserializers: HashMap::new() }
     }
 
     #[allow(unused_variables, type_complexity)]
@@ -104,48 +102,46 @@ impl Parser {
 
             deserializers.insert("Void::new_with_vacuum",
                                  Box::new(|json: &JsonValue, parser: &Parser| {
-                                     let result: Box<Box<Entity<F, Point3<F>, Vector3<F>>>>
-                                         = Box::new(Box::new(Void::new_with_vacuum()));
+                                     let result: Box<Box<Entity<F, Point3<F>, Vector3<F>>>> =
+                                         Box::new(Box::new(Void::new_with_vacuum()));
 
                                      Ok(result)
                                  }));
 
             deserializers.insert("Entity3Impl::new",
                                  Box::new(|json: &JsonValue, parser: &Parser| {
-                                     let mut members: Members = json.members();
+                let mut members: Members = json.members();
 
-                                     let shape: Box<Box<Shape<F, Point3<F>, Vector3<F>>>>
-                                         = try!(parser.deserialize_constructor(
-                                                try!(members.next()
-                                                     .ok_or_else(|| ParserError::InvalidStructure {
-                                                         description: "Missing the `Shape` parameter.".to_owned(),
-                                                         json: json.clone(),
-                                                     }))
-                                           ));
+                let shape: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
+                    try!(parser.deserialize_constructor(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing the `Shape` parameter.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
 
-                                     let material: Box<Box<Material<F, Point3<F>, Vector3<F>>>>
-                                         = try!(parser.deserialize_constructor(
-                                                try!(members.next()
-                                                     .ok_or_else(|| ParserError::InvalidStructure {
-                                                         description: "Missing the `Material` parameter.".to_owned(),
-                                                         json: json.clone(),
-                                                     }))
-                                           ));
+                let material: Box<Box<Material<F, Point3<F>, Vector3<F>>>> =
+                    try!(parser.deserialize_constructor(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing the `Material` parameter.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
 
-                                     let surface: Option<Box<Surface<F, Point3<F>, Vector3<F>>>>
-                                         = if let Some(surface_json) = members.next() {
-                                         Some(*try!(parser.deserialize_constructor(
-                                             surface_json
-                                         )))
-                                     } else {
-                                         None
-                                     };
+                let surface: Option<Box<Surface<F, Point3<F>, Vector3<F>>>> =
+                    if let Some(surface_json) = members.next() {
+                        Some(*try!(parser.deserialize_constructor(surface_json)))
+                    } else {
+                        None
+                    };
 
-                                     let result: Box<Box<Entity<F, Point3<F>, Vector3<F>>>>
-                                         = Box::new(Box::new(Entity3Impl::new(*shape, *material, surface)));
+                let result: Box<Box<Entity<F, Point3<F>, Vector3<F>>>> =
+                    Box::new(Box::new(Entity3Impl::new(*shape, *material, surface)));
 
-                                     Ok(result)
-                                 }));
+                Ok(result)
+            }));
 
             // Shapes
 
@@ -156,42 +152,48 @@ impl Parser {
 
             deserializers.insert("Sphere3::new",
                                  Box::new(|json: &JsonValue, parser: &Parser| {
-                                     let mut members: Members = json.members();
+                let mut members: Members = json.members();
 
-                                     let center: Box<Point3<F>> = try!(parser.deserialize_constructor(try!(members.next()
-                                                          .ok_or_else(|| ParserError::InvalidStructure {
-                                                              description: "Missing the `radius` argument.".to_owned(),
-                                                              json: json.clone(),
-                                                          }))));
-                                     let radius: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
-                                                          .ok_or_else(|| ParserError::InvalidStructure {
-                                                              description: "Missing the `radius` argument.".to_owned(),
-                                                              json: json.clone(),
-                                                          }))).ok_or_else(|| ParserError::InvalidStructure {
-                                         description: "Could not parse the `radius`.".to_owned(),
-                                         json: json.clone(),
-                                     }));
+                let center: Box<Point3<F>> = try!(parser.deserialize_constructor(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing the `radius` argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
+                let radius: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing the `radius` argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        })))
+                    .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the `radius`.".to_owned(),
+                            json: json.clone(),
+                        }
+                    }));
 
-                                     let result: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> = Box::new(Box::new(Sphere::<F, Point3<F>, Vector3<F>>::new(
-                                         *center, radius
-                                     )));
+                let result: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
+                    Box::new(Box::new(Sphere::<F, Point3<F>, Vector3<F>>::new(*center, radius)));
 
-                                     Ok(result)
-                                 }));
+                Ok(result)
+            }));
 
             // Materials
 
             deserializers.insert("Vacuum",
                                  Box::new(|json: &JsonValue, parser: &Parser| {
-                                     let result: Box<Box<Material<F, Point3<F>, Vector3<F>>>>
-                                         = Box::new(Box::new(Vacuum::new()));
+                                     let result: Box<Box<Material<F, Point3<F>, Vector3<F>>>> =
+                                         Box::new(Box::new(Vacuum::new()));
 
                                      Ok(result)
                                  }));
             deserializers.insert("Vacuum::new",
                                  Box::new(|json: &JsonValue, parser: &Parser| {
-                                     let result: Box<Box<Material<F, Point3<F>, Vector3<F>>>>
-                                         = Box::new(Box::new(Vacuum::new()));
+                                     let result: Box<Box<Material<F, Point3<F>, Vector3<F>>>> =
+                                         Box::new(Box::new(Vacuum::new()));
 
                                      Ok(result)
                                  }));
@@ -200,39 +202,41 @@ impl Parser {
 
             deserializers.insert("uv_sphere",
                                  Box::new(|json: &JsonValue, parser: &Parser| {
-                                     let mut members: Members = json.members();
-                                     let center = try!(parser.deserialize_constructor::<Point3<F>>(
-                                                    try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
-                                                        description: "Center location not specified.".to_owned(),
-                                                        json: json.clone()
-                                                    }))
-                                                ));
+                let mut members: Members = json.members();
+                let center = try!(parser.deserialize_constructor::<Point3<F>>(try!(members.next()
+                    .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Center location not specified.".to_owned(),
+                            json: json.clone(),
+                        }
+                    }))));
 
-                                     Ok(Box::new(
-                                             uv_sphere(*center)
-                                     ))
-                                 }));
+                Ok(Box::new(uv_sphere(*center)))
+            }));
 
             deserializers.insert("texture_image",
                                  Box::new(|json: &JsonValue, parser: &Parser| {
-                                     let mut members: Members = json.members();
-                                     let path = try!(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
-                                                        description: "Missing a path to the image as the first argument.".to_owned(),
-                                                        json: json.clone()
-                                                     })).as_str()
-                                                     .ok_or_else(|| ParserError::InvalidStructure {
-                                                         description: "The `texture_image` must be a string.".to_owned(),
-                                                         json: json.clone(),
-                                                     }));
+                let mut members: Members = json.members();
+                let path = try!(try!(members.next().ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Missing a path to the image as the first argument."
+                                .to_owned(),
+                            json: json.clone(),
+                        }
+                    }))
+                    .as_str()
+                    .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "The `texture_image` must be a string.".to_owned(),
+                            json: json.clone(),
+                        }
+                    }));
 
-                                     let result: Box<Box<Texture<F>>> = Box::new(
-                                         texture_image(
-                                             image::open(path).expect(&format!("Could not find texture `{}`.", path))
-                                         )
-                                     );
+                let result: Box<Box<Texture<F>>> = Box::new(texture_image(image::open(path)
+                    .expect(&format!("Could not find texture `{}`.", path))));
 
-                                     Ok(result)
-                                 }));
+                Ok(result)
+            }));
 
             deserializers.insert("MappedTextureImpl3::new",
                                  Box::new(|json: &JsonValue, parser: &Parser| {
@@ -305,22 +309,26 @@ impl Parser {
 
             deserializers.insert("reflection_ratio_uniform",
                                  Box::new(|json: &JsonValue, parser: &Parser| {
-                                     let mut members: Members = json.members();
-                                     let ratio: F = try!(<F as JsonFloat>::float_from_json(
-                                                    try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
-                                                        description: "Missing a `UVFn` as the first argument.".to_owned(),
-                                                        json: json.clone(),
-                                                    })
-                                                )).ok_or_else(|| ParserError::InvalidStructure {
-                                                    description: "Could not parse the radius.".to_owned(),
-                                                    json: json.clone(),
-                                                }));
+                let mut members: Members = json.members();
+                let ratio: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a `UVFn` as the first argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        })))
+                    .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the radius.".to_owned(),
+                            json: json.clone(),
+                        }
+                    }));
 
-                                     let result: Box<Box<ReflectionRatioProvider<F, Point3<F>, Vector3<F>>>>
-                                         = Box::new(reflection_ratio_uniform(ratio));
+                let result: Box<Box<ReflectionRatioProvider<F, Point3<F>, Vector3<F>>>> =
+                    Box::new(reflection_ratio_uniform(ratio));
 
-                                     Ok(result)
-                                 }));
+                Ok(result)
+            }));
 
             deserializers.insert("reflection_direction_specular",
                                  Box::new(|json: &JsonValue, parser: &Parser| {
@@ -351,20 +359,20 @@ impl Parser {
 
             deserializers.insert("Environment",
                                  Box::new(|json: &JsonValue, parser: &Parser| {
-                                     let object: &Object = if let JsonValue::Object(ref object) = *json {
-                                         object
-                                     } else {
-                                         return Err(ParserError::InvalidStructure {
-                                             description: "The JSON value must be an object.".to_owned(),
-                                             json: json.clone(),
-                                         });
-                                     };
+                let object: &Object = if let JsonValue::Object(ref object) = *json {
+                    object
+                } else {
+                    return Err(ParserError::InvalidStructure {
+                        description: "The JSON value must be an object.".to_owned(),
+                        json: json.clone(),
+                    });
+                };
 
-                                     let result: Box<Box<Environment<F>>> =
-                                         try!(parser.deserialize_constructor::<Box<Environment<F>>>(json));
+                let result: Box<Box<Environment<F>>> =
+                    try!(parser.deserialize_constructor::<Box<Environment<F>>>(json));
 
-                                     Ok(result)
-                                 }));
+                Ok(result)
+            }));
 
             deserializers.insert("Universe3",
                                  Box::new(|json: &JsonValue, parser: &Parser| {
@@ -429,9 +437,7 @@ impl Parser {
         if option.is_some() {
             Ok(option.unwrap().as_ref())
         } else {
-            Err(ParserError::NoDeserializer {
-                key: key.to_owned(),
-            })
+            Err(ParserError::NoDeserializer { key: key.to_owned() })
         }
     }
 
@@ -441,11 +447,13 @@ impl Parser {
 
         match result {
             Ok(value) => Ok(value),
-            Err(original_value) => Err(ParserError::TypeMismatch {
-                key: key.to_owned(),
-                value: original_value,
-                json: json.clone(),
-            })
+            Err(original_value) => {
+                Err(ParserError::TypeMismatch {
+                    key: key.to_owned(),
+                    value: original_value,
+                    json: json.clone(),
+                })
+            }
         }
     }
 
@@ -457,7 +465,9 @@ impl Parser {
             self.deserialize::<T>(constructor_key, constructor_value)
         } else {
             Err(ParserError::InvalidStructure {
-                description: "A constructor must be an object containing a single key pointing to either an object or an array.".to_owned(),
+                description: "A constructor must be an object containing a single key pointing to \
+                              either an object or an array."
+                    .to_owned(),
                 json: json.clone(),
             })
         }
@@ -468,10 +478,12 @@ impl Parser {
 
         match value {
             Ok(value) => self.deserialize::<T>(key, &value),
-            Err(err) => Err(ParserError::SyntaxError {
-                key: key.to_owned(),
-                error: err,
-            })
+            Err(err) => {
+                Err(ParserError::SyntaxError {
+                    key: key.to_owned(),
+                    error: err,
+                })
+            }
         }
     }
 }

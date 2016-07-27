@@ -207,7 +207,8 @@ pub trait Environment<F: CustomFloat>: Sync {
     fn render(&self,
               dimensions: (u32, u32),
               time: &Duration,
-              context: &SimulationContext) -> RawImage2d<u8> {
+              context: &SimulationContext)
+              -> RawImage2d<u8> {
         let (width, height) = dimensions;
         const COLOR_DIM: usize = 3;
         let buffer_width = width / context.resolution;
@@ -265,14 +266,14 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, U: Universe<F,
         let point = camera.get_ray_point(screen_x, screen_y, screen_width, screen_height);
         let vector = camera.get_ray_vector(screen_x, screen_y, screen_width, screen_height);
 
-        // if (screen_x - screen_width / 2 == 0 && screen_y - screen_height / 2 == 0)
-        //     || (screen_x == 0 && screen_y == 0) {
-        //     use na::Point3;
-        //     use na::Vector3;
-        //     let point = unsafe { &*(&point as *const _ as *const Point3<F>) };
-        //     let vector = unsafe { &*(&vector as *const _ as *const Vector3<F>) };
-        //     println!("{}; {}:   <{}; {}; {}>", screen_x, screen_y, vector.x, vector.y, vector.z);
-        // }
+// if (screen_x - screen_width / 2 == 0 && screen_y - screen_height / 2 == 0)
+//     || (screen_x == 0 && screen_y == 0) {
+//     use na::Point3;
+//     use na::Vector3;
+//     let point = unsafe { &*(&point as *const _ as *const Point3<F>) };
+//     let vector = unsafe { &*(&vector as *const _ as *const Vector3<F>) };
+//     println!("{}; {}:   <{}; {}; {}>", screen_x, screen_y, vector.x, vector.y, vector.z);
+// }
 
         match self.trace_unknown(time, max_depth, &point, &vector) {
             Some(color) => color,

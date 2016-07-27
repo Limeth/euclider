@@ -71,9 +71,7 @@ impl<F: CustomFloat> Simulation<F> {
         let now = Instant::now();
         let time = now - self.start_instant.unwrap();
 
-        let image = self.environment.render(dimensions,
-                                            &time,
-                                            &self.context);
+        let image = self.environment.render(dimensions, &time, &self.context);
 
         let texture = Texture2d::new(readable_facade, image).unwrap();
         let image_surface = texture.as_surface();

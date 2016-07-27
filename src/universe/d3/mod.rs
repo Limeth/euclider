@@ -38,7 +38,7 @@ impl<F: CustomFloat> Universe3<F> {
                             Box::new(HalfSpace3::<F>::intersect_in_vacuum));
         intersectors.insert((Vacuum::id_static(),
                      ComposableShape::<F, Point3<F>, Vector3<F>>::id_static()),
-                     Box::new(ComposableShape::<F, Point3<F>, Vector3<F>>::intersect_in_vacuum));
+                    Box::new(ComposableShape::<F, Point3<F>, Vector3<F>>::intersect_in_vacuum));
 
         let mut transitions: TransitionHandlers<F, Point3<F>, Vector3<F>> = HashMap::new();
 

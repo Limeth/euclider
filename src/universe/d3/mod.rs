@@ -4,31 +4,52 @@ use std::collections::HashMap;
 use na::Point3;
 use na::Vector3;
 use universe::entity::Camera;
-use universe::entity::shape::GeneralIntersectors;
-use universe::entity::material::TransitionHandlers;
 use universe::entity::surface::MappedTexture;
 use universe::entity::surface::MappedTextureTransparent;
 use universe::d3::entity::camera::Camera3Impl;
 use universe::d3::entity::Camera3;
 use universe::d3::entity::Entity3;
+use universe::entity::material::*;
+use universe::entity::shape::*;
+use universe::d3::entity::shape::*;
 use universe::Universe;
 use util::CustomFloat;
+use util::HasId;
 
 pub struct Universe3D<F: CustomFloat> {
-    camera: Box<Camera3<F>>,
-    entities: Vec<Box<Entity3<F>>>,
-    intersections: GeneralIntersectors<F, Point3<F>, Vector3<F>>,
-    transitions: TransitionHandlers<F, Point3<F>, Vector3<F>>,
-    background: Box<MappedTexture<F, Point3<F>, Vector3<F>>>,
+    pub camera: Box<Camera3<F>>,
+    pub entities: Vec<Box<Entity3<F>>>,
+    pub intersections: GeneralIntersectors<F, Point3<F>, Vector3<F>>,
+    pub transitions: TransitionHandlers<F, Point3<F>, Vector3<F>>,
+    pub background: Box<MappedTexture<F, Point3<F>, Vector3<F>>>,
 }
 
 impl<F: CustomFloat> Universe3D<F> {
-    pub fn new() -> Universe3D<F> {
+    pub fn default() -> Universe3D<F> {
+        let mut intersectors: GeneralIntersectors<F, Point3<F>, Vector3<F>> = HashMap::new();
+
+        intersectors.insert((Vacuum::id_static(), VoidShape::id_static()),
+                            Box::new(intersect_void));
+        intersectors.insert((Vacuum::id_static(), Sphere::<F, Point3<F>, Vector3<F>>::id_static()),
+                            Box::new(intersect_sphere3_in_vacuum));
+        intersectors.insert((Vacuum::id_static(), Plane3::<F>::id_static()),
+                            Box::new(Plane3::<F>::intersect_in_vacuum));
+        intersectors.insert((Vacuum::id_static(), HalfSpace3::<F>::id_static()),
+                            Box::new(HalfSpace3::<F>::intersect_in_vacuum));
+        intersectors.insert((Vacuum::id_static(),
+                     ComposableShape::<F, Point3<F>, Vector3<F>>::id_static()),
+                     Box::new(ComposableShape::<F, Point3<F>, Vector3<F>>::intersect_in_vacuum));
+
+        let mut transitions: TransitionHandlers<F, Point3<F>, Vector3<F>> = HashMap::new();
+
+        transitions.insert((Vacuum::id_static(), Vacuum::id_static()),
+                           Box::new(transition_vacuum_vacuum));
+
         Universe3D {
             camera: Box::new(Camera3Impl::new()),
             entities: Vec::new(),
-            intersections: HashMap::new(),
-            transitions: HashMap::new(),
+            intersections: intersectors,
+            transitions: transitions,
             background: Box::new(MappedTextureTransparent::new()),
         }
     }

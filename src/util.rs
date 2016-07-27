@@ -64,6 +64,7 @@ use na::Vector3;
 use core::iter::FromIterator;
 use core::marker::Reflect;
 use core::ops::DerefMut;
+use json::JsonValue;
 
 /// Ties a combination of ordered `TypeId`s to a value
 pub type TypePairMap<V> = HashMap<(TypeId, TypeId), V>;
@@ -536,6 +537,7 @@ pub trait CustomFloat:
     Zero +
     NumCast +
     ToPrimitive +
+    JsonFloat +
     Send +
     Sync +
     'static {}
@@ -556,5 +558,21 @@ impl Consts for f64 {
 impl Consts for f32 {
     fn epsilon() -> Self {
         std::f32::EPSILON
+    }
+}
+
+pub trait JsonFloat {
+    fn float_from_json(val: &JsonValue) -> Option<Self> where Self: Sized;
+}
+
+impl JsonFloat for f32 {
+    fn float_from_json(val: &JsonValue) -> Option<Self> where Self: Sized {
+        val.as_f32()
+    }
+}
+
+impl JsonFloat for f64 {
+    fn float_from_json(val: &JsonValue) -> Option<Self> where Self: Sized {
+        val.as_f64()
     }
 }

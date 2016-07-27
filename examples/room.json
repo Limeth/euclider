@@ -56,7 +56,7 @@
     }
   ],
   "background": {
-    "MappedTextureImpl::new": [
+    "MappedTextureImpl3::new": [
       {
         "uv_sphere": [
           {
@@ -72,39 +72,5 @@
         "texture_image": "./resources/universe_dim.jpg"
       }
     ]
-  },
-  "intersectors": [
-    {
-      "material": "Vacuum",
-      "shape": "VoidShape",
-      "intersector": "intersect_void"
-    },
-    {
-      "material": "Vacuum",
-      "shape": "Sphere3",
-      "intersector": "intersect_sphere3_in_vacuum"
-    },
-    {
-      "material": "Vacuum",
-      "shape": "Plane3",
-      "intersector": "Plane3::intersect_in_vacuum"
-    },
-    {
-      "material": "Vacuum",
-      "shape": "HalfSpace3",
-      "intersector": "HalfSpace3::intersect_in_vacuum"
-    },
-    {
-      "material": "Vacuum",
-      "shape": "ComposableShape",
-      "intersector": "ComposableShape::intersect_in_vacuum"
-    }
-  ],
-  "transitions": [
-    {
-      "from": "Vacuum",
-      "to": "Vacuum",
-      "transition": "transition_3d_vacuum_vacuum"
-    }
-  ]
+  }
 }

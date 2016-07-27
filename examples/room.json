@@ -4,12 +4,12 @@
       {
         "Entity3Impl::new": [
           {
-            "Sphere::new": [
+            "Sphere3::new": [
               {
                 "Point3::new": [
                   5,
-                  1.5,
-                  5
+                  0,
+                  0
                 ]
               },
               3
@@ -31,13 +31,13 @@
               "surface_color": {
                 "surface_color_texture": [
                   {
-                    "MappedTextureImpl::new": [
+                    "MappedTextureImpl3::new": [
                       {
                         "uv_sphere": [
                           {
                             "Point3::new": [
-                              2,
-                              10.5,
+                              5,
+                              0,
                               0
                             ]
                           }

@@ -1,76 +1,80 @@
 {
-  "environment": "Universe3D",
-  "entities": [
-    {
-      "Entity3Impl::new": [
-        {
-          "Sphere::new": [
-            {
-              "Point3::new": [
-                5,
-                1.5,
-                5
-              ]
-            },
-            3
-          ]
-        },
-        {
-          "Vacuum::new": []
-        },
-        {
-          "ComposableSurface": {
-            "reflection_ratio": {
-              "reflection_ratio_uniform": [
-                0.5
-              ]
-            },
-            "reflection_direction": {
-              "reflection_direction_specular": []
-            },
-            "surface_color": {
-              "surface_color_texture": [
-                {
-                  "MappedTextureImpl::new": [
-                    {
-                      "uv_sphere": [
-                        {
-                          "Point3::new": [
-                            2,
-                            10.5,
-                            0
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "texture_image": "resources/universe_bright.jpg"
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        }
-      ]
-    }
-  ],
-  "background": {
-    "MappedTextureImpl3::new": [
+  "Universe3D": {
+    "entities": [
       {
-        "uv_sphere": [
+        "Entity3Impl::new": [
           {
-            "Point3::new": [
-              0,
-              0,
-              0
+            "Sphere::new": [
+              {
+                "Point3::new": [
+                  5,
+                  1.5,
+                  5
+                ]
+              },
+              3
             ]
+          },
+          {
+            "Vacuum::new": []
+          },
+          {
+            "ComposableSurface": {
+              "reflection_ratio": {
+                "reflection_ratio_uniform": [
+                  0.5
+                ]
+              },
+              "reflection_direction": {
+                "reflection_direction_specular": []
+              },
+              "surface_color": {
+                "surface_color_texture": [
+                  {
+                    "MappedTextureImpl::new": [
+                      {
+                        "uv_sphere": [
+                          {
+                            "Point3::new": [
+                              2,
+                              10.5,
+                              0
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "texture_image": "resources/universe_bright.jpg"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
           }
         ]
       },
       {
-        "texture_image": "./resources/universe_dim.jpg"
+        "Void::new_with_vacuum": []
       }
-    ]
+    ],
+    "background": {
+      "MappedTextureImpl3::new": [
+        {
+          "uv_sphere": [
+            {
+              "Point3::new": [
+                0,
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        {
+          "texture_image": "./resources/universe_dim.jpg"
+        }
+      ]
+    }
   }
 }

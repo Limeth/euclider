@@ -182,10 +182,8 @@ impl Parser {
                                          });
                                      };
 
-                                     let environment = object.get("environment").unwrap().as_str().unwrap();
-
                                      let result: Box<Box<Environment<F>>> =
-                                         try!(parser.deserialize::<Box<Environment<F>>>(environment, json));
+                                         try!(parser.deserialize_constructor::<Box<Environment<F>>>(json));
 
                                      Ok(result)
                                  }));

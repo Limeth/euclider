@@ -185,6 +185,16 @@ pub fn surface_color_illumination_directional<F: CustomFloat,
     })
 }
 
+pub fn surface_color_uniform<F: CustomFloat,
+                             P: CustomPoint<F, V>,
+                             V: CustomVector<F, P>>
+    (color: Rgba<F>)
+     -> Box<SurfaceColorProvider<F, P, V>> {
+    Box::new(move |context: &TracingContext<F, P, V>| {
+        color
+    })
+}
+
 pub type UVFn<F, P> = (Fn(&P) -> Point2<F>) + Send + Sync;
 pub type Texture<F> = (Fn(&Point2<F>) -> Rgba<F>) + Send + Sync;
 

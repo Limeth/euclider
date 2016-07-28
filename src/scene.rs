@@ -1,3 +1,4 @@
+use palette::Rgba;
 use std::any::Any;
 use std::collections::HashMap;
 use util::CustomFloat;
@@ -96,6 +97,78 @@ impl Parser {
                                              )
                                          )
                                      )
+                                 }));
+
+            deserializers.insert("Rgba::new",
+                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                     let mut members: Members = json.members();
+
+                                     Ok(Box::new(Rgba::new(
+                                         try!(<F as JsonFloat>::float_from_json(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Missing the red component of an `Rgba` color.".to_owned(),
+                                             json: json.clone(),
+                                         }))).ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Could not parse the red component of an `Rgba` color.".to_owned(),
+                                             json: json.clone(),
+                                         })),
+                                         try!(<F as JsonFloat>::float_from_json(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Missing the green component of an `Rgba` color.".to_owned(),
+                                             json: json.clone(),
+                                         }))).ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Could not parse the green component of an `Rgba` color.".to_owned(),
+                                             json: json.clone(),
+                                         })),
+                                         try!(<F as JsonFloat>::float_from_json(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Missing the blue component of an `Rgba` color.".to_owned(),
+                                             json: json.clone(),
+                                         }))).ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Could not parse the blue component of an `Rgba` color.".to_owned(),
+                                             json: json.clone(),
+                                         })),
+                                         try!(<F as JsonFloat>::float_from_json(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Missing the alpha component of an `Rgba` color.".to_owned(),
+                                             json: json.clone(),
+                                         }))).ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Could not parse the alpha component of an `Rgba` color.".to_owned(),
+                                             json: json.clone(),
+                                         })),
+                                     )))
+                                 }));
+
+            deserializers.insert("Rgba::new_u8",
+                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                     let mut members: Members = json.members();
+
+                                     Ok(Box::new(Rgba::<F>::new_u8(
+                                         try!(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Missing the red component of an `Rgba` color.".to_owned(),
+                                             json: json.clone(),
+                                         })).as_u8().ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Could not parse the red component of an `Rgba` color.".to_owned(),
+                                             json: json.clone(),
+                                         })),
+                                         try!(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Missing the green component of an `Rgba` color.".to_owned(),
+                                             json: json.clone(),
+                                         })).as_u8().ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Could not parse the green component of an `Rgba` color.".to_owned(),
+                                             json: json.clone(),
+                                         })),
+                                         try!(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Missing the blue component of an `Rgba` color.".to_owned(),
+                                             json: json.clone(),
+                                         })).as_u8().ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Could not parse the blue component of an `Rgba` color.".to_owned(),
+                                             json: json.clone(),
+                                         })),
+                                         try!(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Missing the alpha component of an `Rgba` color.".to_owned(),
+                                             json: json.clone(),
+                                         })).as_u8().ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Could not parse the alpha component of an `Rgba` color.".to_owned(),
+                                             json: json.clone(),
+                                         }))
+                                     )))
                                  }));
 
             // Entities
@@ -334,6 +407,23 @@ impl Parser {
                                  Box::new(|json: &JsonValue, parser: &Parser| {
                                      let result: Box<Box<ReflectionDirectionProvider<F, Point3<F>, Vector3<F>>>>
                                          = Box::new(reflection_direction_specular());
+
+                                     Ok(result)
+                                 }));
+
+            deserializers.insert("surface_color_uniform",
+                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                     let mut members: Members = json.members();
+                                     let color: Box<Rgba<F>>
+                                         = try!(parser.deserialize_constructor::<Rgba<F>>(
+                                                try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
+                                                    description: "Missing a `Rgba` as the first argument.".to_owned(),
+                                                    json: json.clone(),
+                                                })
+                                            )));
+
+                                     let result: Box<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>>
+                                         = Box::new(surface_color_uniform(*color));
 
                                      Ok(result)
                                  }));

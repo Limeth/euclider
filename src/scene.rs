@@ -380,19 +380,104 @@ impl Parser {
                                      Ok(result)
                                  }));
 
+            deserializers.insert("surface_color_perlin_hue_seed",
+                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                let mut members: Members = json.members();
+                let seed: u32 = try!(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a `seed` as the first argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))
+                    .as_u32().ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the seed.".to_owned(),
+                            json: json.clone(),
+                        }
+                    }));
+                let size: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a `size` as the second argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        })))
+                    .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the size.".to_owned(),
+                            json: json.clone(),
+                        }
+                    }));
+                let speed: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a `speed` as the third argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        })))
+                    .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the speed.".to_owned(),
+                            json: json.clone(),
+                        }
+                    }));
+
+                let result: Box<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>> =
+                    Box::new(surface_color_perlin_hue_seed(seed, size, speed));
+
+                Ok(result)
+            }));
+
+            deserializers.insert("surface_color_perlin_hue_random",
+                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                let mut members: Members = json.members();
+                let size: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a `size` as the second argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        })))
+                    .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the size.".to_owned(),
+                            json: json.clone(),
+                        }
+                    }));
+                let speed: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a `speed` as the third argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        })))
+                    .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the speed.".to_owned(),
+                            json: json.clone(),
+                        }
+                    }));
+
+                let result: Box<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>> =
+                    Box::new(surface_color_perlin_hue_random(size, speed));
+
+                Ok(result)
+            }));
+
             deserializers.insert("reflection_ratio_uniform",
                                  Box::new(|json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
                 let ratio: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
                         .ok_or_else(|| {
                             ParserError::InvalidStructure {
-                                description: "Missing a `UVFn` as the first argument.".to_owned(),
+                                description: "Missing a `ratio` as the first argument.".to_owned(),
                                 json: json.clone(),
                             }
                         })))
                     .ok_or_else(|| {
                         ParserError::InvalidStructure {
-                            description: "Could not parse the radius.".to_owned(),
+                            description: "Could not parse the ratio.".to_owned(),
                             json: json.clone(),
                         }
                     }));

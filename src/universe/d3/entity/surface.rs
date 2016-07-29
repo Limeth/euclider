@@ -16,8 +16,6 @@ use palette::Rgba;
 use palette::Hsv;
 use palette::RgbHue;
 use util::CustomFloat;
-use util::CustomPoint;
-use util::CustomVector;
 use util::HasId;
 use universe::entity::surface::Surface;
 use universe::entity::surface::UVFn;

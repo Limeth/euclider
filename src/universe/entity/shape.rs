@@ -19,6 +19,7 @@ use util::CustomVector;
 use util::HasId;
 use util::Provider;
 use util::TypePairMap;
+use mopa;
 use na;
 
 /// Ties a `Material` the ray is passing through and a `Shape` the ray is intersecting to a
@@ -48,10 +49,13 @@ pub type Intersector<'a, F, P, V> = &'a Fn(&Material<F, P, V>, &Shape<F, P, V>)
 pub type Tracer<'a, F, P, V> = &'a Fn(&Duration, &Traceable<F, P, V>, &P, &V) -> Rgba<F>;
 
 pub trait Shape<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
-    where Self: HasId + Debug + Display
+    where Self: HasId + Debug + Display + mopa::Any
 {
     fn is_point_inside(&self, point: &P) -> bool;
 }
+
+// Make sure the type constraints are spaced, so no bitshift operators occur.
+mopafy!(Shape< F: CustomFloat, P: CustomPoint< F, V >, V: CustomVector< F, P > >);
 
 #[derive(Debug, Copy, Clone)]
 pub struct Intersection<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {

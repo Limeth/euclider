@@ -9,12 +9,13 @@ use json;
 use json::JsonValue;
 use json::iterators::Members;
 use json::object::Object;
-use mopa;
 use universe::entity::*;
 use universe::entity::material::*;
 use universe::entity::shape::*;
 use universe::entity::surface::*;
 use universe::d3::entity::Entity3Impl;
+use universe::d3::entity::shape::Plane3;
+use universe::d3::entity::shape::HalfSpace3;
 use universe::d3::entity::surface::*;
 use na::Point3;
 use na::Vector3;
@@ -44,11 +45,6 @@ pub enum ParserError {
     MissingType {
         type_str: String,
     },
-}
-
-pub trait Deserializable: mopa::Any {
-    fn name() -> &'static str;
-    fn deserialize(json: &JsonValue, parser: &Parser) -> Box<Self>;
 }
 
 pub struct Parser {
@@ -250,6 +246,187 @@ impl Parser {
 
                 let result: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
                     Box::new(Box::new(Sphere::<F, Point3<F>, Vector3<F>>::new(*center, radius)));
+
+                Ok(result)
+            }));
+
+            deserializers.insert("Plane3::new",
+                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                let mut members: Members = json.members();
+
+                let normal: Box<Vector3<F>> = try!(parser.deserialize_constructor(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing `Vector3` as the first argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
+                 let constant: F = try!(<F as JsonFloat>::float_from_json(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Missing a floating point number as the second argument.".to_owned(),
+                                             json: json.clone(),
+                                         }))).ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Could not parse the constant (second argument).".to_owned(),
+                                             json: json.clone(),
+                                         }));
+
+                let result: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
+                    Box::new(Box::new(Plane3::new(&normal, constant)));
+
+                Ok(result)
+            }));
+
+            deserializers.insert("Plane3::new_with_point",
+                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                let mut members: Members = json.members();
+
+                let normal: Box<Vector3<F>> = try!(parser.deserialize_constructor(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing `Vector3` as the first argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
+                let point: Box<Point3<F>> = try!(parser.deserialize_constructor(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing `Point3` as the second argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
+
+                let result: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
+                    Box::new(Box::new(Plane3::new_with_point(&normal, &point)));
+
+                Ok(result)
+            }));
+
+            deserializers.insert("Plane3::new_with_vectors",
+                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                let mut members: Members = json.members();
+
+                let vector_a: Box<Vector3<F>> = try!(parser.deserialize_constructor(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing `Vector3` as the first argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
+                let vector_b: Box<Vector3<F>> = try!(parser.deserialize_constructor(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing `Vector3` as the second argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
+                let point: Box<Point3<F>> = try!(parser.deserialize_constructor(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing `Point3` as the third argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
+
+                let result: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
+                    Box::new(Box::new(Plane3::new_with_vectors(&vector_a, &vector_b, &point)));
+
+                Ok(result)
+            }));
+
+            deserializers.insert("Plane3::new_with_equation",
+                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                let mut members: Members = json.members();
+
+                 let a: F = try!(<F as JsonFloat>::float_from_json(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Missing a floating point number as the first argument.".to_owned(),
+                                             json: json.clone(),
+                                         }))).ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Could not parse the first argument.".to_owned(),
+                                             json: json.clone(),
+                                         }));
+                 let b: F = try!(<F as JsonFloat>::float_from_json(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Missing a floating point number as the second argument.".to_owned(),
+                                             json: json.clone(),
+                                         }))).ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Could not parse the second argument.".to_owned(),
+                                             json: json.clone(),
+                                         }));
+                 let c: F = try!(<F as JsonFloat>::float_from_json(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Missing a floating point number as the third argument.".to_owned(),
+                                             json: json.clone(),
+                                         }))).ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Could not parse the third argument.".to_owned(),
+                                             json: json.clone(),
+                                         }));
+                 let d: F = try!(<F as JsonFloat>::float_from_json(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Missing a floating point number as the fourth argument.".to_owned(),
+                                             json: json.clone(),
+                                         }))).ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Could not parse the fourth argument.".to_owned(),
+                                             json: json.clone(),
+                                         }));
+
+                let result: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
+                    Box::new(Box::new(Plane3::new_with_equation(a, b, c, d)));
+
+                Ok(result)
+            }));
+
+            deserializers.insert("HalfSpace3::new",
+                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                let mut members: Members = json.members();
+
+                let plane: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> = try!(parser.deserialize_constructor(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing `Plane3` as the first argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
+                let plane: Plane3<F> = *try!(<Shape<F, Point3<F>, Vector3<F>>>::downcast(*plane)
+                    .or_else(|err| Err(ParserError::InvalidStructure {
+                        description: "Invalid type, expected a `Plane3`.".to_owned(),
+                        json: json.clone(),
+                    })));
+                let signum: F = try!(<F as JsonFloat>::float_from_json(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Missing a floating point number as the second argument.".to_owned(),
+                                             json: json.clone(),
+                                         }))).ok_or_else(|| ParserError::InvalidStructure {
+                                             description: "Could not parse the sign (second argument).".to_owned(),
+                                             json: json.clone(),
+                                         }));
+
+                let result: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
+                    Box::new(Box::new(HalfSpace3::new(plane, signum)));
+
+                Ok(result)
+            }));
+
+            deserializers.insert("HalfSpace3::new_with_point",
+                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                let mut members: Members = json.members();
+
+                let plane: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> = try!(parser.deserialize_constructor(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing `Plane3` as the first argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
+                let plane: Plane3<F> = *try!(<Shape<F, Point3<F>, Vector3<F>>>::downcast(*plane)
+                    .or_else(|err| Err(ParserError::InvalidStructure {
+                        description: "Invalid type, expected a `Plane3`.".to_owned(),
+                        json: json.clone(),
+                    })));
+                let point: Box<Point3<F>> = try!(parser.deserialize_constructor(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing `Point3` as the second argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
+
+                let result: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
+                    Box::new(Box::new(HalfSpace3::new_with_point(plane, &point)));
 
                 Ok(result)
             }));

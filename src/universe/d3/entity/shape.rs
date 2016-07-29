@@ -124,17 +124,7 @@ pub struct Plane3<F: CustomFloat> {
 }
 
 impl<F: CustomFloat> Plane3<F> {
-    pub fn new(point: &Point3<F>, vector_a: &Vector3<F>, vector_b: &Vector3<F>) -> Plane3<F> {
-        // A*x + B*y + C*z + D = 0
-        let normal = na::cross(vector_a, vector_b);
-
-        // D = -(A*x + B*y + C*z)
-        let constant = -na::dot(&normal, point.as_vector());
-
-        Self::from_normal(&normal, constant)
-    }
-
-    pub fn from_normal(normal: &Vector3<F>, constant: F) -> Plane3<F> {
+    pub fn new(normal: &Vector3<F>, constant: F) -> Plane3<F> {
         if na::distance_squared(&na::origin(), normal.as_point()) <= Cast::from(0.0) {
             panic!("Cannot have a normal with length of 0.");
         }
@@ -145,54 +135,23 @@ impl<F: CustomFloat> Plane3<F> {
         }
     }
 
-    #[allow(dead_code)]
-    pub fn from_equation(a: F, b: F, c: F, d: F) -> Plane3<F> {
-        Self::from_normal(&Vector3::new(a, b, c), d)
+    pub fn new_with_point(normal: &Vector3<F>, point: &Point3<F>) -> Plane3<F> {
+        // D = -(A*x + B*y + C*z)
+        let constant = -na::dot(normal, point.as_vector());
+
+        Self::new(normal, constant)
     }
 
-    pub fn cuboid(center: Point3<F>, abc: Vector3<F>) -> ComposableShape<F, Point3<F>, Vector3<F>> {
-        let half_abc: Vector3<F> = abc / <F as NumCast>::from(2.0).unwrap();
-        let x = Vector3::new(<F as One>::one(), <F as Zero>::zero(), <F as Zero>::zero());
-        let y = Vector3::new(<F as Zero>::zero(), <F as One>::one(), <F as Zero>::zero());
-        let z = Vector3::new(<F as Zero>::zero(), <F as Zero>::zero(), <F as One>::one());
-        ComposableShape::of(vec![HalfSpace3::from_point(Plane3::new(&na::translate(&(x *
-                                                                                     half_abc),
-                                                                                   &center),
-                                                                    &y,
-                                                                    &z),
-                                                        &center),
-                                 HalfSpace3::from_point(Plane3::new(&na::translate(&-(x *
-                                                                                      half_abc),
-                                                                                   &center),
-                                                                    &y,
-                                                                    &z),
-                                                        &center),
-                                 HalfSpace3::from_point(Plane3::new(&na::translate(&(y *
-                                                                                     half_abc),
-                                                                                   &center),
-                                                                    &x,
-                                                                    &z),
-                                                        &center),
-                                 HalfSpace3::from_point(Plane3::new(&na::translate(&-(y *
-                                                                                      half_abc),
-                                                                                   &center),
-                                                                    &x,
-                                                                    &z),
-                                                        &center),
-                                 HalfSpace3::from_point(Plane3::new(&na::translate(&(z *
-                                                                                     half_abc),
-                                                                                   &center),
-                                                                    &x,
-                                                                    &y),
-                                                        &center),
-                                 HalfSpace3::from_point(Plane3::new(&na::translate(&-(z *
-                                                                                      half_abc),
-                                                                                   &center),
-                                                                    &x,
-                                                                    &y),
-                                                        &center)]
-                                .into_iter(),
-                            SetOperation::Intersection)
+    pub fn new_with_vectors(vector_a: &Vector3<F>, vector_b: &Vector3<F>, point: &Point3<F>) -> Plane3<F> {
+        // A*x + B*y + C*z + D = 0
+        let normal = na::cross(vector_a, vector_b);
+
+        Self::new_with_point(&normal, point)
+    }
+
+    #[allow(dead_code)]
+    pub fn new_with_equation(a: F, b: F, c: F, d: F) -> Plane3<F> {
+        Self::new(&Vector3::new(a, b, c), d)
     }
 
     #[allow(unused_variables)]
@@ -282,7 +241,7 @@ impl<F: CustomFloat> HalfSpace3<F> {
         }
     }
 
-    pub fn from_point(plane: Plane3<F>, point_inside: &Point3<F>) -> HalfSpace3<F> {
+    pub fn new_with_point(plane: Plane3<F>, point_inside: &Point3<F>) -> HalfSpace3<F> {
         let identifier: F = na::dot(&plane.normal, point_inside.as_vector()) + plane.constant;
 
         Self::new(plane, identifier)
@@ -311,6 +270,57 @@ impl<F: CustomFloat> HalfSpace3<F> {
         }
 
         Box::new(iter::empty())
+    }
+
+    pub fn cuboid(center: Point3<F>, abc: Vector3<F>) -> ComposableShape<F, Point3<F>, Vector3<F>> {
+        let half_abc: Vector3<F> = abc / <F as NumCast>::from(2.0).unwrap();
+        let x = Vector3::new(<F as One>::one(), <F as Zero>::zero(), <F as Zero>::zero());
+        let y = Vector3::new(<F as Zero>::zero(), <F as One>::one(), <F as Zero>::zero());
+        let z = Vector3::new(<F as Zero>::zero(), <F as Zero>::zero(), <F as One>::one());
+        ComposableShape::of(vec![HalfSpace3::new_with_point(Plane3::new_with_vectors(&y,
+                                                                                 &z,
+                                                                                 &na::translate(&(x *
+                                                                                     half_abc),
+                                                                                   &center),
+                                                        ),
+                                                        &center),
+                                 HalfSpace3::new_with_point(Plane3::new_with_vectors(&y,
+                                                                                 &z,
+                                                                                 &na::translate(&-(x *
+                                                                                      half_abc),
+                                                                                   &center),
+                                                        ),
+                                                        &center),
+                                 HalfSpace3::new_with_point(Plane3::new_with_vectors(&x,
+                                                                                 &z,
+                                                                                 &na::translate(&(y *
+                                                                                     half_abc),
+                                                                                   &center),
+                                                        ),
+                                                        &center),
+                                 HalfSpace3::new_with_point(Plane3::new_with_vectors(&x,
+                                                                                 &z,
+                                                                                 &na::translate(&-(y *
+                                                                                      half_abc),
+                                                                                   &center),
+                                                        ),
+                                                        &center),
+                                 HalfSpace3::new_with_point(Plane3::new_with_vectors(&x,
+                                                                                 &y,
+                                                                                 &na::translate(&(z *
+                                                                                     half_abc),
+                                                                                   &center),
+                                                        ),
+                                                        &center),
+                                 HalfSpace3::new_with_point(Plane3::new_with_vectors(&x,
+                                                                                 &y,
+                                                                                 &na::translate(&-(z *
+                                                                                      half_abc),
+                                                                                   &center),
+                                                        ),
+                                                        &center)]
+                                .into_iter(),
+                            SetOperation::Intersection)
     }
 }
 

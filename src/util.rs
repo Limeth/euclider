@@ -65,6 +65,7 @@ use core::iter::FromIterator;
 use core::marker::Reflect;
 use core::ops::DerefMut;
 use json::JsonValue;
+use mopa;
 
 /// Ties a combination of ordered `TypeId`s to a value
 pub type TypePairMap<V> = HashMap<(TypeId, TypeId), V>;
@@ -342,6 +343,10 @@ impl<'a, T> Iterator for Marcher<'a, T> {
         result
     }
 }
+
+pub trait Mopafied: mopa::Any {}
+
+mopafy!(Mopafied);
 
 pub trait CustomPoint<F: CustomFloat, V: CustomVector<F, Self>>:
 // Rotate<O> +

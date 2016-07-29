@@ -185,6 +185,7 @@ pub fn surface_color_illumination_directional<F: CustomFloat,
     })
 }
 
+#[allow(unused_variables)]
 pub fn surface_color_uniform<F: CustomFloat,
                              P: CustomPoint<F, V>,
                              V: CustomVector<F, P>>

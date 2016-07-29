@@ -17,6 +17,8 @@ extern crate num;
 extern crate json;
 #[macro_use]
 extern crate mopa;
+#[macro_use]
+extern crate parse_generics_shim;
 
 pub mod universe;
 pub mod util;

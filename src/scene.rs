@@ -97,75 +97,134 @@ impl Parser {
 
             deserializers.insert("Rgba::new",
                                  Box::new(|json: &JsonValue, parser: &Parser| {
-                                     let mut members: Members = json.members();
+                let mut members: Members = json.members();
 
-                                     Ok(Box::new(Rgba::new(
-                                         try!(<F as JsonFloat>::float_from_json(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Missing the red component of an `Rgba` color.".to_owned(),
-                                             json: json.clone(),
-                                         }))).ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Could not parse the red component of an `Rgba` color.".to_owned(),
-                                             json: json.clone(),
-                                         })),
-                                         try!(<F as JsonFloat>::float_from_json(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Missing the green component of an `Rgba` color.".to_owned(),
-                                             json: json.clone(),
-                                         }))).ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Could not parse the green component of an `Rgba` color.".to_owned(),
-                                             json: json.clone(),
-                                         })),
-                                         try!(<F as JsonFloat>::float_from_json(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Missing the blue component of an `Rgba` color.".to_owned(),
-                                             json: json.clone(),
-                                         }))).ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Could not parse the blue component of an `Rgba` color.".to_owned(),
-                                             json: json.clone(),
-                                         })),
-                                         try!(<F as JsonFloat>::float_from_json(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Missing the alpha component of an `Rgba` color.".to_owned(),
-                                             json: json.clone(),
-                                         }))).ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Could not parse the alpha component of an `Rgba` color.".to_owned(),
-                                             json: json.clone(),
-                                         })),
-                                     )))
-                                 }));
+                Ok(Box::new(Rgba::new(try!(<F as JsonFloat>::float_from_json(try!(members.next()
+                                              .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing the red component of an `Rgba` color."
+                                    .to_owned(),
+                                json: json.clone(),
+                            }
+                        })))
+                                          .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the red component of an `Rgba` color."
+                                .to_owned(),
+                            json: json.clone(),
+                        }
+                    })),
+                                      try!(<F as JsonFloat>::float_from_json(try!(members.next()
+                                              .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing the green component of an `Rgba` color."
+                                    .to_owned(),
+                                json: json.clone(),
+                            }
+                        })))
+                                          .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the green component of an `Rgba` color."
+                                .to_owned(),
+                            json: json.clone(),
+                        }
+                    })),
+                                      try!(<F as JsonFloat>::float_from_json(try!(members.next()
+                                              .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing the blue component of an `Rgba` color."
+                                    .to_owned(),
+                                json: json.clone(),
+                            }
+                        })))
+                                          .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the blue component of an `Rgba` color."
+                                .to_owned(),
+                            json: json.clone(),
+                        }
+                    })),
+                                      try!(<F as JsonFloat>::float_from_json(try!(members.next()
+                                              .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing the alpha component of an `Rgba` color."
+                                    .to_owned(),
+                                json: json.clone(),
+                            }
+                        })))
+                                          .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the alpha component of an `Rgba` color."
+                                .to_owned(),
+                            json: json.clone(),
+                        }
+                    })))))
+            }));
 
             deserializers.insert("Rgba::new_u8",
                                  Box::new(|json: &JsonValue, parser: &Parser| {
-                                     let mut members: Members = json.members();
+                let mut members: Members = json.members();
 
-                                     Ok(Box::new(Rgba::<F>::new_u8(
-                                         try!(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Missing the red component of an `Rgba` color.".to_owned(),
-                                             json: json.clone(),
-                                         })).as_u8().ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Could not parse the red component of an `Rgba` color.".to_owned(),
-                                             json: json.clone(),
-                                         })),
-                                         try!(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Missing the green component of an `Rgba` color.".to_owned(),
-                                             json: json.clone(),
-                                         })).as_u8().ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Could not parse the green component of an `Rgba` color.".to_owned(),
-                                             json: json.clone(),
-                                         })),
-                                         try!(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Missing the blue component of an `Rgba` color.".to_owned(),
-                                             json: json.clone(),
-                                         })).as_u8().ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Could not parse the blue component of an `Rgba` color.".to_owned(),
-                                             json: json.clone(),
-                                         })),
-                                         try!(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Missing the alpha component of an `Rgba` color.".to_owned(),
-                                             json: json.clone(),
-                                         })).as_u8().ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Could not parse the alpha component of an `Rgba` color.".to_owned(),
-                                             json: json.clone(),
-                                         }))
-                                     )))
-                                 }));
+                Ok(Box::new(Rgba::<F>::new_u8(try!(try!(members.next().ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Missing the red component of an `Rgba` color.".to_owned(),
+                            json: json.clone(),
+                        }
+                    }))
+                                                  .as_u8()
+                                                  .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the red component of an `Rgba` color."
+                                .to_owned(),
+                            json: json.clone(),
+                        }
+                    })),
+                                              try!(try!(members.next().ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Missing the green component of an `Rgba` color."
+                                .to_owned(),
+                            json: json.clone(),
+                        }
+                    }))
+                                                  .as_u8()
+                                                  .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the green component of an `Rgba` color."
+                                .to_owned(),
+                            json: json.clone(),
+                        }
+                    })),
+                                              try!(try!(members.next().ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Missing the blue component of an `Rgba` color."
+                                .to_owned(),
+                            json: json.clone(),
+                        }
+                    }))
+                                                  .as_u8()
+                                                  .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the blue component of an `Rgba` color."
+                                .to_owned(),
+                            json: json.clone(),
+                        }
+                    })),
+                                              try!(try!(members.next().ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Missing the alpha component of an `Rgba` color."
+                                .to_owned(),
+                            json: json.clone(),
+                        }
+                    }))
+                                                  .as_u8()
+                                                  .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the alpha component of an `Rgba` color."
+                                .to_owned(),
+                            json: json.clone(),
+                        }
+                    })))))
+            }));
 
             // Entities
 
@@ -254,20 +313,30 @@ impl Parser {
                                  Box::new(|json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
 
-                let normal: Box<Vector3<F>> = try!(parser.deserialize_constructor(try!(members.next()
+                let normal: Box<Vector3<F>> =
+                    try!(parser.deserialize_constructor(try!(members.next()
                         .ok_or_else(|| {
                             ParserError::InvalidStructure {
                                 description: "Missing `Vector3` as the first argument.".to_owned(),
                                 json: json.clone(),
                             }
                         }))));
-                 let constant: F = try!(<F as JsonFloat>::float_from_json(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Missing a floating point number as the second argument.".to_owned(),
-                                             json: json.clone(),
-                                         }))).ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Could not parse the constant (second argument).".to_owned(),
-                                             json: json.clone(),
-                                         }));
+                let constant: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a floating point number as the second \
+                                              argument."
+                                    .to_owned(),
+                                json: json.clone(),
+                            }
+                        })))
+                    .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the constant (second argument)."
+                                .to_owned(),
+                            json: json.clone(),
+                        }
+                    }));
 
                 let result: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
                     Box::new(Box::new(Plane3::new(&normal, constant)));
@@ -279,7 +348,8 @@ impl Parser {
                                  Box::new(|json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
 
-                let normal: Box<Vector3<F>> = try!(parser.deserialize_constructor(try!(members.next()
+                let normal: Box<Vector3<F>> =
+                    try!(parser.deserialize_constructor(try!(members.next()
                         .ok_or_else(|| {
                             ParserError::InvalidStructure {
                                 description: "Missing `Vector3` as the first argument.".to_owned(),
@@ -304,14 +374,16 @@ impl Parser {
                                  Box::new(|json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
 
-                let vector_a: Box<Vector3<F>> = try!(parser.deserialize_constructor(try!(members.next()
+                let vector_a: Box<Vector3<F>> =
+                    try!(parser.deserialize_constructor(try!(members.next()
                         .ok_or_else(|| {
                             ParserError::InvalidStructure {
                                 description: "Missing `Vector3` as the first argument.".to_owned(),
                                 json: json.clone(),
                             }
                         }))));
-                let vector_b: Box<Vector3<F>> = try!(parser.deserialize_constructor(try!(members.next()
+                let vector_b: Box<Vector3<F>> =
+                    try!(parser.deserialize_constructor(try!(members.next()
                         .ok_or_else(|| {
                             ParserError::InvalidStructure {
                                 description: "Missing `Vector3` as the second argument.".to_owned(),
@@ -336,34 +408,66 @@ impl Parser {
                                  Box::new(|json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
 
-                 let a: F = try!(<F as JsonFloat>::float_from_json(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Missing a floating point number as the first argument.".to_owned(),
-                                             json: json.clone(),
-                                         }))).ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Could not parse the first argument.".to_owned(),
-                                             json: json.clone(),
-                                         }));
-                 let b: F = try!(<F as JsonFloat>::float_from_json(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Missing a floating point number as the second argument.".to_owned(),
-                                             json: json.clone(),
-                                         }))).ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Could not parse the second argument.".to_owned(),
-                                             json: json.clone(),
-                                         }));
-                 let c: F = try!(<F as JsonFloat>::float_from_json(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Missing a floating point number as the third argument.".to_owned(),
-                                             json: json.clone(),
-                                         }))).ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Could not parse the third argument.".to_owned(),
-                                             json: json.clone(),
-                                         }));
-                 let d: F = try!(<F as JsonFloat>::float_from_json(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Missing a floating point number as the fourth argument.".to_owned(),
-                                             json: json.clone(),
-                                         }))).ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Could not parse the fourth argument.".to_owned(),
-                                             json: json.clone(),
-                                         }));
+                let a: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a floating point number as the first \
+                                              argument."
+                                    .to_owned(),
+                                json: json.clone(),
+                            }
+                        })))
+                    .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the first argument.".to_owned(),
+                            json: json.clone(),
+                        }
+                    }));
+                let b: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a floating point number as the second \
+                                              argument."
+                                    .to_owned(),
+                                json: json.clone(),
+                            }
+                        })))
+                    .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the second argument.".to_owned(),
+                            json: json.clone(),
+                        }
+                    }));
+                let c: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a floating point number as the third \
+                                              argument."
+                                    .to_owned(),
+                                json: json.clone(),
+                            }
+                        })))
+                    .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the third argument.".to_owned(),
+                            json: json.clone(),
+                        }
+                    }));
+                let d: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a floating point number as the fourth \
+                                              argument."
+                                    .to_owned(),
+                                json: json.clone(),
+                            }
+                        })))
+                    .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the fourth argument.".to_owned(),
+                            json: json.clone(),
+                        }
+                    }));
 
                 let result: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
                     Box::new(Box::new(Plane3::new_with_equation(a, b, c, d)));
@@ -375,7 +479,8 @@ impl Parser {
                                  Box::new(|json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
 
-                let plane: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> = try!(parser.deserialize_constructor(try!(members.next()
+                let plane: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
+                    try!(parser.deserialize_constructor(try!(members.next()
                         .ok_or_else(|| {
                             ParserError::InvalidStructure {
                                 description: "Missing `Plane3` as the first argument.".to_owned(),
@@ -387,13 +492,21 @@ impl Parser {
                         description: "Invalid type, expected a `Plane3`.".to_owned(),
                         json: json.clone(),
                     })));
-                let signum: F = try!(<F as JsonFloat>::float_from_json(try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Missing a floating point number as the second argument.".to_owned(),
-                                             json: json.clone(),
-                                         }))).ok_or_else(|| ParserError::InvalidStructure {
-                                             description: "Could not parse the sign (second argument).".to_owned(),
-                                             json: json.clone(),
-                                         }));
+                let signum: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a floating point number as the second \
+                                              argument."
+                                    .to_owned(),
+                                json: json.clone(),
+                            }
+                        })))
+                    .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the sign (second argument).".to_owned(),
+                            json: json.clone(),
+                        }
+                    }));
 
                 let result: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
                     Box::new(Box::new(HalfSpace3::new(plane, signum)));
@@ -405,7 +518,8 @@ impl Parser {
                                  Box::new(|json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
 
-                let plane: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> = try!(parser.deserialize_constructor(try!(members.next()
+                let plane: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
+                    try!(parser.deserialize_constructor(try!(members.next()
                         .ok_or_else(|| {
                             ParserError::InvalidStructure {
                                 description: "Missing `Plane3` as the first argument.".to_owned(),
@@ -567,7 +681,8 @@ impl Parser {
                                 json: json.clone(),
                             }
                         }))
-                    .as_u32().ok_or_else(|| {
+                    .as_u32()
+                    .ok_or_else(|| {
                         ParserError::InvalidStructure {
                             description: "Could not parse the seed.".to_owned(),
                             json: json.clone(),
@@ -675,20 +790,21 @@ impl Parser {
 
             deserializers.insert("surface_color_uniform",
                                  Box::new(|json: &JsonValue, parser: &Parser| {
-                                     let mut members: Members = json.members();
-                                     let color: Box<Rgba<F>>
-                                         = try!(parser.deserialize_constructor::<Rgba<F>>(
-                                                try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
-                                                    description: "Missing a `Rgba` as the first argument.".to_owned(),
-                                                    json: json.clone(),
-                                                })
-                                            )));
+                let mut members: Members = json.members();
+                let color: Box<Rgba<F>> =
+                    try!(parser.deserialize_constructor::<Rgba<F>>(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a `Rgba` as the first argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
 
-                                     let result: Box<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>>
-                                         = Box::new(surface_color_uniform(*color));
+                let result: Box<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>> =
+                    Box::new(surface_color_uniform(*color));
 
-                                     Ok(result)
-                                 }));
+                Ok(result)
+            }));
 
             deserializers.insert("surface_color_texture",
                                  Box::new(|json: &JsonValue, parser: &Parser| {

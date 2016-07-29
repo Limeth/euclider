@@ -142,7 +142,10 @@ impl<F: CustomFloat> Plane3<F> {
         Self::new(normal, constant)
     }
 
-    pub fn new_with_vectors(vector_a: &Vector3<F>, vector_b: &Vector3<F>, point: &Point3<F>) -> Plane3<F> {
+    pub fn new_with_vectors(vector_a: &Vector3<F>,
+                            vector_b: &Vector3<F>,
+                            point: &Point3<F>)
+                            -> Plane3<F> {
         // A*x + B*y + C*z + D = 0
         let normal = na::cross(vector_a, vector_b);
 

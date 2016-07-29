@@ -4,6 +4,8 @@
 
 A non-euclidean ray tracing prototype written in Rust.
 
+Dual-licensed under [MIT](https://opensource.org/licenses/MIT) or the [UNLICENSE](http://unlicense.org).
+
 # Installation
 1. Install the Rust language via [Rustup](https://www.rustup.rs/)
 2. Clone this repository and `cd` into it

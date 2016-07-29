@@ -721,6 +721,24 @@ impl Parser {
                 Ok(result)
             }));
 
+            deserializers.insert("surface_color_illumination_directional",
+                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                let mut members: Members = json.members();
+                let direction: Box<Vector3<F>> =
+                    try!(parser.deserialize_constructor::<Vector3<F>>(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a `Vector3` as the first argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
+
+                let result: Box<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>> =
+                    Box::new(surface_color_illumination_directional(*direction));
+
+                Ok(result)
+            }));
+
             deserializers.insert("surface_color_perlin_hue_random",
                                  Box::new(|json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();

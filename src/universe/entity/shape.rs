@@ -54,8 +54,7 @@ pub trait Shape<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
     fn is_point_inside(&self, point: &P) -> bool;
 }
 
-// Make sure the type constraints are spaced, so no bitshift operators occur.
-mopafy!(Shape< F: CustomFloat, P: CustomPoint< F, V >, V: CustomVector< F, P > >);
+mopafy!(Shape<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>);
 
 #[derive(Debug, Copy, Clone)]
 pub struct Intersection<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {

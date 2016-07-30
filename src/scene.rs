@@ -21,6 +21,8 @@ use na::Point3;
 use na::Vector3;
 use util::JsonFloat;
 use image;
+use std::sync::Arc;
+use num::NumCast;
 
 pub type Deserializer<T> = Fn(&JsonValue, &Parser) -> Result<T, ParserError>;
 
@@ -277,6 +279,71 @@ impl Parser {
                                  Box::new(|json: &JsonValue, parser: &Parser| {
                                      Ok(Box::new(VoidShape::new()))
                                  }));
+
+            deserializers.insert("ComposableShape::of",
+                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                let mut members: Members = json.members();
+                let shapes_json = try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing an array of `Shapes` as the first argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        })).members();
+
+                let operation: Box<SetOperation> = try!(parser.deserialize_constructor(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a `SetOperation` as the second argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
+
+                let mut shapes: Vec<Box<Shape<F, Point3<F>, Vector3<F>>>> = Vec::new();
+
+                for shape_json in shapes_json {
+                    let shape: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
+                        try!(parser.deserialize_constructor(shape_json)
+                                   .or_else(|err| Err(ParserError::InvalidStructure {
+                                       description: "Could not parse a `Shape`.".to_owned(),
+                                       json: shape_json.clone(),
+                                   })));
+                    shapes.push(*shape);
+                }
+
+                let result: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
+                    Box::new(Box::new(ComposableShape::of(shapes, *operation)));
+
+                Ok(result)
+            }));
+
+            deserializers.insert("SetOperation",
+                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                let mut members: Members = json.members();
+                let name = try!(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a `String` as the first argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        })).as_str().ok_or_else(|| ParserError::InvalidStructure {
+                            description: "The first argument must be a `String`.".to_owned(),
+                            json: json.clone(),
+                        }));
+
+                let result = match name {
+                    "Union" => SetOperation::Union,
+                    "Intersection" => SetOperation::Intersection,
+                    "Complement" => SetOperation::Complement,
+                    "SymmetricDifference" => SetOperation::SymmetricDifference,
+                    _ => return Err(ParserError::InvalidStructure {
+                        description: format!("Invalid `SetOperation`: \"{}\"", name),
+                        json: json.clone(),
+                    }),
+                };
+
+                Ok(Box::new(result))
+            }));
 
             deserializers.insert("Sphere3::new",
                                  Box::new(|json: &JsonValue, parser: &Parser| {

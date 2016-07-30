@@ -107,8 +107,8 @@ pub enum SetOperation {
 }
 
 struct ComposableShapeIterator<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
-    shape_a: Arc<Shape<F, P, V>>,
-    shape_b: Arc<Shape<F, P, V>>,
+    shape_a: Arc<Box<Shape<F, P, V>>>,
+    shape_b: Arc<Box<Shape<F, P, V>>>,
     provider_a: Provider<Intersection<F, P, V>>,
     provider_b: Provider<Intersection<F, P, V>>,
     index_a: usize,
@@ -116,8 +116,8 @@ struct ComposableShapeIterator<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVe
 }
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableShapeIterator<F, P, V> {
-    fn new(shape_a: Arc<Shape<F, P, V>>,
-           shape_b: Arc<Shape<F, P, V>>,
+    fn new(shape_a: Arc<Box<Shape<F, P, V>>>,
+           shape_b: Arc<Box<Shape<F, P, V>>>,
            provider_a: Provider<Intersection<F, P, V>>,
            provider_b: Provider<Intersection<F, P, V>>)
            -> ComposableShapeIterator<F, P, V> {
@@ -137,8 +137,8 @@ struct UnionIterator<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>
 }
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> UnionIterator<F, P, V> {
-    fn new(shape_a: Arc<Shape<F, P, V>>,
-           shape_b: Arc<Shape<F, P, V>>,
+    fn new(shape_a: Arc<Box<Shape<F, P, V>>>,
+           shape_b: Arc<Box<Shape<F, P, V>>>,
            provider_a: Provider<Intersection<F, P, V>>,
            provider_b: Provider<Intersection<F, P, V>>)
            -> UnionIterator<F, P, V> {
@@ -174,11 +174,11 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Iterator for U
                     if unwrapped_a.distance_squared < unwrapped_b.distance_squared {
                         closer = unwrapped_a;
                         closer_index = &mut self.data.index_a;
-                        further_shape = self.data.shape_b.as_ref();
+                        further_shape = self.data.shape_b.as_ref().as_ref();
                     } else {
                         closer = unwrapped_b;
                         closer_index = &mut self.data.index_b;
-                        further_shape = self.data.shape_a.as_ref();
+                        further_shape = self.data.shape_a.as_ref().as_ref();
                     }
 
                     if !further_shape.is_point_inside(&closer.location) {
@@ -207,8 +207,8 @@ struct IntersectionIterator<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVecto
 }
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> IntersectionIterator<F, P, V> {
-    fn new(shape_a: Arc<Shape<F, P, V>>,
-           shape_b: Arc<Shape<F, P, V>>,
+    fn new(shape_a: Arc<Box<Shape<F, P, V>>>,
+           shape_b: Arc<Box<Shape<F, P, V>>>,
            provider_a: Provider<Intersection<F, P, V>>,
            provider_b: Provider<Intersection<F, P, V>>)
            -> IntersectionIterator<F, P, V> {
@@ -242,11 +242,11 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
                     if unwrapped_a.distance_squared < unwrapped_b.distance_squared {
                         closer = unwrapped_a;
                         closer_index = &mut self.data.index_a;
-                        further_shape = self.data.shape_b.as_ref();
+                        further_shape = self.data.shape_b.as_ref().as_ref();
                     } else {
                         closer = unwrapped_b;
                         closer_index = &mut self.data.index_b;
-                        further_shape = self.data.shape_a.as_ref();
+                        further_shape = self.data.shape_a.as_ref().as_ref();
                     }
 
                     *closer_index += 1;
@@ -283,8 +283,8 @@ struct ComplementIterator<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<
 }
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComplementIterator<F, P, V> {
-    fn new(shape_a: Arc<Shape<F, P, V>>,
-           shape_b: Arc<Shape<F, P, V>>,
+    fn new(shape_a: Arc<Box<Shape<F, P, V>>>,
+           shape_b: Arc<Box<Shape<F, P, V>>>,
            provider_a: Provider<Intersection<F, P, V>>,
            provider_b: Provider<Intersection<F, P, V>>)
            -> ComplementIterator<F, P, V> {
@@ -356,8 +356,8 @@ struct SymmetricDifferenceIterator<F: CustomFloat, P: CustomPoint<F, V>, V: Cust
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> SymmetricDifferenceIterator<F,
                                                                                               P,
                                                                                               V> {
-    fn new(shape_a: Arc<Shape<F, P, V>>,
-           shape_b: Arc<Shape<F, P, V>>,
+    fn new(shape_a: Arc<Box<Shape<F, P, V>>>,
+           shape_b: Arc<Box<Shape<F, P, V>>>,
            provider_a: Provider<Intersection<F, P, V>>,
            provider_b: Provider<Intersection<F, P, V>>)
            -> SymmetricDifferenceIterator<F, P, V> {
@@ -391,11 +391,11 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
                     if unwrapped_a.distance_squared < unwrapped_b.distance_squared {
                         closer = unwrapped_a;
                         closer_index = &mut self.data.index_a;
-                        further_shape = self.data.shape_b.as_ref();
+                        further_shape = self.data.shape_b.as_ref().as_ref();
                     } else {
                         closer = unwrapped_b;
                         closer_index = &mut self.data.index_b;
-                        further_shape = self.data.shape_a.as_ref();
+                        further_shape = self.data.shape_a.as_ref().as_ref();
                     }
 
                     if further_shape.is_point_inside(&closer.location) {
@@ -446,12 +446,10 @@ impl Display for SetOperation {
 }
 
 pub struct ComposableShape<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
-    pub a: Arc<Shape<F, P, V>>,
-    pub b: Arc<Shape<F, P, V>>,
+    pub a: Arc<Box<Shape<F, P, V>>>,
+    pub b: Arc<Box<Shape<F, P, V>>>,
     pub operation: SetOperation,
-    pub float_precision: PhantomData<F>,
-    pub dimensions: PhantomData<P>,
-    pub vector_dimensions: PhantomData<V>,
+    marker: PhantomData<Shape<F, P, V>>,
 }
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableShape<F, P, V> {
@@ -461,36 +459,32 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableShap
          operation: SetOperation)
          -> ComposableShape<F, P, V> {
         ComposableShape {
-            a: Arc::new(a),
-            b: Arc::new(b),
+            a: Arc::new(Box::new(a)),
+            b: Arc::new(Box::new(b)),
             operation: operation,
-            float_precision: PhantomData,
-            dimensions: PhantomData,
-            vector_dimensions: PhantomData,
+            marker: PhantomData,
         }
     }
 
-    pub fn of<S: Shape<F, P, V> + 'static, I: Iterator<Item = S>>(mut shapes: I,
-                                                                  operation: SetOperation)
-                                                                  -> ComposableShape<F, P, V> {
+    pub fn of<I: IntoIterator<Item = Box<Shape<F, P, V>>>>(mut shapes: I,
+                                                          operation: SetOperation)
+                                                          -> ComposableShape<F, P, V> {
+        const PANIC: &'static str = "2 or more `Shape`s are needed to construct a `ComposableShape`.";
+        let mut shapes = shapes.into_iter();
         let mut result = ComposableShape {
-            a: Arc::new(shapes.next().unwrap()),
-            b: Arc::new(shapes.next().unwrap()),
+            a: Arc::new(shapes.next().expect(PANIC)),
+            b: Arc::new(shapes.next().expect(PANIC)),
             operation: operation,
-            float_precision: PhantomData,
-            dimensions: PhantomData,
-            vector_dimensions: PhantomData,
+            marker: PhantomData,
         };
 
         for shape in shapes {
-            result.b = Arc::new(ComposableShape {
+            result.b = Arc::new(Box::new(ComposableShape {
                 a: result.b,
                 b: Arc::new(shape),
                 operation: operation,
-                float_precision: PhantomData,
-                dimensions: PhantomData,
-                vector_dimensions: PhantomData,
-            });
+                marker: PhantomData,
+            }));
         }
 
         result
@@ -506,8 +500,8 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableShap
         vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
         let composed: &ComposableShape<F, P, V> =
             shape.as_any().downcast_ref::<ComposableShape<F, P, V>>().unwrap();
-        let provider_a = intersect(vacuum, composed.a.as_ref());
-        let provider_b = intersect(vacuum, composed.b.as_ref());
+        let provider_a = intersect(vacuum, composed.a.as_ref().as_ref());
+        let provider_b = intersect(vacuum, composed.b.as_ref().as_ref());
         match composed.operation {
             SetOperation::Union => {
                 Box::new(UnionIterator::new(composed.a.clone(),

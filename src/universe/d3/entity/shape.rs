@@ -280,49 +280,49 @@ impl<F: CustomFloat> HalfSpace3<F> {
         let x = Vector3::new(<F as One>::one(), <F as Zero>::zero(), <F as Zero>::zero());
         let y = Vector3::new(<F as Zero>::zero(), <F as One>::one(), <F as Zero>::zero());
         let z = Vector3::new(<F as Zero>::zero(), <F as Zero>::zero(), <F as One>::one());
-        ComposableShape::of(vec![HalfSpace3::new_with_point(Plane3::new_with_vectors(&y,
+        let shapes: Vec<Box<Shape<F, Point3<F>, Vector3<F>>>> = vec![Box::new(HalfSpace3::new_with_point(Plane3::new_with_vectors(&y,
                                                                                  &z,
                                                                                  &na::translate(&(x *
                                                                                      half_abc),
                                                                                    &center),
                                                         ),
-                                                        &center),
-                                 HalfSpace3::new_with_point(Plane3::new_with_vectors(&y,
+                                                        &center)),
+                                 Box::new(HalfSpace3::new_with_point(Plane3::new_with_vectors(&y,
                                                                                  &z,
                                                                                  &na::translate(&-(x *
                                                                                       half_abc),
                                                                                    &center),
                                                         ),
-                                                        &center),
-                                 HalfSpace3::new_with_point(Plane3::new_with_vectors(&x,
+                                                        &center)),
+                                 Box::new(HalfSpace3::new_with_point(Plane3::new_with_vectors(&x,
                                                                                  &z,
                                                                                  &na::translate(&(y *
                                                                                      half_abc),
                                                                                    &center),
                                                         ),
-                                                        &center),
-                                 HalfSpace3::new_with_point(Plane3::new_with_vectors(&x,
+                                                        &center)),
+                                 Box::new(HalfSpace3::new_with_point(Plane3::new_with_vectors(&x,
                                                                                  &z,
                                                                                  &na::translate(&-(y *
                                                                                       half_abc),
                                                                                    &center),
                                                         ),
-                                                        &center),
-                                 HalfSpace3::new_with_point(Plane3::new_with_vectors(&x,
+                                                        &center)),
+                                 Box::new(HalfSpace3::new_with_point(Plane3::new_with_vectors(&x,
                                                                                  &y,
                                                                                  &na::translate(&(z *
                                                                                      half_abc),
                                                                                    &center),
                                                         ),
-                                                        &center),
-                                 HalfSpace3::new_with_point(Plane3::new_with_vectors(&x,
+                                                        &center)),
+                                 Box::new(HalfSpace3::new_with_point(Plane3::new_with_vectors(&x,
                                                                                  &y,
                                                                                  &na::translate(&-(z *
                                                                                       half_abc),
                                                                                    &center),
                                                         ),
-                                                        &center)]
-                                .into_iter(),
+                                                        &center))];
+        ComposableShape::of(shapes,
                             SetOperation::Intersection)
     }
 }

@@ -612,6 +612,31 @@ impl Parser {
                 Ok(result)
             }));
 
+            deserializers.insert("HalfSpace3::cuboid",
+                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                let mut members: Members = json.members();
+
+                let center: Box<Point3<F>> = try!(parser.deserialize_constructor(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing `Point3` as the first argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
+                let abc: Box<Vector3<F>> = try!(parser.deserialize_constructor(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing `Vector3` as the second argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
+
+                let result: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
+                    Box::new(Box::new(HalfSpace3::cuboid(*center, *abc)));
+
+                Ok(result)
+            }));
+
             // Materials
 
             deserializers.insert("Vacuum",

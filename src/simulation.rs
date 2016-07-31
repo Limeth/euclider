@@ -40,7 +40,7 @@ impl<F: CustomFloat> Simulation<F> {
     pub fn start(mut self) {
         let facade: GlutinFacade = WindowBuilder::new()
             .with_dimensions(1024, 768)
-            .with_title("Hello world".to_string())
+            .with_title(format!("euclider {}", crate_version!()))
             .build_glium()
             .unwrap();
 

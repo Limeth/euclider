@@ -19,6 +19,8 @@ extern crate json;
 extern crate mopa;
 #[macro_use]
 extern crate parse_generics_shim;
+#[macro_use]
+extern crate clap;
 
 pub mod universe;
 pub mod util;
@@ -31,6 +33,8 @@ use simulation::Simulation;
 use std::io::BufReader;
 use std::fs::File;
 use std::io::Read;
+use clap::App;
+use clap::Arg;
 
 fn main() {
     run::<f64>();
@@ -197,7 +201,22 @@ fn run<F: CustomFloat>() {
     //     entities.push(Box::new(Void::new_with_vacuum()));
     // }
 
-    let mut reader = BufReader::new(File::open("examples/room.json")
+    const ARG_SCENE: &'static str = "SCENE";
+
+    let matches = App::new("euclider")
+                      .version(crate_version!())
+                      .author(crate_authors!())
+                      .about("A non-euclidean raytracer")
+                      .arg(Arg::with_name(ARG_SCENE)
+                               .short("s")
+                               .long("scene")
+                               .help("Loads a `.json` scene file")
+                               .takes_value(true)
+                               .required(true))
+                      .get_matches();
+
+    let scene = matches.value_of(ARG_SCENE).unwrap();
+    let mut reader = BufReader::new(File::open(scene)
         .expect("Unable to find the scene file."));
     let mut json = String::new();
     reader.read_to_string(&mut json).expect("Unable to read the scene file.");

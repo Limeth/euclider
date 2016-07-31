@@ -9,7 +9,9 @@ Dual-licensed under [MIT](https://opensource.org/licenses/MIT) or the [UNLICENSE
 # Installation
 1. Install the Rust language via [Rustup](https://www.rustup.rs/)
 2. Clone this repository and `cd` into it
-3. Run `cargo run --release`
+3. Build with `cargo build --release`
+4. Run with `target/release/euclider`
+5. Open a scene with `target/release/euclider --scene scenes/room.json`
 
 # Controls
 

@@ -163,8 +163,9 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Iterator for U
             let intersection_b = self.data.provider_b[self.data.index_b];
 
             if intersection_a.is_some() {
+                let unwrapped_a = intersection_a.unwrap();
+
                 if intersection_b.is_some() {
-                    let unwrapped_a = intersection_a.unwrap();
                     let unwrapped_b = intersection_b.unwrap();
                     let closer: Intersection<F, P, V>;
                     let closer_index: &mut usize;
@@ -188,11 +189,21 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Iterator for U
                     *closer_index += 1;
                 } else {
                     self.data.index_a += 1;
+
+                    if self.data.shape_b.is_point_inside(&unwrapped_a.location) {
+                        return None;
+                    }
+
                     return intersection_a;
                 }
             } else {
                 if intersection_b.is_some() {
+                    let unwrapped_b = intersection_b.unwrap();
                     self.data.index_b += 1;
+
+                    if self.data.shape_a.is_point_inside(&unwrapped_b.location) {
+                        return None;
+                    }
                 }
 
                 return intersection_b;

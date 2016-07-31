@@ -465,7 +465,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableShap
         }
     }
 
-    pub fn of<I: IntoIterator<Item = Box<Shape<F, P, V>>>>(mut shapes: I,
+    pub fn of<I: IntoIterator<Item = Box<Shape<F, P, V>>>>(shapes: I,
                                                           operation: SetOperation)
                                                           -> ComposableShape<F, P, V> {
         const PANIC: &'static str = "2 or more `Shape`s are needed to construct a `ComposableShape`.";

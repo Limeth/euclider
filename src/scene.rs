@@ -21,8 +21,6 @@ use na::Point3;
 use na::Vector3;
 use util::JsonFloat;
 use image;
-use std::sync::Arc;
-use num::NumCast;
 
 pub type Deserializer<T> = Fn(&JsonValue, &Parser) -> Result<T, ParserError>;
 

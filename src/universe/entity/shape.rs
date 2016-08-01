@@ -19,6 +19,7 @@ use util::CustomVector;
 use util::HasId;
 use util::Provider;
 use util::TypePairMap;
+use num::Zero;
 use mopa;
 use na;
 
@@ -583,6 +584,18 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V>
     }
 }
 
+#[allow(unused_variables)]
+pub fn intersect_void<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+    (location: &P,
+     direction: &V,
+     material: &Material<F, P, V>,
+     void: &Shape<F, P, V>,
+     intersect: Intersector<F, P, V>)
+     -> Box<IntersectionMarcher<F, P, V>> {
+    void.as_any().downcast_ref::<VoidShape>().unwrap();
+    Box::new(iter::empty())
+}
+
 #[derive(Debug)]
 pub struct Sphere<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
     pub location: P,
@@ -608,14 +621,139 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V>
     }
 }
 
-#[allow(unused_variables)]
-pub fn intersect_void<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
-    (location: &P,
-     direction: &V,
-     material: &Material<F, P, V>,
-     void: &Shape<F, P, V>,
-     intersect: Intersector<F, P, V>)
-     -> Box<IntersectionMarcher<F, P, V>> {
-    void.as_any().downcast_ref::<VoidShape>().unwrap();
-    Box::new(iter::empty())
+#[derive(Debug)]
+pub struct Plane<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
+    pub normal: V,
+    pub constant: F,
+    marker: PhantomData<P>,
+}
+
+shape!(Plane<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>);
+
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Plane<F, P, V> {
+    pub fn new(normal: V, constant: F) -> Plane<F, P, V> {
+        if na::distance_squared(&na::origin(), normal.as_point()) <= <F as Zero>::zero() {
+            panic!("Cannot have a normal with length of 0.");
+        }
+
+        Plane {
+            normal: normal,
+            constant: constant,
+            marker: PhantomData,
+        }
+    }
+
+    pub fn new_with_point(normal: V, point: &P) -> Plane<F, P, V> {
+        // D = -(A*x + B*y + C*z)
+        let constant = -na::dot(&normal, point.as_vector());
+
+        Self::new(normal, constant)
+    }
+
+    pub fn new_with_vectors(vector_a: &V,
+                            vector_b: &V,
+                            point: &P)
+                            -> Plane<F, P, V> {
+        // A*x + B*y + C*z + D = 0
+        let normal = na::cross(vector_a, vector_b);
+
+        Self::new_with_point(normal, point)
+    }
+
+    #[allow(unused_variables)]
+    pub fn intersect_in_vacuum(location: &P,
+                               direction: &V,
+                               vacuum: &Material<F, P, V>,
+                               shape: &Shape<F, P, V>,
+                               intersect: Intersector<F, P, V>)
+                               -> Box<IntersectionMarcher<F, P, V>> {
+        vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
+        let plane: &Plane<F, P, V> = shape.as_any().downcast_ref::<Plane<F, P, V>>().unwrap();
+
+        // A*x + B*y + C*z + D = 0
+
+        let t: F = -(na::dot(&plane.normal, location.as_vector()) + plane.constant) /
+                   na::dot(&plane.normal, direction);
+
+        if t < <F as Zero>::zero() {
+            return Box::new(iter::empty());
+        }
+
+        let result_vector = *direction * t;
+        let result_point = result_vector.translate(location);
+
+        let normal = plane.normal;
+
+        Box::new(iter::once(Intersection::new(result_point,
+                                              *direction,
+                                              normal,
+                                              na::distance_squared(location, &result_point))))
+    }
+}
+
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V> for Plane<F, P, V> {
+    #[allow(unused_variables)]
+    fn is_point_inside(&self, point: &P) -> bool {
+        false
+    }
+}
+
+#[derive(Debug)]
+pub struct HalfSpace<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
+    pub plane: Plane<F, P, V>,
+    pub signum: F,
+}
+
+shape!(HalfSpace<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>);
+
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> HalfSpace<F, P, V> {
+    pub fn new(plane: Plane<F, P, V>, mut signum: F) -> HalfSpace<F, P, V> {
+        signum /= signum.abs();
+
+        HalfSpace {
+            plane: plane,
+            signum: signum,
+        }
+    }
+
+    pub fn new_with_point(plane: Plane<F, P, V>, point_inside: &P) -> HalfSpace<F, P, V> {
+        let identifier: F = na::dot(&plane.normal, point_inside.as_vector()) + plane.constant;
+
+        Self::new(plane, identifier)
+    }
+
+    pub fn intersect_in_vacuum(location: &P,
+                               direction: &V,
+                               vacuum: &Material<F, P, V>,
+                               shape: &Shape<F, P, V>,
+                               intersect: Intersector<F, P, V>)
+                               -> Box<IntersectionMarcher<F, P, V>> {
+        vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
+        let halfspace: &HalfSpace<F, P,V> = shape.as_any().downcast_ref::<HalfSpace<F, P, V>>().unwrap();
+        let intersection = Plane::<F, P, V>::intersect_in_vacuum(location,
+                                                            direction,
+                                                            vacuum,
+                                                            &halfspace.plane,
+                                                            intersect)
+            .next();
+
+        // Works so far, not sure why
+        if intersection.is_some() {
+            let mut intersection = intersection.unwrap();
+            intersection.normal *= -halfspace.signum;
+            return Box::new(iter::once(intersection));
+        }
+
+        Box::new(iter::empty())
+    }
+}
+
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V> for HalfSpace<F, P, V> {
+    fn is_point_inside(&self, point: &P) -> bool {
+        // A*x + B*y + C*z + D = 0
+        // ~~~~~~~~~~~~~~~ dot
+        let result: F = na::dot(&self.plane.normal, point.as_vector()) + self.plane.constant;
+
+        self.signum == result.signum()
+    }
 }

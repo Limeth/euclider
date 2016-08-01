@@ -32,10 +32,10 @@ impl<F: CustomFloat> Universe3<F> {
                             Box::new(intersect_void));
         intersectors.insert((Vacuum::id_static(), Sphere::<F, Point3<F>, Vector3<F>>::id_static()),
                             Box::new(intersect_sphere3_in_vacuum));
-        intersectors.insert((Vacuum::id_static(), Plane3::<F>::id_static()),
-                            Box::new(Plane3::<F>::intersect_in_vacuum));
-        intersectors.insert((Vacuum::id_static(), HalfSpace3::<F>::id_static()),
-                            Box::new(HalfSpace3::<F>::intersect_in_vacuum));
+        intersectors.insert((Vacuum::id_static(), Plane::<F, Point3<F>, Vector3<F>>::id_static()),
+                            Box::new(Plane::<F, Point3<F>, Vector3<F>>::intersect_in_vacuum));
+        intersectors.insert((Vacuum::id_static(), HalfSpace::<F, Point3<F>, Vector3<F>>::id_static()),
+                            Box::new(HalfSpace::<F, Point3<F>, Vector3<F>>::intersect_in_vacuum));
         intersectors.insert((Vacuum::id_static(),
                      ComposableShape::<F, Point3<F>, Vector3<F>>::id_static()),
                     Box::new(ComposableShape::<F, Point3<F>, Vector3<F>>::intersect_in_vacuum));

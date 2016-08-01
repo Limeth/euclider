@@ -1,8 +1,3 @@
-use std::marker::Reflect;
-use std::any::Any;
-use std::any::TypeId;
-use std::fmt;
-use std::fmt::Display;
 use std::iter;
 use num::traits::NumCast;
 use num::Zero;
@@ -12,12 +7,13 @@ use na::Cast;
 use na::Point3;
 use na::Vector3;
 use util::CustomFloat;
-use util::HasId;
 use util::VecLazy;
 use util::IterLazy;
 use universe::entity::material::Material;
 use universe::entity::material::Vacuum;
 use universe::entity::shape::Shape;
+use universe::entity::shape::Plane;
+use universe::entity::shape::HalfSpace;
 use universe::entity::shape::Intersector;
 use universe::entity::shape::IntersectionMarcher;
 use universe::entity::shape::Intersection;
@@ -25,6 +21,58 @@ use universe::entity::shape::ComposableShape;
 use universe::entity::shape::SetOperation;
 
 pub type Shape3<F> = Shape<F, Point3<F>, Vector3<F>>;
+
+#[allow(type_complexity)]
+pub fn cuboid<F: CustomFloat>(center: Point3<F>, abc: Vector3<F>) -> ComposableShape<F, Point3<F>, Vector3<F>> {
+    let half_abc: Vector3<F> = abc / <F as NumCast>::from(2.0).unwrap();
+    let x = Vector3::new(<F as One>::one(), <F as Zero>::zero(), <F as Zero>::zero());
+    let y = Vector3::new(<F as Zero>::zero(), <F as One>::one(), <F as Zero>::zero());
+    let z = Vector3::new(<F as Zero>::zero(), <F as Zero>::zero(), <F as One>::one());
+    let shapes: Vec<Box<Shape<F, Point3<F>, Vector3<F>>>> = vec![Box::new(HalfSpace::new_with_point(Plane::new_with_vectors(&y,
+                                                                             &z,
+                                                                             &na::translate(&(x *
+                                                                                 half_abc),
+                                                                               &center),
+                                                    ),
+                                                    &center)),
+                             Box::new(HalfSpace::new_with_point(Plane::new_with_vectors(&y,
+                                                                             &z,
+                                                                             &na::translate(&-(x *
+                                                                                  half_abc),
+                                                                               &center),
+                                                    ),
+                                                    &center)),
+                             Box::new(HalfSpace::new_with_point(Plane::new_with_vectors(&x,
+                                                                             &z,
+                                                                             &na::translate(&(y *
+                                                                                 half_abc),
+                                                                               &center),
+                                                    ),
+                                                    &center)),
+                             Box::new(HalfSpace::new_with_point(Plane::new_with_vectors(&x,
+                                                                             &z,
+                                                                             &na::translate(&-(y *
+                                                                                  half_abc),
+                                                                               &center),
+                                                    ),
+                                                    &center)),
+                             Box::new(HalfSpace::new_with_point(Plane::new_with_vectors(&x,
+                                                                             &y,
+                                                                             &na::translate(&(z *
+                                                                                 half_abc),
+                                                                               &center),
+                                                    ),
+                                                    &center)),
+                             Box::new(HalfSpace::new_with_point(Plane::new_with_vectors(&x,
+                                                                             &y,
+                                                                             &na::translate(&-(z *
+                                                                                  half_abc),
+                                                                               &center),
+                                                    ),
+                                                    &center))];
+    ComposableShape::of(shapes,
+                        SetOperation::Intersection)
+}
 
 #[allow(unused_variables)]
 pub fn intersect_sphere3_in_vacuum<F: CustomFloat>
@@ -116,198 +164,4 @@ pub fn intersect_sphere3_in_vacuum<F: CustomFloat>
     }
 
     Box::new(IterLazy::new(closures))
-}
-
-#[derive(Debug)]
-pub struct Plane3<F: CustomFloat> {
-    normal: Vector3<F>,
-    constant: F,
-}
-
-shape!(Plane3<F: CustomFloat>);
-
-impl<F: CustomFloat> Plane3<F> {
-    pub fn new(normal: &Vector3<F>, constant: F) -> Plane3<F> {
-        if na::distance_squared(&na::origin(), normal.as_point()) <= Cast::from(0.0) {
-            panic!("Cannot have a normal with length of 0.");
-        }
-
-        Plane3 {
-            normal: *normal,
-            constant: constant,
-        }
-    }
-
-    pub fn new_with_point(normal: &Vector3<F>, point: &Point3<F>) -> Plane3<F> {
-        // D = -(A*x + B*y + C*z)
-        let constant = -na::dot(normal, point.as_vector());
-
-        Self::new(normal, constant)
-    }
-
-    pub fn new_with_vectors(vector_a: &Vector3<F>,
-                            vector_b: &Vector3<F>,
-                            point: &Point3<F>)
-                            -> Plane3<F> {
-        // A*x + B*y + C*z + D = 0
-        let normal = na::cross(vector_a, vector_b);
-
-        Self::new_with_point(&normal, point)
-    }
-
-    #[allow(dead_code)]
-    pub fn new_with_equation(a: F, b: F, c: F, d: F) -> Plane3<F> {
-        Self::new(&Vector3::new(a, b, c), d)
-    }
-
-    #[allow(unused_variables)]
-    pub fn intersect_in_vacuum(location: &Point3<F>,
-                               direction: &Vector3<F>,
-                               vacuum: &Material<F, Point3<F>, Vector3<F>>,
-                               shape: &Shape<F, Point3<F>, Vector3<F>>,
-                               intersect: Intersector<F, Point3<F>, Vector3<F>>)
-                               -> Box<IntersectionMarcher<F, Point3<F>, Vector3<F>>> {
-        vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
-        let plane: &Plane3<F> = shape.as_any().downcast_ref::<Plane3<F>>().unwrap();
-
-        // A*x + B*y + C*z + D = 0
-
-        let t: F = -(na::dot(&plane.normal, location.as_vector()) + plane.constant) /
-                   na::dot(&plane.normal, direction);
-
-        if t < Cast::from(0.0) {
-            return Box::new(iter::empty());
-        }
-
-        let result_vector = *direction * t;
-        let result_point = Point3::new(location.x + result_vector.x,
-                                       location.y + result_vector.y,
-                                       location.z + result_vector.z);
-
-        let normal = plane.normal;
-
-        Box::new(iter::once(Intersection::new(result_point,
-                                              *direction,
-                                              normal,
-                                              na::distance_squared(location, &result_point))))
-    }
-}
-
-impl<F: CustomFloat> Shape<F, Point3<F>, Vector3<F>> for Plane3<F> {
-    #[allow(unused_variables)]
-    fn is_point_inside(&self, point: &Point3<F>) -> bool {
-        false
-    }
-}
-
-#[derive(Debug)]
-pub struct HalfSpace3<F: CustomFloat> {
-    plane: Plane3<F>,
-    signum: F,
-}
-
-shape!(HalfSpace3<F: CustomFloat>);
-
-impl<F: CustomFloat> HalfSpace3<F> {
-    pub fn new(plane: Plane3<F>, mut signum: F) -> HalfSpace3<F> {
-        signum /= signum.abs();
-
-        HalfSpace3 {
-            plane: plane,
-            signum: signum,
-        }
-    }
-
-    pub fn new_with_point(plane: Plane3<F>, point_inside: &Point3<F>) -> HalfSpace3<F> {
-        let identifier: F = na::dot(&plane.normal, point_inside.as_vector()) + plane.constant;
-
-        Self::new(plane, identifier)
-    }
-
-    pub fn intersect_in_vacuum(location: &Point3<F>,
-                               direction: &Vector3<F>,
-                               vacuum: &Material<F, Point3<F>, Vector3<F>>,
-                               shape: &Shape<F, Point3<F>, Vector3<F>>,
-                               intersect: Intersector<F, Point3<F>, Vector3<F>>)
-                               -> Box<IntersectionMarcher<F, Point3<F>, Vector3<F>>> {
-        vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
-        let halfspace: &HalfSpace3<F> = shape.as_any().downcast_ref::<HalfSpace3<F>>().unwrap();
-        let intersection = Plane3::<F>::intersect_in_vacuum(location,
-                                                            direction,
-                                                            vacuum,
-                                                            &halfspace.plane,
-                                                            intersect)
-            .next();
-
-        // Works so far, not sure why
-        if intersection.is_some() {
-            let mut intersection = intersection.unwrap();
-            intersection.normal *= -halfspace.signum;
-            return Box::new(iter::once(intersection));
-        }
-
-        Box::new(iter::empty())
-    }
-
-    #[allow(type_complexity)]
-    pub fn cuboid(center: Point3<F>, abc: Vector3<F>) -> ComposableShape<F, Point3<F>, Vector3<F>> {
-        let half_abc: Vector3<F> = abc / <F as NumCast>::from(2.0).unwrap();
-        let x = Vector3::new(<F as One>::one(), <F as Zero>::zero(), <F as Zero>::zero());
-        let y = Vector3::new(<F as Zero>::zero(), <F as One>::one(), <F as Zero>::zero());
-        let z = Vector3::new(<F as Zero>::zero(), <F as Zero>::zero(), <F as One>::one());
-        let shapes: Vec<Box<Shape<F, Point3<F>, Vector3<F>>>> = vec![Box::new(HalfSpace3::new_with_point(Plane3::new_with_vectors(&y,
-                                                                                 &z,
-                                                                                 &na::translate(&(x *
-                                                                                     half_abc),
-                                                                                   &center),
-                                                        ),
-                                                        &center)),
-                                 Box::new(HalfSpace3::new_with_point(Plane3::new_with_vectors(&y,
-                                                                                 &z,
-                                                                                 &na::translate(&-(x *
-                                                                                      half_abc),
-                                                                                   &center),
-                                                        ),
-                                                        &center)),
-                                 Box::new(HalfSpace3::new_with_point(Plane3::new_with_vectors(&x,
-                                                                                 &z,
-                                                                                 &na::translate(&(y *
-                                                                                     half_abc),
-                                                                                   &center),
-                                                        ),
-                                                        &center)),
-                                 Box::new(HalfSpace3::new_with_point(Plane3::new_with_vectors(&x,
-                                                                                 &z,
-                                                                                 &na::translate(&-(y *
-                                                                                      half_abc),
-                                                                                   &center),
-                                                        ),
-                                                        &center)),
-                                 Box::new(HalfSpace3::new_with_point(Plane3::new_with_vectors(&x,
-                                                                                 &y,
-                                                                                 &na::translate(&(z *
-                                                                                     half_abc),
-                                                                                   &center),
-                                                        ),
-                                                        &center)),
-                                 Box::new(HalfSpace3::new_with_point(Plane3::new_with_vectors(&x,
-                                                                                 &y,
-                                                                                 &na::translate(&-(z *
-                                                                                      half_abc),
-                                                                                   &center),
-                                                        ),
-                                                        &center))];
-        ComposableShape::of(shapes,
-                            SetOperation::Intersection)
-    }
-}
-
-impl<F: CustomFloat> Shape<F, Point3<F>, Vector3<F>> for HalfSpace3<F> {
-    fn is_point_inside(&self, point: &Point3<F>) -> bool {
-        // A*x + B*y + C*z + D = 0
-        // ~~~~~~~~~~~~~~~ dot
-        let result: F = na::dot(&self.plane.normal, point.as_vector()) + self.plane.constant;
-
-        self.signum == result.signum()
-    }
 }

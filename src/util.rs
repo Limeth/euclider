@@ -59,6 +59,8 @@ use na::IterableMut;
 use na::Dot;
 use na::Norm;
 use na::Mean;
+use na::Cross;
+use na::Translate;
 use na::Point3;
 use na::Vector3;
 use core::iter::FromIterator;
@@ -589,6 +591,8 @@ pub trait CustomVector<F: CustomFloat, P: CustomPoint<F, Self>>:
 // MulAssign<UnitQuaternion<F>>
 // Mul<Rotation3<F>>
 // MulAssign<Rotation3<F>>
+    Translate<P> +
+    Cross<CrossProductType=Self> +
     VectorAsPoint<Point=P> +
     Copy +
     Debug +

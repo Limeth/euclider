@@ -27,6 +27,14 @@ pub trait Material<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
 {
 }
 
+#[macro_export]
+macro_rules! material {
+    ($($t:tt)*) => {
+        has_id!($($t)*);
+        name_as_display!($($t)*);
+    }
+}
+
 #[derive(Default, Debug)]
 pub struct Vacuum {}
 
@@ -36,15 +44,9 @@ impl Vacuum {
     }
 }
 
-has_id!(Vacuum);
+material!(Vacuum);
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Material<F, P, V> for Vacuum {}
-
-impl Display for Vacuum {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
 
 #[allow(unused_variables)]
 pub fn transition_vacuum_vacuum<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>

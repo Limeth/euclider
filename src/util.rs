@@ -109,6 +109,99 @@ pub trait HasId {
 }
 
 #[macro_export]
+macro_rules! reflect_internal {
+    (
+        $trait_:ident
+        {
+            constr: [ $($constr:tt)* ],
+            params: [ $($args:tt)* ],
+            $($_fields:tt)*
+        },
+    ) => {
+        as_item! {
+            #[allow(dead_code)]
+            impl<$($constr)*> Reflect for $trait_<$($args)*> {
+            }
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! reflect {
+    ($trait_:ident $($t:tt)*) => {
+        parse_generics_shim! {
+            { .. },
+            then reflect_internal!($trait_),
+            $($t)*
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! debug_as_display_internal {
+    (
+        $trait_:ident
+        {
+            constr: [ $($constr:tt)* ],
+            params: [ $($args:tt)* ],
+            $($_fields:tt)*
+        },
+    ) => {
+        as_item! {
+            #[allow(dead_code)]
+            impl<$($constr)*> Display for $trait_<$($args)*> {
+                fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                    <Self as Debug>::fmt(self, f)
+                }
+            }
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! debug_as_display {
+    ($trait_:ident $($t:tt)*) => {
+        parse_generics_shim! {
+            { .. },
+            then debug_as_display_internal!($trait_),
+            $($t)*
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! name_as_display_internal {
+    (
+        $trait_:ident
+        {
+            constr: [ $($constr:tt)* ],
+            params: [ $($args:tt)* ],
+            $($_fields:tt)*
+        },
+    ) => {
+        as_item! {
+            #[allow(dead_code)]
+            impl<$($constr)*> Display for $trait_<$($args)*> {
+                fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                    write!(f, stringify!($trait_<$($constr)*>))
+                }
+            }
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! name_as_display {
+    ($trait_:ident $($t:tt)*) => {
+        parse_generics_shim! {
+            { .. },
+            then name_as_display_internal!($trait_),
+            $($t)*
+        }
+    }
+}
+
+#[macro_export]
 macro_rules! has_id_internal {
     (
         $trait_:ident
@@ -145,7 +238,7 @@ macro_rules! has_id {
             then has_id_internal!($trait_),
             $($t)*
         }
-    };
+    }
 }
 
 pub fn combine_color<F: CustomFloat>(a: Rgba<u8>, b: Rgba<u8>, a_ratio: F) -> Rgba<u8> {

@@ -56,6 +56,15 @@ pub trait Shape<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
 
 mopafy!(Shape<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>);
 
+#[macro_export]
+macro_rules! shape {
+    ($($t:tt)*) => {
+        reflect!($($t)*);
+        has_id!($($t)*);
+        name_as_display!($($t)*);
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 pub struct Intersection<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
     pub location: P,
@@ -104,6 +113,8 @@ pub enum SetOperation {
     Complement, // A - B
     SymmetricDifference, // A ^ B
 }
+
+debug_as_display!(SetOperation);
 
 struct ComposableShapeIterator<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
     shape_a: Arc<Box<Shape<F, P, V>>>,
@@ -449,18 +460,15 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
     }
 }
 
-impl Display for SetOperation {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
+#[derive(Debug)]
 pub struct ComposableShape<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
     pub a: Arc<Box<Shape<F, P, V>>>,
     pub b: Arc<Box<Shape<F, P, V>>>,
     pub operation: SetOperation,
     marker: PhantomData<Shape<F, P, V>>,
 }
+
+shape!(ComposableShape<F: 'static + CustomFloat, P: 'static + CustomPoint<F, V>, V: 'static + CustomVector<F, P>>);
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableShape<F, P, V> {
     pub fn new<A: Shape<F, P, V> + 'static, B: Shape<F, P, V> + 'static>
@@ -557,41 +565,16 @@ impl<F: 'static + CustomFloat, P: 'static + CustomPoint<F, V>, V: 'static + Cust
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Debug for ComposableShape<F, P, V> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "ComposableShape [ operation: {:?} ]", self.operation)
-    }
-}
-
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Display for ComposableShape<F,
-                                                                                              P,
-                                                                                              V> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "ComposableShape [ a: {}, b: {}, operation: {} ]",
-               self.a,
-               self.b,
-               self.operation)
-    }
-}
-
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Reflect for ComposableShape<F,
-                                                                                              P,
-                                                                                              V> {
-}
-
-has_id!(ComposableShape<F: 'static + CustomFloat, P: 'static + CustomPoint<F, V>, V: 'static + CustomVector<F, P>>);
-
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct VoidShape {}
+
+shape!(VoidShape);
 
 impl VoidShape {
     pub fn new() -> Self {
         VoidShape {}
     }
 }
-
-has_id!(VoidShape);
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V> for VoidShape {
     #[allow(unused_variables)]
@@ -600,23 +583,14 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V>
     }
 }
 
-impl Debug for VoidShape {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "VoidShape")
-    }
-}
-
-impl Display for VoidShape {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "VoidShape")
-    }
-}
-
+#[derive(Debug)]
 pub struct Sphere<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
     pub location: P,
     pub radius: F,
     marker_vector: PhantomData<V>,
 }
+
+shape!(Sphere<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>);
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Sphere<F, P, V> {
     pub fn new(location: P, radius: F) -> Sphere<F, P, V> {
@@ -628,28 +602,9 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Sphere<F, P, V
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Reflect for Sphere<F, P, V> {}
-
-has_id!(Sphere<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>);
-
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V> for Sphere<F, P, V> {
     fn is_point_inside(&self, point: &P) -> bool {
         na::distance_squared(&self.location, point) <= self.radius * self.radius
-    }
-}
-
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Debug for Sphere<F, P, V> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "Sphere [ location: {:?}, radius: {:?} ]",
-               self.location,
-               self.radius)
-    }
-}
-
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Display for Sphere<F, P, V> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Sphere")
     }
 }
 

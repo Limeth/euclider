@@ -1,7 +1,7 @@
+use std::marker::Reflect;
 use std::any::Any;
 use std::any::TypeId;
 use std::fmt;
-use std::fmt::Debug;
 use std::fmt::Display;
 use std::iter;
 use num::traits::NumCast;
@@ -118,10 +118,13 @@ pub fn intersect_sphere3_in_vacuum<F: CustomFloat>
     Box::new(IterLazy::new(closures))
 }
 
+#[derive(Debug)]
 pub struct Plane3<F: CustomFloat> {
     normal: Vector3<F>,
     constant: F,
 }
+
+shape!(Plane3<F: CustomFloat>);
 
 impl<F: CustomFloat> Plane3<F> {
     pub fn new(normal: &Vector3<F>, constant: F) -> Plane3<F> {
@@ -190,8 +193,6 @@ impl<F: CustomFloat> Plane3<F> {
     }
 }
 
-has_id!(Plane3<F: CustomFloat>);
-
 impl<F: CustomFloat> Shape<F, Point3<F>, Vector3<F>> for Plane3<F> {
     #[allow(unused_variables)]
     fn is_point_inside(&self, point: &Point3<F>) -> bool {
@@ -199,28 +200,13 @@ impl<F: CustomFloat> Shape<F, Point3<F>, Vector3<F>> for Plane3<F> {
     }
 }
 
-impl<F: CustomFloat> Debug for Plane3<F> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "Plane3 [ normal: {:?}, constant: {:?} ]",
-               self.normal,
-               self.constant)
-    }
-}
-
-impl<F: CustomFloat> Display for Plane3<F> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "Plane3 [ normal: {}, constant: {} ]",
-               self.normal,
-               self.constant)
-    }
-}
-
+#[derive(Debug)]
 pub struct HalfSpace3<F: CustomFloat> {
     plane: Plane3<F>,
     signum: F,
 }
+
+shape!(HalfSpace3<F: CustomFloat>);
 
 impl<F: CustomFloat> HalfSpace3<F> {
     pub fn new(plane: Plane3<F>, mut signum: F) -> HalfSpace3<F> {
@@ -316,8 +302,6 @@ impl<F: CustomFloat> HalfSpace3<F> {
     }
 }
 
-has_id!(HalfSpace3<F: CustomFloat>);
-
 impl<F: CustomFloat> Shape<F, Point3<F>, Vector3<F>> for HalfSpace3<F> {
     fn is_point_inside(&self, point: &Point3<F>) -> bool {
         // A*x + B*y + C*z + D = 0
@@ -325,23 +309,5 @@ impl<F: CustomFloat> Shape<F, Point3<F>, Vector3<F>> for HalfSpace3<F> {
         let result: F = na::dot(&self.plane.normal, point.as_vector()) + self.plane.constant;
 
         self.signum == result.signum()
-    }
-}
-
-impl<F: CustomFloat> Debug for HalfSpace3<F> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "HalfSpace3 [ plane: {:?}, signum: {:?} ]",
-               self.plane,
-               self.signum)
-    }
-}
-
-impl<F: CustomFloat> Display for HalfSpace3<F> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "HalfSpace3 [ plane: {}, signum: {} ]",
-               self.plane,
-               self.signum)
     }
 }

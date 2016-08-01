@@ -1,4 +1,6 @@
+#[macro_use]
 pub mod material;
+#[macro_use]
 pub mod shape;
 pub mod surface;
 

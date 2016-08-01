@@ -43,7 +43,7 @@ impl<F: CustomFloat> Universe3<F> {
         let mut transitions: TransitionHandlers<F, Point3<F>, Vector3<F>> = HashMap::new();
 
         transitions.insert((Vacuum::id_static(), Vacuum::id_static()),
-                           Box::new(transition_vacuum_vacuum));
+                           Box::new(transition_seamless));
 
         Universe3 {
             camera: Box::new(Camera3Impl::new()),

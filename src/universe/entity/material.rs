@@ -49,7 +49,7 @@ material!(Vacuum);
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Material<F, P, V> for Vacuum {}
 
 #[allow(unused_variables)]
-pub fn transition_vacuum_vacuum<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+pub fn transition_seamless<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
     (from: &Material<F, P, V>,
      to: &Material<F, P, V>,
      context: &TracingContext<F, P, V>)

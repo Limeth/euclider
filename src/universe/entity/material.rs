@@ -27,7 +27,7 @@ pub trait Material<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
 {
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Vacuum {}
 
 impl Vacuum {
@@ -36,31 +36,13 @@ impl Vacuum {
     }
 }
 
-impl HasId for Vacuum {
-    fn id(&self) -> TypeId {
-        Self::id_static()
-    }
-
-    fn as_any(&self) -> &Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut Any {
-        self
-    }
-}
+has_id!(Vacuum);
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Material<F, P, V> for Vacuum {}
 
-impl Debug for Vacuum {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Vacuum")
-    }
-}
-
 impl Display for Vacuum {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Vacuum")
+        write!(f, "{:?}", self)
     }
 }
 

@@ -108,6 +108,46 @@ pub trait HasId {
     fn as_any_mut(&mut self) -> &mut Any;
 }
 
+#[macro_export]
+macro_rules! has_id_internal {
+    (
+        $trait_:ident
+        {
+            constr: [ $($constr:tt)* ],
+            params: [ $($args:tt)* ],
+            $($_fields:tt)*
+        },
+    ) => {
+        as_item! {
+            #[allow(dead_code)]
+            impl<$($constr)*> HasId for $trait_<$($args)*> {
+                fn id(&self) -> TypeId {
+                    Self::id_static()
+                }
+
+                fn as_any(&self) -> &Any {
+                    self
+                }
+
+                fn as_any_mut(&mut self) -> &mut Any {
+                    self
+                }
+            }
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! has_id {
+    ($trait_:ident $($t:tt)*) => {
+        parse_generics_shim! {
+            { .. },
+            then has_id_internal!($trait_),
+            $($t)*
+        }
+    };
+}
+
 pub fn combine_color<F: CustomFloat>(a: Rgba<u8>, b: Rgba<u8>, a_ratio: F) -> Rgba<u8> {
     if a_ratio <= Cast::from(0.0) {
         b

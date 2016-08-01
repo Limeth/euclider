@@ -22,8 +22,9 @@ extern crate parse_generics_shim;
 #[macro_use]
 extern crate clap;
 
-pub mod universe;
+#[macro_use]
 pub mod util;
+pub mod universe;
 pub mod simulation;
 pub mod scene;
 

@@ -580,20 +580,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Reflect for Co
                                                                                               V> {
 }
 
-impl<F: 'static + CustomFloat, P: 'static + CustomPoint<F, V>, V: 'static + CustomVector<F, P>> HasId
-        for ComposableShape<F, P, V> {
-    fn id(&self) -> TypeId {
-        Self::id_static()
-    }
-
-    fn as_any(&self) -> &Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut Any {
-        self
-    }
-}
+has_id!(ComposableShape<F: 'static + CustomFloat, P: 'static + CustomPoint<F, V>, V: 'static + CustomVector<F, P>>);
 
 #[derive(Default)]
 pub struct VoidShape {}
@@ -604,19 +591,7 @@ impl VoidShape {
     }
 }
 
-impl HasId for VoidShape {
-    fn id(&self) -> TypeId {
-        Self::id_static()
-    }
-
-    fn as_any(&self) -> &Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut Any {
-        self
-    }
-}
+has_id!(VoidShape);
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V> for VoidShape {
     #[allow(unused_variables)]
@@ -655,19 +630,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Sphere<F, P, V
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Reflect for Sphere<F, P, V> {}
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> HasId for Sphere<F, P, V> {
-    fn id(&self) -> TypeId {
-        Self::id_static()
-    }
-
-    fn as_any(&self) -> &Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut Any {
-        self
-    }
-}
+has_id!(Sphere<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>);
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V> for Sphere<F, P, V> {
     fn is_point_inside(&self, point: &P) -> bool {

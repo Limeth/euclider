@@ -30,19 +30,7 @@ pub struct PerlinSurface3<F: CustomFloat> {
     speed: F,
 }
 
-impl<F: CustomFloat> HasId for PerlinSurface3<F> {
-    fn id(&self) -> TypeId {
-        Self::id_static()
-    }
-
-    fn as_any(&self) -> &Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut Any {
-        self
-    }
-}
+has_id!(PerlinSurface3<F: CustomFloat>);
 
 impl<F: CustomFloat> PerlinSurface3<F> {
     #[allow(dead_code)]

@@ -190,19 +190,7 @@ impl<F: CustomFloat> Plane3<F> {
     }
 }
 
-impl<F: CustomFloat> HasId for Plane3<F> {
-    fn id(&self) -> TypeId {
-        Self::id_static()
-    }
-
-    fn as_any(&self) -> &Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut Any {
-        self
-    }
-}
+has_id!(Plane3<F: CustomFloat>);
 
 impl<F: CustomFloat> Shape<F, Point3<F>, Vector3<F>> for Plane3<F> {
     #[allow(unused_variables)]
@@ -328,19 +316,7 @@ impl<F: CustomFloat> HalfSpace3<F> {
     }
 }
 
-impl<F: CustomFloat> HasId for HalfSpace3<F> {
-    fn id(&self) -> TypeId {
-        Self::id_static()
-    }
-
-    fn as_any(&self) -> &Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut Any {
-        self
-    }
-}
+has_id!(HalfSpace3<F: CustomFloat>);
 
 impl<F: CustomFloat> Shape<F, Point3<F>, Vector3<F>> for HalfSpace3<F> {
     fn is_point_inside(&self, point: &Point3<F>) -> bool {

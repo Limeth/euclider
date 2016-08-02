@@ -10,7 +10,6 @@ use util::CustomFloat;
 use util::VecLazy;
 use util::IterLazy;
 use universe::entity::material::Material;
-use universe::entity::material::Vacuum;
 use universe::entity::shape::Shape;
 use universe::entity::shape::Plane;
 use universe::entity::shape::HalfSpace;

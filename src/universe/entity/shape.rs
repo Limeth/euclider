@@ -12,7 +12,6 @@ use palette::Rgba;
 use universe::entity::Traceable;
 use universe::entity::material::Material;
 use universe::entity::material::TransitionHandlers;
-use universe::entity::material::Vacuum;
 use util::CustomFloat;
 use util::CustomPoint;
 use util::CustomVector;

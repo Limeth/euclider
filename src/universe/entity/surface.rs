@@ -87,7 +87,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
                                                                transition_color[2],
                                                                transition_color[3]);
 
-                surface_palette.plus(transition_palette)
+                surface_palette.over(transition_palette)
             }
         })
     }

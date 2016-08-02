@@ -3,6 +3,7 @@ use std::fmt::Debug;
 use std::fmt::Display;
 use std::any::TypeId;
 use std::any::Any;
+use std::collections::HashMap;
 use palette::Rgba;
 use util::CustomFloat;
 use util::CustomPoint;
@@ -11,6 +12,9 @@ use util::HasId;
 use util::TypePairMap;
 use universe::entity::shape::TracingContext;
 use na::Cast;
+use na::Dimension;
+use meval::Expr;
+use num::NumCast;
 
 /// Ties two `Material`s (exiting, entering) to a `TransitionHandler`
 pub type TransitionHandlers<F, P, V> = TypePairMap<Box<TransitionHandler<F, P, V>>>;
@@ -38,15 +42,102 @@ macro_rules! material {
 #[derive(Default, Debug)]
 pub struct Vacuum {}
 
+material!(Vacuum);
+
 impl Vacuum {
     pub fn new() -> Self {
         Vacuum {}
     }
 }
 
-material!(Vacuum);
-
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Material<F, P, V> for Vacuum {}
+
+pub trait LinearTransformation<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: Debug {
+    fn transform(&self, vector: &mut V, legend: &str);
+    fn inverse_transform(&self, vector: &mut V, legend: &str);
+}
+
+#[derive(Debug)]
+pub struct ComponentTransformationExpr {
+    pub expression: Expr,
+    pub inverse_expression: Expr,
+}
+
+#[derive(Debug)]
+pub struct ComponentTransformation {
+    pub expressions: Vec<ComponentTransformationExpr>,
+}
+
+impl ComponentTransformation {
+    fn create_context<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>(vector: &V, legend: &str) -> HashMap<String, f64> {
+        let mut result: HashMap<String, f64> = HashMap::new();
+        let mut chars = legend.chars();
+
+        for component in vector.iter() {
+            let character = chars.next()
+                                 .expect(&format!("The legend is too short! Make sure it is sufficient for {} dimensions.", <P as Dimension>::dimension(None)))
+                                 .to_string();
+
+            result.insert(character, <f64 as NumCast>::from(*component).unwrap());
+        }
+
+        result
+    }
+    
+    fn transform_with<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, E: Fn(&ComponentTransformationExpr) -> &Expr>
+        (&self, vector: &mut V, expr: &E, legend: &str) {
+        let dim = <P as Dimension>::dimension(None);
+
+        if self.expressions.len() != dim {
+            panic!("The number of functions must be equal to the number of dimensions ({})!", dim);
+        }
+
+        let context = Self::create_context(vector, legend);
+
+        for (component, expression) in vector.iter_mut().zip(self.expressions.iter()) {
+            let result = expr(expression).eval(context.clone())
+                        .expect("Could not evaluate the expression.");
+
+            *component = <F as NumCast>::from(result).unwrap();
+        }
+    }
+}
+
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> LinearTransformation<F, P, V> for ComponentTransformation {
+    fn transform(&self, vector: &mut V, legend: &str) {
+        self.transform_with(vector, &|expr| &expr.expression, legend)
+    }
+
+    fn inverse_transform(&self, vector: &mut V, legend: &str) {
+        self.transform_with(vector, &|expr| &expr.inverse_expression, legend)
+    }
+}
+
+#[derive(Debug)]
+pub struct LinearSpace<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
+    pub legend: String,
+    pub transformations: Vec<Box<LinearTransformation<F, P, V>>>,
+}
+
+material!(LinearSpace<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>);
+
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Material<F, P, V> for LinearSpace<F, P, V> {}
+
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> LinearSpace<F, P, V> {
+    fn transform(&self, vector: &mut V) {
+        for transformation in &self.transformations {
+            transformation.transform(vector, &self.legend)
+        }
+    }
+
+    fn inverse_transform(&self, vector: &mut V) {
+        let mut inverse = self.transformations.iter();
+
+        while let Some(transformation) = inverse.next_back() {
+            transformation.inverse_transform(vector, &self.legend)
+        }
+    }
+}
 
 #[allow(unused_variables)]
 pub fn transition_seamless<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
@@ -64,4 +155,75 @@ pub fn transition_seamless<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector
           context.intersection_traceable,
           &new_origin,
           &context.intersection.direction)
+}
+
+#[allow(unused_variables)]
+pub fn transition_to_space_transformation<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+    (from: &Material<F, P, V>,
+     to: &Material<F, P, V>,
+     context: &TracingContext<F, P, V>)
+     -> Rgba<F> {
+    let space_transformation = to.as_any().downcast_ref::<LinearSpace<F, P, V>>().unwrap();
+    let mut direction = context.intersection.direction;
+
+    space_transformation.transform(&mut direction);
+
+    let trace = context.trace;
+    // Offset the new origin, so it doesn't hit the same shape over and over
+    // The question is -- is there a better way? I think not.
+    let new_origin = context.intersection.location +
+                     -*context.intersection_normal_closer * F::epsilon() * Cast::from(128.0);
+
+    trace(context.time,
+          context.intersection_traceable,
+          &new_origin,
+          &direction)
+}
+
+#[allow(unused_variables)]
+pub fn transition_from_space_transformation<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+    (from: &Material<F, P, V>,
+     to: &Material<F, P, V>,
+     context: &TracingContext<F, P, V>)
+     -> Rgba<F> {
+    let space_transformation = from.as_any().downcast_ref::<LinearSpace<F, P, V>>().unwrap();
+    let mut direction = context.intersection.direction;
+
+    space_transformation.inverse_transform(&mut direction);
+
+    let trace = context.trace;
+    // Offset the new origin, so it doesn't hit the same shape over and over
+    // The question is -- is there a better way? I think not.
+    let new_origin = context.intersection.location +
+                     -*context.intersection_normal_closer * F::epsilon() * Cast::from(128.0);
+
+    trace(context.time,
+          context.intersection_traceable,
+          &new_origin,
+          &direction)
+}
+
+#[allow(unused_variables)]
+pub fn transition_of_space_transformation<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+    (from: &Material<F, P, V>,
+     to: &Material<F, P, V>,
+     context: &TracingContext<F, P, V>)
+     -> Rgba<F> {
+    let space_transformation_from = from.as_any().downcast_ref::<LinearSpace<F, P, V>>().unwrap();
+    let space_transformation_to = to.as_any().downcast_ref::<LinearSpace<F, P, V>>().unwrap();
+    let mut direction = context.intersection.direction;
+
+    space_transformation_from.inverse_transform(&mut direction);
+    space_transformation_to.transform(&mut direction);
+
+    let trace = context.trace;
+    // Offset the new origin, so it doesn't hit the same shape over and over
+    // The question is -- is there a better way? I think not.
+    let new_origin = context.intersection.location +
+                     -*context.intersection_normal_closer * F::epsilon() * Cast::from(128.0);
+
+    trace(context.time,
+          context.intersection_traceable,
+          &new_origin,
+          &direction)
 }

@@ -19,6 +19,7 @@ use universe::entity::shape::IntersectionMarcher;
 use universe::entity::shape::Intersection;
 use universe::entity::shape::ComposableShape;
 use universe::entity::shape::SetOperation;
+use universe::entity::shape::Sphere;
 
 pub type Shape3<F> = Shape<F, Point3<F>, Vector3<F>>;
 
@@ -75,17 +76,13 @@ pub fn cuboid<F: CustomFloat>(center: Point3<F>, abc: Vector3<F>) -> ComposableS
 }
 
 #[allow(unused_variables)]
-pub fn intersect_sphere3_in_vacuum<F: CustomFloat>
+pub fn intersect_sphere3_linear<F: CustomFloat>
     (location: &Point3<F>,
      direction: &Vector3<F>,
      vacuum: &Material<F, Point3<F>, Vector3<F>>,
      sphere: &Shape<F, Point3<F>, Vector3<F>>,
      intersect: Intersector<F, Point3<F>, Vector3<F>>)
      -> Box<IntersectionMarcher<F, Point3<F>, Vector3<F>>> {
-    use universe::entity::shape::Sphere;
-    // Unsafe cast example:
-    // let a = unsafe { &*(a as *const _ as *const Aimpl) };
-    vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
     let sphere: &Sphere<F, Point3<F>, Vector3<F>> =
         sphere.as_any().downcast_ref::<Sphere<F, Point3<F>, Vector3<F>>>().unwrap();
 

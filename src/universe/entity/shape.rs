@@ -510,13 +510,12 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableShap
     }
 
     #[allow(unused_variables)]
-    pub fn intersect_in_vacuum(location: &P,
+    pub fn intersect_linear(location: &P,
                                direction: &V,
                                vacuum: &Material<F, P, V>,
                                shape: &Shape<F, P, V>,
                                intersect: Intersector<F, P, V>)
                                -> Box<Iterator<Item = Intersection<F, P, V>>> {
-        vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
         let composed: &ComposableShape<F, P, V> =
             shape.as_any().downcast_ref::<ComposableShape<F, P, V>>().unwrap();
         let provider_a = intersect(vacuum, composed.a.as_ref().as_ref());
@@ -661,13 +660,12 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Plane<F, P, V>
     }
 
     #[allow(unused_variables)]
-    pub fn intersect_in_vacuum(location: &P,
+    pub fn intersect_linear(location: &P,
                                direction: &V,
                                vacuum: &Material<F, P, V>,
                                shape: &Shape<F, P, V>,
                                intersect: Intersector<F, P, V>)
                                -> Box<IntersectionMarcher<F, P, V>> {
-        vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
         let plane: &Plane<F, P, V> = shape.as_any().downcast_ref::<Plane<F, P, V>>().unwrap();
 
         // A*x + B*y + C*z + D = 0
@@ -722,15 +720,14 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> HalfSpace<F, P
         Self::new(plane, identifier)
     }
 
-    pub fn intersect_in_vacuum(location: &P,
+    pub fn intersect_linear(location: &P,
                                direction: &V,
                                vacuum: &Material<F, P, V>,
                                shape: &Shape<F, P, V>,
                                intersect: Intersector<F, P, V>)
                                -> Box<IntersectionMarcher<F, P, V>> {
-        vacuum.as_any().downcast_ref::<Vacuum>().unwrap();
         let halfspace: &HalfSpace<F, P,V> = shape.as_any().downcast_ref::<HalfSpace<F, P, V>>().unwrap();
-        let intersection = Plane::<F, P, V>::intersect_in_vacuum(location,
+        let intersection = Plane::<F, P, V>::intersect_linear(location,
                                                             direction,
                                                             vacuum,
                                                             &halfspace.plane,

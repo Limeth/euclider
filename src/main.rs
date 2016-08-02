@@ -15,6 +15,7 @@ extern crate palette;
 extern crate glium;
 extern crate num;
 extern crate json;
+extern crate meval;
 #[macro_use]
 extern crate mopa;
 #[macro_use]

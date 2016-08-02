@@ -500,8 +500,8 @@ pub trait CustomPoint<F: CustomFloat, V: CustomVector<F, Self>>:
 // AsMut<[N; 3]>
 // From<&'a [N; 3]>
 // From<&'a mut [N; 3]>
-// Index<Output=[N]::Output> +
-// IndexMut<Output=[N]::Output> +
+    Index<usize, Output=F> +
+    IndexMut<usize, Output=F> +
     Shape<usize> +
     Indexable<usize, F> +
     Repeat<F> +
@@ -530,6 +530,7 @@ pub trait CustomPoint<F: CustomFloat, V: CustomVector<F, Self>>:
 // MulAssign<UnitQuaternion<F>>
 // Mul<Rotation3<F>>
 // MulAssign<Rotation3<F>>
+    Reflect +
     Copy +
     Debug +
 // Hash +
@@ -560,8 +561,8 @@ pub trait CustomVector<F: CustomFloat, P: CustomPoint<F, Self>>:
 // AsMut<[N; 3]>
 // From<&'a [N; 3]>
 // From<&'a mut [N; 3]>
-// Index<Output=[N]::Output> +
-// IndexMut<Output=[N]::Output> +
+    Index<usize, Output=F> +
+    IndexMut<usize, Output=F> +
     Shape<usize> +
     Indexable<usize, F> +
     Repeat<F> +
@@ -594,6 +595,7 @@ pub trait CustomVector<F: CustomFloat, P: CustomPoint<F, Self>>:
     Translate<P> +
     Cross<CrossProductType=Self> +
     VectorAsPoint<Point=P> +
+    Reflect +
     Copy +
     Debug +
 // Hash +

@@ -7,6 +7,71 @@
             "Sphere3::new": [
               {
                 "Point3::new": [
+                  10,
+                  0,
+                  -1
+                ]
+              },
+              3
+            ]
+          },
+          {
+            "LinearSpace": {
+              "legend": "xyz",
+              "transformations": [
+                {
+                  "ComponentTransformation": {
+                    "expressions": [
+                      {
+                        "expression": "x * 2",
+                        "inverse_expression": "x / 2"
+                      },
+                      {
+                        "expression": "y",
+                        "inverse_expression": "y"
+                      },
+                      {
+                        "expression": "z",
+                        "inverse_expression": "z"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "ComposableSurface": {
+              "reflection_ratio": {
+                "reflection_ratio_uniform": [
+                  0
+                ]
+              },
+              "reflection_direction": {
+                "reflection_direction_specular": []
+              },
+              "surface_color": {
+                "surface_color_uniform": [
+                  {
+                    "Rgba::new": [
+                      1,
+                      1,
+                      0,
+                      0.5
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "Entity3Impl::new": [
+          {
+            "Sphere3::new": [
+              {
+                "Point3::new": [
                   14,
                   5,
                   -1
@@ -22,7 +87,7 @@
             "ComposableSurface": {
               "reflection_ratio": {
                 "reflection_ratio_uniform": [
-                  0.75
+                  0.5
                 ]
               },
               "reflection_direction": {
@@ -35,7 +100,7 @@
                       0,
                       0,
                       1,
-                      1
+                      0.75
                     ]
                   }
                 ]

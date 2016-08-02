@@ -31,19 +31,36 @@ impl<F: CustomFloat> Universe3<F> {
         intersectors.insert((Vacuum::id_static(), VoidShape::id_static()),
                             Box::new(intersect_void));
         intersectors.insert((Vacuum::id_static(), Sphere::<F, Point3<F>, Vector3<F>>::id_static()),
-                            Box::new(intersect_sphere3_in_vacuum));
+                            Box::new(intersect_sphere3_linear));
         intersectors.insert((Vacuum::id_static(), Plane::<F, Point3<F>, Vector3<F>>::id_static()),
-                            Box::new(Plane::<F, Point3<F>, Vector3<F>>::intersect_in_vacuum));
+                            Box::new(Plane::<F, Point3<F>, Vector3<F>>::intersect_linear));
         intersectors.insert((Vacuum::id_static(), HalfSpace::<F, Point3<F>, Vector3<F>>::id_static()),
-                            Box::new(HalfSpace::<F, Point3<F>, Vector3<F>>::intersect_in_vacuum));
+                            Box::new(HalfSpace::<F, Point3<F>, Vector3<F>>::intersect_linear));
         intersectors.insert((Vacuum::id_static(),
                      ComposableShape::<F, Point3<F>, Vector3<F>>::id_static()),
-                    Box::new(ComposableShape::<F, Point3<F>, Vector3<F>>::intersect_in_vacuum));
+                    Box::new(ComposableShape::<F, Point3<F>, Vector3<F>>::intersect_linear));
+        intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), VoidShape::id_static()),
+                            Box::new(intersect_void));
+        intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), Sphere::<F, Point3<F>, Vector3<F>>::id_static()),
+                            Box::new(intersect_sphere3_linear));
+        intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), Plane::<F, Point3<F>, Vector3<F>>::id_static()),
+                            Box::new(Plane::<F, Point3<F>, Vector3<F>>::intersect_linear));
+        intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), HalfSpace::<F, Point3<F>, Vector3<F>>::id_static()),
+                            Box::new(HalfSpace::<F, Point3<F>, Vector3<F>>::intersect_linear));
+        intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(),
+                     ComposableShape::<F, Point3<F>, Vector3<F>>::id_static()),
+                    Box::new(ComposableShape::<F, Point3<F>, Vector3<F>>::intersect_linear));
 
         let mut transitions: TransitionHandlers<F, Point3<F>, Vector3<F>> = HashMap::new();
 
         transitions.insert((Vacuum::id_static(), Vacuum::id_static()),
                            Box::new(transition_seamless));
+        transitions.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), Vacuum::id_static()),
+                           Box::new(transition_from_space_transformation));
+        transitions.insert((Vacuum::id_static(), LinearSpace::<F, Point3<F>, Vector3<F>>::id_static()),
+                           Box::new(transition_to_space_transformation));
+        transitions.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), LinearSpace::<F, Point3<F>, Vector3<F>>::id_static()),
+                           Box::new(transition_of_space_transformation));
 
         Universe3 {
             camera: Box::new(Camera3Impl::new()),

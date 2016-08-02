@@ -17,3 +17,4 @@ json = "0.*"
 parse-generics-shim = "0.*"
 mopa = { git = "https://github.com/Limeth/mopa.git" }
 clap = "2.*"
+meval = "0.*"

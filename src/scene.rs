@@ -20,6 +20,7 @@ use na::Point3;
 use na::Vector3;
 use util::JsonFloat;
 use image;
+use meval::Expr;
 
 pub type Deserializer<T> = Fn(&JsonValue, &Parser) -> Result<T, ParserError>;
 
@@ -572,10 +573,133 @@ impl Parser {
 
                                      Ok(result)
                                  }));
+
             deserializers.insert("Vacuum::new",
                                  Box::new(|json: &JsonValue, parser: &Parser| {
                                      let result: Box<Box<Material<F, Point3<F>, Vector3<F>>>> =
                                          Box::new(Box::new(Vacuum::new()));
+
+                                     Ok(result)
+                                 }));
+            
+            deserializers.insert("ComponentTransformation",
+                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                     let object: &Object = if let JsonValue::Object(ref object) = *json {
+                                         object
+                                     } else {
+                                         return Err(ParserError::InvalidStructure {
+                                             description: "The JSON value must be an object.".to_owned(),
+                                             json: json.clone(),
+                                         });
+                                     };
+
+                                     let array = try!(object.get("expressions").ok_or_else(|| ParserError::InvalidStructure {
+                                         description: "Could not find `expressions`.".to_owned(),
+                                         json: json.clone(),
+                                     }));
+                                     let array: &Vec<JsonValue> = if let JsonValue::Array(ref object) = *array {
+                                         object
+                                     } else {
+                                         return Err(ParserError::InvalidStructure {
+                                             description: "The `expressions` field must be an array.".to_owned(),
+                                             json: json.clone(),
+                                         });
+                                     };
+
+                                     let mut expressions: Vec<ComponentTransformationExpr> = Vec::new();
+
+                                     for json in array {
+                                         let object: &Object = if let JsonValue::Object(ref object) = *json {
+                                             object
+                                         } else {
+                                             return Err(ParserError::InvalidStructure {
+                                                 description: "The JSON value must be an object.".to_owned(),
+                                                 json: json.clone(),
+                                             });
+                                         };
+
+                                         let expression = try!(try!(object.get("expression").ok_or_else(|| ParserError::InvalidStructure {
+                                                          description: "The `expression` field is missing.".to_owned(),
+                                                          json: json.clone(),
+                                                      })).as_str().ok_or_else(|| ParserError::InvalidStructure {
+                                                          description: "Expected a string as the function.".to_owned(),
+                                                          json: json.clone(),
+                                                      }));
+                                         let expression = try!(Expr::from_str(expression).or_else(|err| Err(ParserError::InvalidStructure {
+                                             description: "Invalid component transformation expression.".to_owned(),
+                                             json: json.clone(),
+                                         })));
+
+                                         let inverse_expression = try!(try!(object.get("inverse_expression").ok_or_else(|| ParserError::InvalidStructure {
+                                                          description: "The `inverse_expression` field is missing.".to_owned(),
+                                                          json: json.clone(),
+                                                      })).as_str().ok_or_else(|| ParserError::InvalidStructure {
+                                                          description: "Expected a string as the inverse function.".to_owned(),
+                                                          json: json.clone(),
+                                                      }));
+                                         let inverse_expression = try!(Expr::from_str(inverse_expression).or_else(|err| Err(ParserError::InvalidStructure {
+                                             description: "Invalid component transformation inverse expression.".to_owned(),
+                                             json: json.clone(),
+                                         })));
+
+                                         expressions.push(ComponentTransformationExpr {
+                                             expression: expression,
+                                             inverse_expression: inverse_expression,
+                                         });
+                                     }
+
+                                     let result: Box<Box<LinearTransformation<F, Point3<F>, Vector3<F>>>> =
+                                         Box::new(Box::new(ComponentTransformation {
+                                             expressions: expressions,
+                                         }));
+
+                                     Ok(result)
+                                 }));
+            
+            deserializers.insert("LinearSpace",
+                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                     let object: &Object = if let JsonValue::Object(ref object) = *json {
+                                         object
+                                     } else {
+                                         return Err(ParserError::InvalidStructure {
+                                             description: "The JSON value must be an object.".to_owned(),
+                                             json: json.clone(),
+                                         });
+                                     };
+
+                                     let legend = try!(try!(object.get("legend").ok_or_else(|| ParserError::InvalidStructure {
+                                                      description: "The `legend` field is missing.".to_owned(),
+                                                      json: json.clone(),
+                                                  })).as_str().ok_or_else(|| ParserError::InvalidStructure {
+                                                      description: "Expected a string as the legend.".to_owned(),
+                                                      json: json.clone(),
+                                                  }));
+
+                                     let array = try!(object.get("transformations").ok_or_else(|| ParserError::InvalidStructure {
+                                         description: "Could not find `transformations`.".to_owned(),
+                                         json: json.clone(),
+                                     }));
+                                     let array: &Vec<JsonValue> = if let JsonValue::Array(ref object) = *array {
+                                         object
+                                     } else {
+                                         return Err(ParserError::InvalidStructure {
+                                             description: "The `transformations` field must be an array.".to_owned(),
+                                             json: json.clone(),
+                                         });
+                                     };
+
+                                     let mut transformations: Vec<Box<LinearTransformation<F, Point3<F>, Vector3<F>>>> = Vec::new();
+
+                                     for json in array {
+                                         let transformation = try!(parser.deserialize_constructor::<Box<LinearTransformation<F, Point3<F>, Vector3<F>>>>(json));
+                                         transformations.push(*transformation);
+                                     }
+
+                                     let result: Box<Box<Material<F, Point3<F>, Vector3<F>>>> =
+                                         Box::new(Box::new(LinearSpace {
+                                             legend: legend.to_owned(),
+                                             transformations: transformations,
+                                         }));
 
                                      Ok(result)
                                  }));

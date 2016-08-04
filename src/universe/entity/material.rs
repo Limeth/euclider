@@ -4,31 +4,19 @@ use std::fmt::Display;
 use std::any::TypeId;
 use std::any::Any;
 use std::collections::HashMap;
-use palette::Rgba;
 use util::CustomFloat;
 use util::CustomPoint;
 use util::CustomVector;
 use util::HasId;
-use util::TypePairMap;
-use universe::entity::shape::TracingContext;
-use na::Cast;
 use na::Dimension;
 use meval::Expr;
 use num::NumCast;
 
-/// Ties two `Material`s (exiting, entering) to a `TransitionHandler`
-pub type TransitionHandlers<F, P, V> = TypePairMap<Box<TransitionHandler<F, P, V>>>;
-
-/// Computes the color of the surface (not the reflection).
-// Send + Sync must be at the end of the type alias definition.
-pub type TransitionHandler<F, P, V> = Fn(&Material<F, P, V>,
-                                         &Material<F, P, V>,
-                                         &TracingContext<F, P, V>
-                                      ) -> Rgba<F> + Send + Sync;
-
 pub trait Material<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
     where Self: HasId + Debug + Display
 {
+    fn enter(&self, location: &P, direction: &mut V);
+    fn exit(&self, location: &P, direction: &mut V);
 }
 
 #[macro_export]
@@ -50,7 +38,17 @@ impl Vacuum {
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Material<F, P, V> for Vacuum {}
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Material<F, P, V> for Vacuum {
+    #[allow(unused_variables)]
+    fn enter(&self, location: &P, direction: &mut V) {
+        // Empty
+    }
+
+    #[allow(unused_variables)]
+    fn exit(&self, location: &P, direction: &mut V) {
+        // Empty
+    }
+}
 
 pub trait LinearTransformation<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: Debug {
     fn transform(&self, vector: &mut V, legend: &str);
@@ -121,7 +119,17 @@ pub struct LinearSpace<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, 
 
 material!(LinearSpace<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>);
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Material<F, P, V> for LinearSpace<F, P, V> {}
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Material<F, P, V> for LinearSpace<F, P, V> {
+    #[allow(unused_variables)]
+    fn enter(&self, location: &P, direction: &mut V) {
+        self.transform(direction);
+    }
+
+    #[allow(unused_variables)]
+    fn exit(&self, location: &P, direction: &mut V) {
+        self.inverse_transform(direction);
+    }
+}
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> LinearSpace<F, P, V> {
     fn transform(&self, vector: &mut V) {
@@ -137,93 +145,4 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> LinearSpace<F,
             transformation.inverse_transform(vector, &self.legend)
         }
     }
-}
-
-#[allow(unused_variables)]
-pub fn transition_seamless<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
-    (from: &Material<F, P, V>,
-     to: &Material<F, P, V>,
-     context: &TracingContext<F, P, V>)
-     -> Rgba<F> {
-    let trace = context.trace;
-    // Offset the new origin, so it doesn't hit the same shape over and over
-    // The question is -- is there a better way? I think not.
-    let new_origin = context.intersection.location +
-                     -*context.intersection_normal_closer * F::epsilon() * Cast::from(128.0);
-
-    trace(context.time,
-          context.intersection_traceable,
-          &new_origin,
-          &context.intersection.direction)
-}
-
-#[allow(unused_variables)]
-pub fn transition_to_space_transformation<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
-    (from: &Material<F, P, V>,
-     to: &Material<F, P, V>,
-     context: &TracingContext<F, P, V>)
-     -> Rgba<F> {
-    let space_transformation = to.as_any().downcast_ref::<LinearSpace<F, P, V>>().unwrap();
-    let mut direction = context.intersection.direction;
-
-    space_transformation.transform(&mut direction);
-
-    let trace = context.trace;
-    // Offset the new origin, so it doesn't hit the same shape over and over
-    // The question is -- is there a better way? I think not.
-    let new_origin = context.intersection.location +
-                     -*context.intersection_normal_closer * F::epsilon() * Cast::from(128.0);
-
-    trace(context.time,
-          context.intersection_traceable,
-          &new_origin,
-          &direction)
-}
-
-#[allow(unused_variables)]
-pub fn transition_from_space_transformation<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
-    (from: &Material<F, P, V>,
-     to: &Material<F, P, V>,
-     context: &TracingContext<F, P, V>)
-     -> Rgba<F> {
-    let space_transformation = from.as_any().downcast_ref::<LinearSpace<F, P, V>>().unwrap();
-    let mut direction = context.intersection.direction;
-
-    space_transformation.inverse_transform(&mut direction);
-
-    let trace = context.trace;
-    // Offset the new origin, so it doesn't hit the same shape over and over
-    // The question is -- is there a better way? I think not.
-    let new_origin = context.intersection.location +
-                     -*context.intersection_normal_closer * F::epsilon() * Cast::from(128.0);
-
-    trace(context.time,
-          context.intersection_traceable,
-          &new_origin,
-          &direction)
-}
-
-#[allow(unused_variables)]
-pub fn transition_of_space_transformation<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
-    (from: &Material<F, P, V>,
-     to: &Material<F, P, V>,
-     context: &TracingContext<F, P, V>)
-     -> Rgba<F> {
-    let space_transformation_from = from.as_any().downcast_ref::<LinearSpace<F, P, V>>().unwrap();
-    let space_transformation_to = to.as_any().downcast_ref::<LinearSpace<F, P, V>>().unwrap();
-    let mut direction = context.intersection.direction;
-
-    space_transformation_from.inverse_transform(&mut direction);
-    space_transformation_to.transform(&mut direction);
-
-    let trace = context.trace;
-    // Offset the new origin, so it doesn't hit the same shape over and over
-    // The question is -- is there a better way? I think not.
-    let new_origin = context.intersection.location +
-                     -*context.intersection_normal_closer * F::epsilon() * Cast::from(128.0);
-
-    trace(context.time,
-          context.intersection_traceable,
-          &new_origin,
-          &direction)
 }

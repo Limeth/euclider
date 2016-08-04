@@ -68,15 +68,23 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
             if surface_color_alpha == std::u8::MAX {
                 surface_color
             } else {
-                let origin_material = context.origin_traceable.material();
-                let intersection_material = context.intersection_traceable.material();
-                let transition = context.transitions
-                    .get(&(origin_material.id(), intersection_material.id()))
-                    .expect(&format!("No transition found from material {:?} to material {:?}. \
-                                      Make sure to register one.",
-                                     origin_material,
-                                     intersection_material));
-                let transition_color = transition(origin_material, intersection_material, context);
+                let trace = context.trace;
+
+                // Offset the new origin, so it doesn't hit the same shape over and over
+                // The question is -- is there a better way? I think not.
+                let new_origin = context.intersection.location +
+                                 -*context.intersection_normal_closer * F::epsilon() * Cast::from(128.0);
+
+                // Apply the material transition
+                let mut transitioned_direction = context.intersection.direction;
+
+                context.origin_traceable.material().exit(&new_origin, &mut transitioned_direction);
+                context.intersection_traceable.material().enter(&new_origin, &mut transitioned_direction);
+
+                let transition_color = trace(context.time,
+                      context.intersection_traceable,
+                      &new_origin,
+                      &transitioned_direction);
                 let surface_palette: Rgba<F> = palette::Rgba::new_u8(surface_color_data[0],
                                                                      surface_color_data[1],
                                                                      surface_color_data[2],

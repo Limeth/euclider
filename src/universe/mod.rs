@@ -19,7 +19,6 @@ use universe::entity::Entity;
 use universe::entity::Camera;
 use universe::entity::Traceable;
 use universe::entity::material::Material;
-use universe::entity::material::TransitionHandlers;
 use universe::entity::shape::Shape;
 use universe::entity::shape::GeneralIntersectors;
 use universe::entity::shape::Intersection;
@@ -49,10 +48,6 @@ pub trait Universe<F: CustomFloat>
     fn intersectors_mut(&mut self) -> &mut GeneralIntersectors<F, Self::P, Self::V>;
     fn intersectors(&self) -> &GeneralIntersectors<F, Self::P, Self::V>;
     fn set_intersectors(&mut self, intersections: GeneralIntersectors<F, Self::P, Self::V>);
-    /// Stores the behavior of a ray passing from the first material to the second
-    fn transitions_mut(&mut self) -> &mut TransitionHandlers<F, Self::P, Self::V>;
-    fn transitions(&self) -> &TransitionHandlers<F, Self::P, Self::V>;
-    fn set_transitions(&mut self, transitions: TransitionHandlers<F, Self::P, Self::V>);
     fn background_mut(&mut self) -> &mut Box<MappedTexture<F, Self::P, Self::V>>;
     fn background(&self) -> &Box<MappedTexture<F, Self::P, Self::V>>;
     fn set_background(&mut self, background: Box<MappedTexture<F, Self::P, Self::V>>);
@@ -140,7 +135,6 @@ pub trait Universe<F: CustomFloat>
                         intersection: intersection,
                         intersection_normal_closer: &closer_normal,
                         exiting: &exiting,
-                        transitions: self.transitions(),
                         trace: &|time, traceable, location, direction| {
                             self.trace(time, &(*max_depth - 1), traceable, location, direction)
                         },

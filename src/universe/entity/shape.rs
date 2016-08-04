@@ -11,7 +11,6 @@ use std::iter;
 use palette::Rgba;
 use universe::entity::Traceable;
 use universe::entity::material::Material;
-use universe::entity::material::TransitionHandlers;
 use util::CustomFloat;
 use util::CustomPoint;
 use util::CustomVector;
@@ -101,7 +100,6 @@ pub struct TracingContext<'a,
     pub intersection: &'a Intersection<F, P, V>,
     pub intersection_normal_closer: &'a V,
     pub exiting: &'a bool,
-    pub transitions: &'a TransitionHandlers<F, P, V>,
     pub trace: Tracer<'a, F, P, V>,
 }
 

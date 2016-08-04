@@ -20,7 +20,6 @@ pub struct Universe3<F: CustomFloat> {
     pub camera: Box<Camera3<F>>,
     pub entities: Vec<Box<Entity3<F>>>,
     pub intersections: GeneralIntersectors<F, Point3<F>, Vector3<F>>,
-    pub transitions: TransitionHandlers<F, Point3<F>, Vector3<F>>,
     pub background: Box<MappedTexture<F, Point3<F>, Vector3<F>>>,
 }
 
@@ -51,22 +50,10 @@ impl<F: CustomFloat> Universe3<F> {
                      ComposableShape::<F, Point3<F>, Vector3<F>>::id_static()),
                     Box::new(ComposableShape::<F, Point3<F>, Vector3<F>>::intersect_linear));
 
-        let mut transitions: TransitionHandlers<F, Point3<F>, Vector3<F>> = HashMap::new();
-
-        transitions.insert((Vacuum::id_static(), Vacuum::id_static()),
-                           Box::new(transition_seamless));
-        transitions.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), Vacuum::id_static()),
-                           Box::new(transition_from_space_transformation));
-        transitions.insert((Vacuum::id_static(), LinearSpace::<F, Point3<F>, Vector3<F>>::id_static()),
-                           Box::new(transition_to_space_transformation));
-        transitions.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), LinearSpace::<F, Point3<F>, Vector3<F>>::id_static()),
-                           Box::new(transition_of_space_transformation));
-
         Universe3 {
             camera: Box::new(Camera3Impl::new()),
             entities: Vec::new(),
             intersections: intersectors,
-            transitions: transitions,
             background: Box::new(MappedTextureTransparent::new()),
         }
     }
@@ -110,18 +97,6 @@ impl<F: CustomFloat> Universe<F> for Universe3<F> {
 
     fn set_intersectors(&mut self, intersections: GeneralIntersectors<F, Point3<F>, Vector3<F>>) {
         self.intersections = intersections;
-    }
-
-    fn transitions_mut(&mut self) -> &mut TransitionHandlers<F, Self::P, Self::V> {
-        &mut self.transitions
-    }
-
-    fn transitions(&self) -> &TransitionHandlers<F, Self::P, Self::V> {
-        &self.transitions
-    }
-
-    fn set_transitions(&mut self, transitions: TransitionHandlers<F, Self::P, Self::V>) {
-        self.transitions = transitions;
     }
 
     fn background_mut(&mut self) -> &mut Box<MappedTexture<F, Self::P, Self::V>> {

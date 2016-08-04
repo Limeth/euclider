@@ -54,7 +54,7 @@ pub trait Universe<F: CustomFloat>
 
     fn intersect(&self,
                  location: &Self::P,
-                 rotation: &Self::V,
+                 direction: &Self::V,
                  material: &Material<F, Self::P, Self::V>,
                  shape: &Shape<F, Self::P, Self::V>)
                  -> Provider<Intersection<F, Self::P, Self::V>> {
@@ -71,9 +71,9 @@ pub trait Universe<F: CustomFloat>
         // let intersector = intersector.unwrap();
 
         let intersect: Intersector<F, Self::P, Self::V> =
-            &move |material, shape| self.intersect(location, rotation, material, shape);
+            &move |material, shape| self.intersect(location, direction, material, shape);
 
-        Provider::new(intersector(location, rotation, material, shape, intersect))
+        Provider::new(intersector(location, direction, material, shape, intersect))
     }
 
     fn trace(&self,
@@ -81,14 +81,14 @@ pub trait Universe<F: CustomFloat>
              max_depth: &u32,
              belongs_to: &Traceable<F, Self::P, Self::V>,
              location: &Self::P,
-             rotation: &Self::V)
+             direction: &Self::V)
              -> Rgba<F> {
         let material = belongs_to.material();
         let mut foreground: Option<Rgba<F>> = None;
         let mut foreground_distance_squared: Option<F> = None;
 
         if *max_depth == 0 {
-            return self.background().get_color(rotation.as_point());
+            return self.background().get_color(direction.as_point());
         }
 
         for other in self.entities() {
@@ -100,7 +100,7 @@ pub trait Universe<F: CustomFloat>
 
             let other_traceable = other_traceable.unwrap();
             let shape = other_traceable.shape();
-            let provider = self.intersect(location, rotation, material, shape);
+            let provider = self.intersect(location, direction, material, shape);
             let mut intersections = provider.iter();
 
             if let Some(intersection) = intersections.next() {
@@ -146,14 +146,14 @@ pub trait Universe<F: CustomFloat>
             }
         }
 
-        foreground.unwrap_or_else(|| self.background().get_color(rotation.as_point()))
+        foreground.unwrap_or_else(|| self.background().get_color(direction.as_point()))
     }
 
     fn trace_unknown(&self,
                      time: &Duration,
                      max_depth: &u32,
                      location: &Self::P,
-                     rotation: &Self::V)
+                     direction: &Self::V)
                      -> Option<Rgb<F>> {
         let mut belongs_to: Option<&Traceable<F, Self::P, Self::V>> = None;
 
@@ -176,10 +176,13 @@ pub trait Universe<F: CustomFloat>
         }
 
         if belongs_to.is_some() {
+            let belongs_to = belongs_to.unwrap();
+            let mut transitioned_direction = *direction;
+            belongs_to.material().enter(location, &mut transitioned_direction);
             let background =
                 Rgba::from(Rgb::new(Cast::from(1.0), Cast::from(1.0), Cast::from(1.0)))
                     .into_premultiplied();
-            let foreground = self.trace(time, max_depth, belongs_to.unwrap(), location, rotation)
+            let foreground = self.trace(time, max_depth, belongs_to, location, &transitioned_direction)
                 .into_premultiplied();
             Some(Rgb::from_premultiplied(foreground.over(background)))
             // Some(util::overlay_color::<F>(background, foreground))

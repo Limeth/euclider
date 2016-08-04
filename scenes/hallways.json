@@ -1,0 +1,384 @@
+{
+  "Universe3": {
+    "entities": [
+      {
+        "Entity3Impl::new": [
+          {
+            "HalfSpace3::cuboid": [
+              {
+                "Point3::new": [
+                  20,
+                  -5,
+                  -1
+                ]
+              },
+              {
+                "Vector3::new": [
+                  20,
+                  3,
+                  6
+                ]
+              }
+            ]
+          },
+          {
+            "LinearSpace": {
+              "legend": "xyz",
+              "transformations": [
+                {
+                  "ComponentTransformation": {
+                    "expressions": [
+                      {
+                        "expression": "x * 4",
+                        "inverse_expression": "x / 4"
+                      },
+                      {
+                        "expression": "y",
+                        "inverse_expression": "y"
+                      },
+                      {
+                        "expression": "z",
+                        "inverse_expression": "z"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "ComposableSurface": {
+              "reflection_ratio": {
+                "reflection_ratio_uniform": [
+                  0
+                ]
+              },
+              "reflection_direction": {
+                "reflection_direction_specular": []
+              },
+              "surface_color": {
+                "surface_color_uniform": [
+                  {
+                    "Rgba::new": [
+                      1,
+                      1,
+                      0,
+                      0.5
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "Entity3Impl::new": [
+          {
+            "ComposableShape::of": [
+              [
+                {
+                  "HalfSpace3::cuboid": [
+                    {
+                      "Point3::new": [
+                        20,
+                        -5,
+                        -1
+                      ]
+                    },
+                    {
+                      "Vector3::new": [
+                        20,
+                        5,
+                        8
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "HalfSpace3::cuboid": [
+                    {
+                      "Point3::new": [
+                        20,
+                        -5,
+                        -1
+                      ]
+                    },
+                    {
+                      "Vector3::new": [
+                        21.01,
+                        3.01,
+                        6.01
+                      ]
+                    }
+                  ]
+                }
+              ],
+              {
+                "SetOperation": [
+                  "Complement"
+                ]
+              }
+            ]
+          },
+          {
+            "Vacuum": []
+          },
+          {
+            "ComposableSurface": {
+              "reflection_ratio": {
+                "reflection_ratio_uniform": [
+                  0
+                ]
+              },
+              "reflection_direction": {
+                "reflection_direction_specular": []
+              },
+              "surface_color": {
+                "surface_color_illumination_directional": [
+                  {
+                    "Vector3::new": [
+                      0,
+                      0,
+                      -1
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "Entity3Impl::new": [
+          {
+            "HalfSpace3::cuboid": [
+              {
+                "Point3::new": [
+                  20,
+                  5,
+                  -1
+                ]
+              },
+              {
+                "Vector3::new": [
+                  5,
+                  3,
+                  6
+                ]
+              }
+            ]
+          },
+          {
+            "LinearSpace": {
+              "legend": "xyz",
+              "transformations": [
+                {
+                  "ComponentTransformation": {
+                    "expressions": [
+                      {
+                        "expression": "x / 4",
+                        "inverse_expression": "x * 4"
+                      },
+                      {
+                        "expression": "y",
+                        "inverse_expression": "y"
+                      },
+                      {
+                        "expression": "z",
+                        "inverse_expression": "z"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "ComposableSurface": {
+              "reflection_ratio": {
+                "reflection_ratio_uniform": [
+                  0
+                ]
+              },
+              "reflection_direction": {
+                "reflection_direction_specular": []
+              },
+              "surface_color": {
+                "surface_color_uniform": [
+                  {
+                    "Rgba::new": [
+                      1,
+                      1,
+                      0,
+                      0.5
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "Entity3Impl::new": [
+          {
+            "ComposableShape::of": [
+              [
+                {
+                  "HalfSpace3::cuboid": [
+                    {
+                      "Point3::new": [
+                        20,
+                        5,
+                        -1
+                      ]
+                    },
+                    {
+                      "Vector3::new": [
+                        5,
+                        5,
+                        8
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "HalfSpace3::cuboid": [
+                    {
+                      "Point3::new": [
+                        20,
+                        5,
+                        -1
+                      ]
+                    },
+                    {
+                      "Vector3::new": [
+                        6.01,
+                        3.01,
+                        6.01
+                      ]
+                    }
+                  ]
+                }
+              ],
+              {
+                "SetOperation": [
+                  "Complement"
+                ]
+              }
+            ]
+          },
+          {
+            "Vacuum": []
+          },
+          {
+            "ComposableSurface": {
+              "reflection_ratio": {
+                "reflection_ratio_uniform": [
+                  0
+                ]
+              },
+              "reflection_direction": {
+                "reflection_direction_specular": []
+              },
+              "surface_color": {
+                "surface_color_illumination_directional": [
+                  {
+                    "Vector3::new": [
+                      0,
+                      0,
+                      -1
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "Entity3Impl::new": [
+          {
+            "HalfSpace3::new_with_point": [
+              {
+                "Plane3::new_with_point": [
+                  {
+                    "Vector3::new": [
+                      0,
+                      0,
+                      1
+                    ]
+                  },
+                  {
+                    "Point3::new": [
+                      0,
+                      0,
+                      -4
+                    ]
+                  }
+                ]
+              },
+              {
+                "Point3::new": [
+                  0,
+                  0,
+                  -5
+                ]
+              }
+            ]
+          },
+          {
+            "Vacuum::new": []
+          },
+          {
+            "ComposableSurface": {
+              "reflection_ratio": {
+                "reflection_ratio_uniform": [
+                  0
+                ]
+              },
+              "reflection_direction": {
+                "reflection_direction_specular": []
+              },
+              "surface_color": {
+                "surface_color_illumination_directional": [
+                  {
+                    "Vector3::new": [
+                      0,
+                      0,
+                      -1
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "Void::new_with_vacuum": []
+      }
+    ],
+    "background": {
+      "MappedTextureImpl3::new": [
+        {
+          "uv_sphere": [
+            {
+              "Point3::new": [
+                0,
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        {
+          "texture_image": [
+            "./resources/universe_dim.jpg"
+          ]
+        }
+      ]
+    }
+  }
+}

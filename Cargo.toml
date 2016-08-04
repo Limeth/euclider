@@ -2,6 +2,13 @@
 name = "euclider"
 version = "0.11.3"
 authors = ["Jakub Hlusička <jakub.hlusicka@email.cz>"]
+include = [
+    "**/*.rs",
+    "Cargo.toml",
+    "README.md",
+    "LICENSE-MIT",
+    "UNLICENSE",
+]
 
 [dependencies]
 clippy = "0.*"

@@ -1,8 +1,12 @@
 [package]
 name = "euclider"
-version = "0.11.4"
+version = "0.11.5"
+description = "A non-euclidean ray tracer"
+license = "MIT/Unlicense"
 authors = ["Jakub Hlusička <jakub.hlusicka@email.cz>"]
 repository = "https://github.com/Limeth/euclider"
+keywords = ["graphics", "rendering", "ray", "tracing"]
+readme = "README.md"
 include = [
     "**/*.rs",
     "Cargo.toml",

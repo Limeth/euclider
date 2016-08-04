@@ -1,7 +1,8 @@
 [package]
 name = "euclider"
-version = "0.11.3"
+version = "0.11.4"
 authors = ["Jakub Hlusička <jakub.hlusicka@email.cz>"]
+repository = "https://github.com/Limeth/euclider"
 include = [
     "**/*.rs",
     "Cargo.toml",

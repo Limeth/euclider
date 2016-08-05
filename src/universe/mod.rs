@@ -107,19 +107,20 @@ pub trait Universe<F: CustomFloat>
 
             let shape = other_traceable.shape();
             let provider = self.intersect(location, direction, material, shape);
-            let mut intersections = provider.iter();
+            let mut inside = false;
 
-            if let Some(intersection) = intersections.next() {
+            for intersection in provider.iter() {
                 let exiting: bool;
                 let closer_normal: Self::V;
 
-                // TODO
                 if intersection.direction.angle_between(&intersection.normal) <
                    <F as BaseFloat>::frac_pi_2() {
-                    // closer_normal = -intersection.normal;
-                    // exiting = true;
-                    // TODO NEXT ITERATION FROM THE INTERSECTIONS
-                    continue; //The same behavior as the above TODO
+                    if !inside {
+                        inside = true;
+                        continue;
+                    } else {
+                        break;
+                    }
                 } else {
                     closer_normal = intersection.normal;
                     exiting = false;
@@ -140,6 +141,8 @@ pub trait Universe<F: CustomFloat>
                     closest = Some((other_traceable, context));
                     closest_distance_squared = Some(intersection.distance_squared);
                 }
+
+                break;
             }
         }
 

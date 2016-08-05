@@ -7,6 +7,8 @@ use palette::Blend;
 use image::DynamicImage;
 use image::GenericImage;
 use universe::entity::shape::TracingContext;
+use universe::entity::shape::ColorTracingContext;
+use universe::entity::shape::PathTracingContext;
 use util;
 use util::CustomFloat;
 use util::CustomPoint;
@@ -27,7 +29,8 @@ pub type ReflectionDirectionProvider<F, P, V> = Fn(&TracingContext<F, P, V>) -> 
 pub type SurfaceColorProvider<F, P, V> = Fn(&TracingContext<F, P, V>) -> Rgba<F>;
 
 pub trait Surface<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
-    fn get_color(&self, context: TracingContext<F, P, V>) -> Rgba<F>;
+    fn get_color(&self, context: ColorTracingContext<F, P, V>) -> Rgba<F>;
+    fn get_path(&self, context: PathTracingContext<F, P, V>) -> Option<(P, V)>;
 }
 
 pub struct ComposableSurface<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
@@ -54,14 +57,14 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
 
     fn get_intersection_color(&self,
                               reflection_ratio: F,
-                              context: &TracingContext<F, P, V>)
+                              context: &ColorTracingContext<F, P, V>)
                               -> Option<Rgba<F>> {
         if reflection_ratio >= <F as NumCast>::from(1.0).unwrap() {
             return None;
         }
 
         Some({
-            let surface_color = self.get_surface_color(context);
+            let surface_color = self.get_surface_color(&context.general);
             let surface_color_data: [u8; 4] = surface_color.to_pixel();
             let surface_color_alpha = surface_color_data[3];
 
@@ -72,17 +75,17 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
 
                 // Offset the new origin, so it doesn't hit the same shape over and over
                 // The question is -- is there a better way? I think not.
-                let new_origin = context.intersection.location +
-                                 -*context.intersection_normal_closer * F::epsilon() * Cast::from(128.0);
+                let new_origin = context.general.intersection.location +
+                                 -*context.general.intersection_normal_closer * F::epsilon() * Cast::from(128.0);
 
                 // Apply the material transition
-                let mut transitioned_direction = context.intersection.direction;
+                let mut transitioned_direction = context.general.intersection.direction;
 
-                context.origin_traceable.material().exit(&new_origin, &mut transitioned_direction);
-                context.intersection_traceable.material().enter(&new_origin, &mut transitioned_direction);
+                context.general.origin_traceable.material().exit(&new_origin, &mut transitioned_direction);
+                context.general.intersection_traceable.material().enter(&new_origin, &mut transitioned_direction);
 
-                let transition_color = trace(context.time,
-                      context.intersection_traceable,
+                let transition_color = trace(context.general.time,
+                      context.general.intersection_traceable,
                       &new_origin,
                       &transitioned_direction);
                 let surface_palette: Rgba<F> = palette::Rgba::new_u8(surface_color_data[0],
@@ -102,21 +105,21 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
 
     fn get_reflection_color(&self,
                             reflection_ratio: F,
-                            context: &TracingContext<F, P, V>)
+                            context: &ColorTracingContext<F, P, V>)
                             -> Option<Rgba<F>> {
         if reflection_ratio <= <F as NumCast>::from(0.0).unwrap() {
             return None;
         }
 
-        let reflection_direction = self.get_reflection_direction(context);
+        let reflection_direction = self.get_reflection_direction(&context.general);
         let trace = context.trace;
         // Offset the new origin, so it doesn't hit the same shape over and over
         // The question is -- is there a better way? I think not.
-        let new_origin = context.intersection.location +
+        let new_origin = context.general.intersection.location +
                          (reflection_direction * F::epsilon() * Cast::from(128.0));
 
-        Some(trace(context.time,
-                   context.origin_traceable,
+        Some(trace(context.general.time,
+                   context.general.origin_traceable,
                    &new_origin,
                    &reflection_direction))
     }
@@ -124,8 +127,8 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Surface<F, P, V>
         for ComposableSurface<F, P, V> {
-    fn get_color(&self, context: TracingContext<F, P, V>) -> Rgba<F> {
-        let reflection_ratio = self.get_reflection_ratio(&context)
+    fn get_color(&self, context: ColorTracingContext<F, P, V>) -> Rgba<F> {
+        let reflection_ratio = self.get_reflection_ratio(&context.general)
             .min(<F as NumCast>::from(1.0).unwrap())
             .max(<F as NumCast>::from(0.0).unwrap());
         let intersection_color: Option<Rgba<F>> =
@@ -142,6 +145,33 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Surface<F, P, 
         util::combine_palette_color(reflection_color.unwrap(),
                                     intersection_color.unwrap(),
                                     reflection_ratio)
+    }
+
+    fn get_path(&self, context: PathTracingContext<F, P, V>) -> Option<(P, V)> {
+        let new_distance = *context.distance - context.general.intersection.distance_squared.sqrt();
+
+        if new_distance <= <F as Zero>::zero() {
+            None
+        } else {
+            let trace = context.trace;
+
+            // Offset the new origin, so it doesn't hit the same shape over and over
+            // The question is -- is there a better way? I think not.
+            let new_origin = context.general.intersection.location +
+                -*context.general.intersection_normal_closer * F::epsilon() * Cast::from(128.0);
+
+            // Apply the material transition
+            let mut transitioned_direction = context.general.intersection.direction;
+
+            context.general.origin_traceable.material().exit(&new_origin, &mut transitioned_direction);
+            context.general.intersection_traceable.material().enter(&new_origin, &mut transitioned_direction);
+
+            Some(trace(context.general.time,
+                       &new_distance,
+                       context.general.intersection_traceable,
+                       &new_origin,
+                       &transitioned_direction))
+        }
     }
 }
 

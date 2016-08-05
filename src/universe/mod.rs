@@ -24,6 +24,8 @@ use universe::entity::shape::GeneralIntersectors;
 use universe::entity::shape::Intersection;
 use universe::entity::shape::Intersector;
 use universe::entity::shape::TracingContext;
+use universe::entity::shape::ColorTracingContext;
+use universe::entity::shape::PathTracingContext;
 use universe::entity::surface::MappedTexture;
 use util::CustomPoint;
 use util::CustomVector;
@@ -119,6 +121,7 @@ pub trait Universe<F: CustomFloat>
                    <F as BaseFloat>::frac_pi_2() {
                     // closer_normal = -intersection.normal;
                     // exiting = true;
+                    // TODO NEXT ITERATION FROM THE INTERSECTIONS
                     continue; //The same behavior as the above TODO
                 } else {
                     closer_normal = intersection.normal;
@@ -127,19 +130,25 @@ pub trait Universe<F: CustomFloat>
 
                 if foreground_distance_squared.is_none() ||
                    foreground_distance_squared.unwrap() > intersection.distance_squared {
-                    let context = TracingContext {
-                        time: time,
+                    let context = ColorTracingContext {
+                        general: TracingContext {
+                            time: time,
+                            origin_traceable: belongs_to,
+                            origin_location: location,
+                            origin_direction: direction,
+                            intersection_traceable: other_traceable,
+                            intersection: intersection,
+                            intersection_normal_closer: &closer_normal,
+                            exiting: &exiting,
+                        },
                         depth_remaining: max_depth,
-                        origin_traceable: belongs_to,
-                        intersection_traceable: other_traceable,
-                        intersection: intersection,
-                        intersection_normal_closer: &closer_normal,
-                        exiting: &exiting,
                         trace: &|time, traceable, location, direction| {
                             self.trace(time, &(*max_depth - 1), traceable, location, direction)
                         },
                     };
 
+                    // I should probably calculate this only once for the closest one,
+                    // not for all candidates.
                     foreground = Some(surface.get_color(context));
                     foreground_distance_squared = Some(intersection.distance_squared);
                 }
@@ -149,12 +158,87 @@ pub trait Universe<F: CustomFloat>
         foreground.unwrap_or_else(|| self.background().get_color(direction.as_point()))
     }
 
-    fn trace_unknown(&self,
-                     time: &Duration,
-                     max_depth: &u32,
-                     location: &Self::P,
-                     direction: &Self::V)
-                     -> Option<Rgb<F>> {
+    fn trace_path(&self,
+             time: &Duration,
+             distance: &F,
+             belongs_to: &Traceable<F, Self::P, Self::V>,
+             location: &Self::P,
+             direction: &Self::V)
+             -> (Self::P, Self::V) {
+        let material = belongs_to.material();
+        let mut path: Option<(Self::P, Self::V)> = None;
+        let mut path_distance_squared: Option<F> = None;
+
+        for other in self.entities() {
+            let other_traceable = other.as_traceable();
+
+            if other_traceable.is_none() {
+                continue;
+            }
+
+            let other_traceable = other_traceable.unwrap();
+            let shape = other_traceable.shape();
+            let provider = self.intersect(location, direction, material, shape);
+            let mut intersections = provider.iter();
+
+            if let Some(intersection) = intersections.next() {
+                let surface = other_traceable.surface();
+
+                if surface.is_none() {
+                    continue; //TODO
+                }
+
+                let surface = surface.unwrap();
+                let exiting: bool;
+                let closer_normal: Self::V;
+
+                // TODO
+                if intersection.direction.angle_between(&intersection.normal) <
+                   <F as BaseFloat>::frac_pi_2() {
+                    // closer_normal = -intersection.normal;
+                    // exiting = true;
+                    continue; //The same behavior as the above TODO
+                } else {
+                    closer_normal = intersection.normal;
+                    exiting = false;
+                }
+
+                if path_distance_squared.is_none() ||
+                   path_distance_squared.unwrap() > intersection.distance_squared {
+                    let context = PathTracingContext {
+                        general: TracingContext {
+                            time: time,
+                            origin_traceable: belongs_to,
+                            origin_location: location,
+                            origin_direction: direction,
+                            intersection_traceable: other_traceable,
+                            intersection: intersection,
+                            intersection_normal_closer: &closer_normal,
+                            exiting: &exiting,
+                        },
+                        distance: distance,
+                        trace: &|time, distance, traceable, location, direction| {
+                            self.trace_path(time, distance, traceable, location, direction)
+                        },
+                    };
+
+                    // TODO only compute once
+                    path = surface.get_path(context);
+                    path_distance_squared = Some(intersection.distance_squared);
+                }
+            }
+        }
+
+        if path.is_some() {
+            path.unwrap()
+        } else {
+            let material = belongs_to.material();
+
+            material.trace_path(location, direction, distance)
+        }
+    }
+
+    fn material_at(&self, location: &Self::P) -> Option<&Traceable<F, Self::P, Self::V>> {
         let mut belongs_to: Option<&Traceable<F, Self::P, Self::V>> = None;
 
         for entity in self.entities() {
@@ -175,8 +259,16 @@ pub trait Universe<F: CustomFloat>
             break;
         }
 
-        if belongs_to.is_some() {
-            let belongs_to = belongs_to.unwrap();
+        belongs_to
+    }
+
+    fn trace_unknown(&self,
+                     time: &Duration,
+                     max_depth: &u32,
+                     location: &Self::P,
+                     direction: &Self::V)
+                     -> Option<Rgb<F>> {
+        self.material_at(location).map(|belongs_to| {
             let mut transitioned_direction = *direction;
             belongs_to.material().enter(location, &mut transitioned_direction);
             let background =
@@ -184,11 +276,22 @@ pub trait Universe<F: CustomFloat>
                     .into_premultiplied();
             let foreground = self.trace(time, max_depth, belongs_to, location, &transitioned_direction)
                 .into_premultiplied();
-            Some(Rgb::from_premultiplied(foreground.over(background)))
-            // Some(util::overlay_color::<F>(background, foreground))
-        } else {
-            None
-        }
+            Rgb::from_premultiplied(foreground.over(background))
+        })
+    }
+
+    fn trace_path_unknown(&self,
+                          time: &Duration,
+                          distance: &F,
+                          location: &Self::P,
+                          direction: &Self::V)
+                          -> Option<(Self::P, Self::V)> {
+        self.material_at(location).map(|belongs_to| {
+            let mut transitioned_direction = *direction;
+
+            belongs_to.material().enter(location, &mut transitioned_direction);
+            self.trace_path(time, distance, belongs_to, location, &transitioned_direction)
+        })
     }
 }
 

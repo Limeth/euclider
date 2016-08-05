@@ -45,7 +45,12 @@ pub type Intersector<'a, F, P, V> = &'a Fn(&Material<F, P, V>, &Shape<F, P, V>)
 
 /// Calls the `trace` method on the current Universe and returns the resulting color.
 // TODO: It feels wrong to have a type alias to a reference of another type
-pub type Tracer<'a, F, P, V> = &'a Fn(&Duration, &Traceable<F, P, V>, &P, &V) -> Rgba<F>;
+pub type ColorTracer<'a, F, P, V> = &'a Fn(&Duration, &Traceable<F, P, V>, &P, &V) -> Rgba<F>;
+
+/// Calls the `trace_path` method on the current Universe and returns the resulting location and
+/// vector.
+// TODO: It feels wrong to have a type alias to a reference of another type
+pub type PathTracer<'a, F, P, V> = &'a Fn(&Duration, &F, &Traceable<F, P, V>, &P, &V) -> (P, V);
 
 pub trait Shape<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
     where Self: HasId + Debug + Display + mopa::Any
@@ -94,13 +99,35 @@ pub struct TracingContext<'a,
                           V: 'a + CustomVector<F, P>>
 {
     pub time: &'a Duration,
-    pub depth_remaining: &'a u32,
     pub origin_traceable: &'a Traceable<F, P, V>,
+    pub origin_location: &'a P,
+    pub origin_direction: &'a V,
     pub intersection_traceable: &'a Traceable<F, P, V>,
     pub intersection: &'a Intersection<F, P, V>,
     pub intersection_normal_closer: &'a V,
     pub exiting: &'a bool,
-    pub trace: Tracer<'a, F, P, V>,
+}
+
+#[derive(Copy, Clone)]
+pub struct ColorTracingContext<'a,
+                               F: 'a + CustomFloat,
+                               P: 'a + CustomPoint<F, V>,
+                               V: 'a + CustomVector<F, P>>
+{
+    pub general: TracingContext<'a, F, P, V>,
+    pub depth_remaining: &'a u32,
+    pub trace: ColorTracer<'a, F, P, V>,
+}
+
+#[derive(Copy, Clone)]
+pub struct PathTracingContext<'a,
+                              F: 'a + CustomFloat,
+                              P: 'a + CustomPoint<F, V>,
+                              V: 'a + CustomVector<F, P>>
+{
+    pub general: TracingContext<'a, F, P, V>,
+    pub distance: &'a F,
+    pub trace: PathTracer<'a, F, P, V>,
 }
 
 #[allow(dead_code)]

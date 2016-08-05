@@ -17,6 +17,7 @@ pub trait Material<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
 {
     fn enter(&self, location: &P, direction: &mut V);
     fn exit(&self, location: &P, direction: &mut V);
+    fn trace_path(&self, location: &P, direction: &V, distance: &F) -> (P, V);
 }
 
 #[macro_export]
@@ -47,6 +48,10 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Material<F, P,
     #[allow(unused_variables)]
     fn exit(&self, location: &P, direction: &mut V) {
         // Empty
+    }
+
+    fn trace_path(&self, location: &P, direction: &V, distance: &F) -> (P, V) {
+        (*location + *direction * *distance, *direction)
     }
 }
 
@@ -128,6 +133,10 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Material<F, P,
     #[allow(unused_variables)]
     fn exit(&self, location: &P, direction: &mut V) {
         self.inverse_transform(direction);
+    }
+
+    fn trace_path(&self, location: &P, direction: &V, distance: &F) -> (P, V) {
+        (*location + *direction * *distance, *direction)
     }
 }
 

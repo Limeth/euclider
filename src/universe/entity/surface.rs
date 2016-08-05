@@ -76,7 +76,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
                 // Offset the new origin, so it doesn't hit the same shape over and over
                 // The question is -- is there a better way? I think not.
                 let new_origin = context.general.intersection.location +
-                                 -*context.general.intersection_normal_closer * F::epsilon() * Cast::from(128.0);
+                                 -context.general.intersection_normal_closer * F::epsilon() * Cast::from(128.0);
 
                 // Apply the material transition
                 let mut transitioned_direction = context.general.intersection.direction;
@@ -84,7 +84,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
                 context.general.origin_traceable.material().exit(&new_origin, &mut transitioned_direction);
                 context.general.intersection_traceable.material().enter(&new_origin, &mut transitioned_direction);
 
-                let transition_color = trace(context.general.time,
+                let transition_color = trace(&context.general.time,
                       context.general.intersection_traceable,
                       &new_origin,
                       &transitioned_direction);
@@ -118,7 +118,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
         let new_origin = context.general.intersection.location +
                          (reflection_direction * F::epsilon() * Cast::from(128.0));
 
-        Some(trace(context.general.time,
+        Some(trace(&context.general.time,
                    context.general.origin_traceable,
                    &new_origin,
                    &reflection_direction))
@@ -158,7 +158,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Surface<F, P, 
             // Offset the new origin, so it doesn't hit the same shape over and over
             // The question is -- is there a better way? I think not.
             let new_origin = context.general.intersection.location +
-                -*context.general.intersection_normal_closer * F::epsilon() * Cast::from(128.0);
+                -context.general.intersection_normal_closer * F::epsilon() * Cast::from(128.0);
 
             // Apply the material transition
             let mut transitioned_direction = context.general.intersection.direction;
@@ -166,7 +166,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Surface<F, P, 
             context.general.origin_traceable.material().exit(&new_origin, &mut transitioned_direction);
             context.general.intersection_traceable.material().enter(&new_origin, &mut transitioned_direction);
 
-            Some(trace(context.general.time,
+            Some(trace(&context.general.time,
                        &new_distance,
                        context.general.intersection_traceable,
                        &new_origin,

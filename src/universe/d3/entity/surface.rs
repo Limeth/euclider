@@ -25,7 +25,7 @@ pub fn surface_color_perlin_hue<F: CustomFloat>
      speed: F)
      -> Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>> {
     Box::new(move |context: &TracingContext<F, Point3<F>, Vector3<F>>| {
-        let time_millis: F = Cast::from((*context.time * 1000).as_secs() as f64 / 1000.0);
+        let time_millis: F = Cast::from((context.time * 1000).as_secs() as f64 / 1000.0);
         let location = [context.intersection.location.x / size,
                         context.intersection.location.y / size,
                         context.intersection.location.z / size,

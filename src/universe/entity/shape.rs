@@ -98,14 +98,14 @@ pub struct TracingContext<'a,
                           P: 'a + CustomPoint<F, V>,
                           V: 'a + CustomVector<F, P>>
 {
-    pub time: &'a Duration,
+    pub time: Duration,
     pub origin_traceable: &'a Traceable<F, P, V>,
-    pub origin_location: &'a P,
-    pub origin_direction: &'a V,
+    pub origin_location: P,
+    pub origin_direction: V,
     pub intersection_traceable: &'a Traceable<F, P, V>,
-    pub intersection: &'a Intersection<F, P, V>,
-    pub intersection_normal_closer: &'a V,
-    pub exiting: &'a bool,
+    pub intersection: Intersection<F, P, V>,
+    pub intersection_normal_closer: V,
+    pub exiting: bool,
 }
 
 #[derive(Copy, Clone)]

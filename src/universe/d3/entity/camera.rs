@@ -149,32 +149,46 @@ impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for Camera3Impl<F> {
         let pressed_keys: &HashSet<(u8, Option<VirtualKeyCode>)> = context.pressed_keys();
         let delta_millis = <F as NumCast>::from((*delta_time * 1000u32).as_secs()).unwrap() /
                            Cast::from(1000.0);
+        let distance = self.speed * delta_millis;
+        let mut direction: Vector3<F> = na::zero();
 
         for pressed_key in pressed_keys {
             if pressed_key.1.is_none() {
                 continue;
             }
 
-            match pressed_key.1.unwrap() {
-                VirtualKeyCode::W => {
-                    self.location += self.forward * self.speed * delta_millis;
+            direction += match pressed_key.1.unwrap() {
+                VirtualKeyCode::W => self.forward,
+                VirtualKeyCode::S => -self.forward,
+                VirtualKeyCode::A => self.get_left(),
+                VirtualKeyCode::D => self.get_right(),
+                VirtualKeyCode::LControl => -AXIS_Z(),
+                VirtualKeyCode::LShift => AXIS_Z(),
+                _ => continue,
+            };
+        }
+
+        let velocity = direction * distance;
+
+        if velocity.norm_squared() != <F as Zero>::zero() {
+            let path = universe.trace_path_unknown(delta_time,
+                                                   &distance,
+                                                   &self.location,
+                                                   &velocity);
+
+            if path.is_some() {
+                let (new_location, new_direction) = path.unwrap();
+                let rotation_scale = direction.angle_between(&new_direction);
+
+                if rotation_scale == <F as Zero>::zero() {
+                    // TODO: Not tested, might need a lot of tuning.
+                    let rotation_axis = na::cross(&direction, &new_direction);
+                    let difference = UnitQuaternion::new(rotation_axis * rotation_scale);
+                    self.forward = difference.rotate(&self.forward);
+                    self.up = difference.rotate(&self.up);
                 }
-                VirtualKeyCode::S => {
-                    self.location += -self.forward * self.speed * delta_millis;
-                }
-                VirtualKeyCode::A => {
-                    self.location += self.get_left() * self.speed * delta_millis;
-                }
-                VirtualKeyCode::D => {
-                    self.location += self.get_right() * self.speed * delta_millis;
-                }
-                VirtualKeyCode::LControl => {
-                    self.location += -AXIS_Z() * self.speed * delta_millis;
-                }
-                VirtualKeyCode::LShift => {
-                    self.location += AXIS_Z() * self.speed * delta_millis;
-                }
-                _ => (),
+
+                self.location = new_location;
             }
         }
     }

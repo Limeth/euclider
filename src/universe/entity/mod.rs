@@ -15,8 +15,7 @@ use util::CustomFloat;
 use util::CustomPoint;
 use util::CustomVector;
 
-pub trait Entity<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
-    where Self: Sync
+pub trait Entity<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: Send + Sync
 {
     fn as_updatable_mut(&mut self) -> Option<&mut Updatable<F, P, V>>;
     fn as_updatable(&self) -> Option<&Updatable<F, P, V>>;
@@ -70,6 +69,7 @@ pub struct Void<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
     material: Box<Material<F, P, V>>,
 }
 
+unsafe impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Send for Void<F, P, V> {}
 unsafe impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Sync for Void<F, P, V> {}
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Void<F, P, V> {

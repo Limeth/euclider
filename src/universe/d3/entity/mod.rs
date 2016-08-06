@@ -40,6 +40,7 @@ pub struct Entity3Impl<F: CustomFloat> {
     surface: Option<Box<Surface3<F>>>,
 }
 
+unsafe impl<F: CustomFloat> Send for Entity3Impl<F> {}
 unsafe impl<F: CustomFloat> Sync for Entity3Impl<F> {}
 
 impl<F: CustomFloat> Entity3Impl<F> {

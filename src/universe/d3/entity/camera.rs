@@ -3,10 +3,10 @@ use std::time::Duration;
 use na;
 use na::*;
 use glium::glutin::VirtualKeyCode;
+use universe::Universe;
 use universe::entity::Entity;
 use universe::entity::Locatable;
 use universe::entity::Rotatable;
-use universe::entity::Updatable;
 use universe::entity::Traceable;
 use universe::entity::Camera;
 use universe::d3::entity::*;
@@ -142,28 +142,8 @@ impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for Camera3Impl<F> {
     fn max_depth(&self) -> u32 {
         self.max_depth
     }
-}
 
-impl<F: CustomFloat> Entity<F, Point3<F>, Vector3<F>> for Camera3Impl<F> {
-    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<F, Point3<F>, Vector3<F>>> {
-        Some(self)
-    }
-
-    fn as_updatable(&self) -> Option<&Updatable3<F>> {
-        Some(self)
-    }
-
-    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<F, Point3<F>, Vector3<F>>> {
-        None
-    }
-
-    fn as_traceable(&self) -> Option<&Traceable3<F>> {
-        None
-    }
-}
-
-impl<F: CustomFloat> Updatable<F, Point3<F>, Vector3<F>> for Camera3Impl<F> {
-    fn update(&mut self, delta_time: &Duration, context: &SimulationContext) {
+    fn update(&mut self, delta_time: &Duration, context: &SimulationContext, universe: &Universe<F, P=Point3<F>, V=Vector3<F>>) {
         self.update_rotation(context);
 
         let pressed_keys: &HashSet<(u8, Option<VirtualKeyCode>)> = context.pressed_keys();
@@ -197,6 +177,16 @@ impl<F: CustomFloat> Updatable<F, Point3<F>, Vector3<F>> for Camera3Impl<F> {
                 _ => (),
             }
         }
+    }
+}
+
+impl<F: CustomFloat> Entity<F, Point3<F>, Vector3<F>> for Camera3Impl<F> {
+    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<F, Point3<F>, Vector3<F>>> {
+        None
+    }
+
+    fn as_traceable(&self) -> Option<&Traceable3<F>> {
+        None
     }
 }
 

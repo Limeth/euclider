@@ -6,6 +6,7 @@ pub mod surface;
 
 use std::time::Duration;
 use simulation::SimulationContext;
+use universe::Universe;
 use universe::entity::shape::Shape;
 use universe::entity::shape::VoidShape;
 use universe::entity::material::Material;
@@ -17,8 +18,6 @@ use util::CustomVector;
 
 pub trait Entity<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: Send + Sync
 {
-    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<F, P, V>>;
-    fn as_updatable(&self) -> Option<&Updatable<F, P, V>>;
     fn as_traceable_mut(&mut self) -> Option<&mut Traceable<F, P, V>>;
     fn as_traceable(&self) -> Option<&Traceable<F, P, V>>;
 }
@@ -38,11 +37,7 @@ pub trait Camera<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
                       screen_height: i32)
                       -> V;
     fn max_depth(&self) -> u32;
-}
-
-pub trait Updatable<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
-    : Entity<F, P, V> {
-    fn update(&mut self, delta_time: &Duration, context: &SimulationContext);
+    fn update(&mut self, delta_time: &Duration, context: &SimulationContext, universe: &Universe<F, P=P, V=V>);
 }
 
 pub trait Traceable<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
@@ -86,14 +81,6 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Void<F, P, V> 
 }
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Entity<F, P, V> for Void<F, P, V> {
-    fn as_updatable_mut(&mut self) -> Option<&mut Updatable<F, P, V>> {
-        None
-    }
-
-    fn as_updatable(&self) -> Option<&Updatable<F, P, V>> {
-        None
-    }
-
     fn as_traceable_mut(&mut self) -> Option<&mut Traceable<F, P, V>> {
         Some(self)
     }

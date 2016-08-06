@@ -22,7 +22,6 @@ use universe::entity::shape::Sphere;
 
 pub type Shape3<F> = Shape<F, Point3<F>, Vector3<F>>;
 
-#[allow(type_complexity)]
 pub fn cuboid<F: CustomFloat>(center: Point3<F>, abc: Vector3<F>) -> ComposableShape<F, Point3<F>, Vector3<F>> {
     let half_abc: Vector3<F> = abc / <F as NumCast>::from(2.0).unwrap();
     let x = Vector3::new(<F as One>::one(), <F as Zero>::zero(), <F as Zero>::zero());

@@ -5,9 +5,7 @@ pub mod d3;
 use std::time::Duration;
 use std::borrow::Cow;
 use std::marker::Reflect;
-use std::sync::RwLockReadGuard;
-use std::sync::RwLockWriteGuard;
-use core::ops::DerefMut;
+use std::sync::RwLock;
 use na::Cast;
 use na::BaseFloat;
 use glium::texture::ClientFormat;
@@ -46,12 +44,10 @@ pub trait Universe<F: CustomFloat>
     type P: CustomPoint<F, Self::V>;
     type V: CustomVector<F, Self::P>;
 
-    fn camera_mut(&self) -> RwLockWriteGuard<Box<Camera<F, Self::P, Self::V>>>;
-    fn camera(&self) -> RwLockReadGuard<Box<Camera<F, Self::P, Self::V>>>;
-    fn set_camera(&self, camera: Box<Camera<F, Self::P, Self::V>>);
-    fn entities_mut(&self) -> RwLockWriteGuard<Vec<Box<Entity<F, Self::P, Self::V>>>>;
-    fn entities(&self) -> RwLockReadGuard<Vec<Box<Entity<F, Self::P, Self::V>>>>;
-    fn set_entities(&self, entities: Vec<Box<Entity<F, Self::P, Self::V>>>);
+    fn camera(&self) -> &RwLock<Box<Camera<F, Self::P, Self::V>>>;
+    fn entities_mut(&mut self) -> &mut Vec<Box<Entity<F, Self::P, Self::V>>>;
+    fn entities(&self) -> &Vec<Box<Entity<F, Self::P, Self::V>>>;
+    fn set_entities(&mut self, entities: Vec<Box<Entity<F, Self::P, Self::V>>>);
     /// Calculates the intersection of the shape (second) in the material (first)
     fn intersectors_mut(&mut self) -> &mut GeneralIntersectors<F, Self::P, Self::V>;
     fn intersectors(&self) -> &GeneralIntersectors<F, Self::P, Self::V>;
@@ -95,7 +91,7 @@ pub trait Universe<F: CustomFloat>
         let mut closest: Option<TraceResult<'a, F, Self::P, Self::V>> = None;
         let mut closest_distance_squared: Option<F> = None;
 
-        for other in *self.entities() {
+        for other in self.entities() {
             let other_traceable = other.as_traceable();
 
             if other_traceable.is_none() {
@@ -222,7 +218,7 @@ pub trait Universe<F: CustomFloat>
     fn material_at(&self, location: &Self::P) -> Option<&Traceable<F, Self::P, Self::V>> {
         let mut belongs_to: Option<&Traceable<F, Self::P, Self::V>> = None;
 
-        for entity in *self.entities() {
+        for entity in self.entities() {
             let traceable = entity.as_traceable();
 
             if traceable.is_none() {
@@ -327,13 +323,16 @@ pub trait Environment<F: CustomFloat>: Sync {
         }
     }
 
-    fn update(&mut self, delta_time: &Duration, context: &SimulationContext);
+    fn update(&self, delta_time: &Duration, context: &SimulationContext);
 }
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, U: Universe<F, P=P, V=V>>
         Environment<F> for U {
     fn max_depth(&self) -> u32 {
-        self.camera().max_depth()
+        self.camera()
+            .try_read()
+            .expect("Could not get the max ray tracing depth, the camera is mutably borrowed.")
+            .max_depth()
     }
 
     fn trace_screen_point(&self,
@@ -344,7 +343,8 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, U: Universe<F,
                           screen_width: i32,
                           screen_height: i32)
                           -> Rgb<F> {
-        let camera = self.camera();
+        let camera = self.camera().try_read()
+            .expect("Could not get the origin location and direction, the camera is mutably borrowed.");
         let point = camera.get_ray_point(screen_x, screen_y, screen_width, screen_height);
         let vector = camera.get_ray_vector(screen_x, screen_y, screen_width, screen_height);
 
@@ -362,17 +362,11 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, U: Universe<F,
         }
     }
 
-    fn update(&mut self, delta_time: &Duration, context: &SimulationContext) {
-        self.camera_mut().as_updatable_mut().map(|x| x.update(delta_time, context));
+    fn update(&self, delta_time: &Duration, context: &SimulationContext) {
+        let mut camera = self.camera()
+            .try_write()
+            .expect("Could not update the camera. It is already borrowed.");
 
-        // If I wanted to make Traceable be able to access the trace methods,
-        // I would have to make `Environment` a `Clone` type.
-        for entity in self.entities_mut().deref_mut() {
-            let updatable = entity.as_updatable_mut();
-
-            if updatable.is_some() {
-                updatable.unwrap().update(delta_time, context);
-            }
-        }
+        camera.update(delta_time, context, self)
     }
 }

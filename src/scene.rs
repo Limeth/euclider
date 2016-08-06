@@ -56,7 +56,7 @@ impl Parser {
         Parser { deserializers: HashMap::new() }
     }
 
-    #[allow(unused_variables, type_complexity)]
+    #[allow(unused_variables)]
     pub fn default<F: CustomFloat>() -> Self {
         let mut parser = Self::empty();
 

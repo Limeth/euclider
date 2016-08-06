@@ -6,7 +6,9 @@ A non-euclidean ray tracing prototype written in Rust.
 
 Dual-licensed under [MIT](https://opensource.org/licenses/MIT) or the [UNLICENSE](http://unlicense.org).
 
+
 # Installation
+
 1. Install the Rust language via [Rustup](https://www.rustup.rs/)
 2. Use nightly rust via `rustup default nightly`
 3. Clone this repository and `cd` into it
@@ -14,12 +16,14 @@ Dual-licensed under [MIT](https://opensource.org/licenses/MIT) or the [UNLICENSE
 5. Run with `target/release/euclider`
 6. Open a scene with `target/release/euclider --scene scenes/room.json`
 
+
 # Controls
 
 * Mouse - camera rotation
 * Mouse wheel - resolution adjustment
 * [`W`/`A`/`S`/`D`/`Shift`/`Control`] - camera movement
 * [`Esc`] - exit
+
 
 # Preview of version 0.9.0
 
@@ -30,10 +34,12 @@ A reflection chamber.
 Universe background and a textured sphere. Thank you NASA for providing the
 materials.
 
+
 # Preview of version 0.5.0
 
 ![Reflection](preview_2_reflection.png)
 A sphere reflecting another sphere.
+
 
 # Preview of version 0.4.0
 

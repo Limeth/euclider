@@ -52,6 +52,11 @@ pub type ColorTracer<'a, F, P, V> = &'a Fn(&Duration, &Traceable<F, P, V>, &P, &
 // TODO: It feels wrong to have a type alias to a reference of another type
 pub type PathTracer<'a, F, P, V> = &'a Fn(&Duration, &F, &Traceable<F, P, V>, &P, &V) -> (P, V);
 
+/// Calls the `trace_path` method on the current Universe and returns the resulting location and
+/// vector.
+// TODO: It feels wrong to have a type alias to a reference of another type
+pub type MaterialFinder<'a, F, P, V> = &'a Fn(&P) -> Option<&'a Traceable<F, P, V>>;
+
 pub trait Shape<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
     where Self: HasId + Debug + Display + mopa::Any
 {
@@ -117,6 +122,7 @@ pub struct ColorTracingContext<'a,
     pub general: TracingContext<'a, F, P, V>,
     pub depth_remaining: &'a u32,
     pub trace: ColorTracer<'a, F, P, V>,
+    pub material_at: MaterialFinder<'a, F, P, V>,
 }
 
 #[derive(Copy, Clone)]
@@ -128,6 +134,7 @@ pub struct PathTracingContext<'a,
     pub general: TracingContext<'a, F, P, V>,
     pub distance: &'a F,
     pub trace: PathTracer<'a, F, P, V>,
+    pub material_at: MaterialFinder<'a, F, P, V>,
 }
 
 #[allow(dead_code)]

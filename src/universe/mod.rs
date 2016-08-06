@@ -106,7 +106,6 @@ pub trait Universe<F: CustomFloat>
 
             let shape = other_traceable.shape();
             let provider = self.intersect(location, direction, material, shape);
-            let mut inside = false;
 
             for intersection in provider.iter() {
                 let exiting: bool;
@@ -114,12 +113,8 @@ pub trait Universe<F: CustomFloat>
 
                 if intersection.direction.angle_between(&intersection.normal) <
                    <F as BaseFloat>::frac_pi_2() {
-                    if !inside {
-                        inside = true;
-                        continue;
-                    } else {
-                        break;
-                    }
+                    closer_normal = -intersection.normal;
+                    exiting = true;
                 } else {
                     closer_normal = intersection.normal;
                     exiting = false;
@@ -169,6 +164,9 @@ pub trait Universe<F: CustomFloat>
                     trace: &|time, traceable, location, direction| {
                         self.trace(time, &(*max_depth - 1), traceable, location, direction)
                     },
+                    material_at: &|point| {
+                        self.material_at(point)
+                    },
                 };
 
                 // We can safely unwrap here, because we filtered out all the entities without a surface.
@@ -200,6 +198,9 @@ pub trait Universe<F: CustomFloat>
                 distance: distance,
                 trace: &|time, distance, traceable, location, direction| {
                     self.trace_path(time, distance, traceable, location, direction)
+                },
+                material_at: &|point| {
+                    self.material_at(point)
                 },
             };
 

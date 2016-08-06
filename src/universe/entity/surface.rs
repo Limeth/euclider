@@ -59,7 +59,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
                               reflection_ratio: F,
                               context: &ColorTracingContext<F, P, V>)
                               -> Option<Rgba<F>> {
-        if reflection_ratio >= <F as NumCast>::from(1.0).unwrap() {
+        if reflection_ratio >= <F as One>::one() {
             return None;
         }
 
@@ -79,10 +79,19 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
                                  -context.general.intersection_normal_closer * F::epsilon() * Cast::from(128.0);
 
                 // Apply the material transition
+                let destination_traceable = if context.general.exiting {
+                    if let Some(result) = (context.material_at)(&new_origin) {
+                        result
+                    } else {
+                        return None;
+                    }
+                } else {
+                    context.general.intersection_traceable
+                };
                 let mut transitioned_direction = context.general.intersection.direction;
 
                 context.general.origin_traceable.material().exit(&new_origin, &mut transitioned_direction);
-                context.general.intersection_traceable.material().enter(&new_origin, &mut transitioned_direction);
+                destination_traceable.material().enter(&new_origin, &mut transitioned_direction);
 
                 let transition_color = trace(&context.general.time,
                       context.general.intersection_traceable,
@@ -107,8 +116,12 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
                             reflection_ratio: F,
                             context: &ColorTracingContext<F, P, V>)
                             -> Option<Rgba<F>> {
-        if reflection_ratio <= <F as NumCast>::from(0.0).unwrap() {
+        if reflection_ratio <= <F as Zero>::zero() {
             return None;
+        }
+
+        if context.general.exiting {
+            return Some(Rgba::new(<F as Zero>::zero(), <F as Zero>::zero(), <F as Zero>::zero(), <F as Zero>::zero()))
         }
 
         let reflection_direction = self.get_reflection_direction(&context.general);
@@ -129,8 +142,8 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Surface<F, P, 
         for ComposableSurface<F, P, V> {
     fn get_color(&self, context: ColorTracingContext<F, P, V>) -> Rgba<F> {
         let reflection_ratio = self.get_reflection_ratio(&context.general)
-            .min(<F as NumCast>::from(1.0).unwrap())
-            .max(<F as NumCast>::from(0.0).unwrap());
+            .min(<F as One>::one())
+            .max(<F as Zero>::zero());
         let intersection_color: Option<Rgba<F>> =
             self.get_intersection_color(reflection_ratio, &context);
         let reflection_color: Option<Rgba<F>> =
@@ -161,10 +174,19 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Surface<F, P, 
                 -context.general.intersection_normal_closer * F::epsilon() * Cast::from(128.0);
 
             // Apply the material transition
+            let destination_traceable = if context.general.exiting {
+                if let Some(result) = (context.material_at)(&new_origin) {
+                    result
+                } else {
+                    return None;
+                }
+            } else {
+                context.general.intersection_traceable
+            };
             let mut transitioned_direction = context.general.intersection.direction;
 
             context.general.origin_traceable.material().exit(&new_origin, &mut transitioned_direction);
-            context.general.intersection_traceable.material().enter(&new_origin, &mut transitioned_direction);
+            destination_traceable.material().enter(&new_origin, &mut transitioned_direction);
 
             Some(trace(&context.general.time,
                        &new_distance,

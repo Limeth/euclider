@@ -7,55 +7,6 @@
             "Sphere3::new": [
               {
                 "Point3::new": [
-                  10,
-                  0,
-                  -1
-                ]
-              },
-              3
-            ]
-          },
-          {
-            "Vacuum": []
-          },
-          {
-            "ComposableSurface": {
-              "reflection_ratio": {
-                "reflection_ratio_fresnel": [
-                  1.458,
-                  1
-                ]
-              },
-              "reflection_direction": {
-                "reflection_direction_specular": []
-              },
-              "threshold_direction": {
-                "threshold_direction_snell": [
-                    1.458
-                ]
-              },
-              "surface_color": {
-                "surface_color_uniform": [
-                  {
-                    "Rgba::new": [
-                      0,
-                      0,
-                      0,
-                      0
-                    ]
-                  }
-                ]
-              }
-            }
-          }
-        ]
-      },
-      {
-        "Entity3Impl::new": [
-          {
-            "Sphere3::new": [
-              {
-                "Point3::new": [
                   14,
                   5,
                   -1
@@ -191,23 +142,27 @@
           {
             "ComposableSurface": {
               "reflection_ratio": {
-                "reflection_ratio_uniform": [
-                  0
+                "reflection_ratio_fresnel": [
+                  1.458,
+                  1
                 ]
               },
               "reflection_direction": {
                 "reflection_direction_specular": []
               },
               "threshold_direction": {
-                "threshold_direction_identity": []
+                "threshold_direction_snell": [
+                    1.458
+                ]
               },
               "surface_color": {
-                "surface_color_illumination_directional": [
+                "surface_color_uniform": [
                   {
-                    "Vector3::new": [
+                    "Rgba::new": [
                       0,
                       0,
-                      -1
+                      0,
+                      0
                     ]
                   }
                 ]

@@ -56,6 +56,9 @@
               "reflection_direction": {
                 "reflection_direction_specular": []
               },
+              "threshold_direction": {
+                "threshold_direction_identity": []
+              },
               "surface_color": {
                 "surface_color_uniform": [
                   {
@@ -134,6 +137,9 @@
               "reflection_direction": {
                 "reflection_direction_specular": []
               },
+              "threshold_direction": {
+                "threshold_direction_identity": []
+              },
               "surface_color": {
                 "surface_color_illumination_directional": [
                   {
@@ -203,6 +209,9 @@
               },
               "reflection_direction": {
                 "reflection_direction_specular": []
+              },
+              "threshold_direction": {
+                "threshold_direction_identity": []
               },
               "surface_color": {
                 "surface_color_uniform": [
@@ -282,6 +291,9 @@
               "reflection_direction": {
                 "reflection_direction_specular": []
               },
+              "threshold_direction": {
+                "threshold_direction_identity": []
+              },
               "surface_color": {
                 "surface_color_illumination_directional": [
                   {
@@ -340,6 +352,9 @@
               },
               "reflection_direction": {
                 "reflection_direction_specular": []
+              },
+              "threshold_direction": {
+                "threshold_direction_identity": []
               },
               "surface_color": {
                 "surface_color_illumination_directional": [

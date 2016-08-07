@@ -26,6 +26,7 @@ use na::BaseFloat;
 
 pub type ReflectionRatioProvider<F, P, V> = Fn(&TracingContext<F, P, V>) -> F;
 pub type ReflectionDirectionProvider<F, P, V> = Fn(&TracingContext<F, P, V>) -> V;
+pub type ThresholdDirectionProvider<F, P, V> = Fn(&TracingContext<F, P, V>, bool) -> V;
 pub type SurfaceColorProvider<F, P, V> = Fn(&TracingContext<F, P, V>) -> Rgba<F>;
 
 pub trait Surface<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
@@ -36,6 +37,7 @@ pub trait Surface<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
 pub struct ComposableSurface<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
     pub reflection_ratio: Box<ReflectionRatioProvider<F, P, V>>,
     pub reflection_direction: Box<ReflectionDirectionProvider<F, P, V>>,
+    pub threshold_direction: Box<ThresholdDirectionProvider<F, P, V>>,
     pub surface_color: Box<SurfaceColorProvider<F, P, V>>,
 }
 
@@ -88,7 +90,8 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
                 } else {
                     context.general.intersection_traceable
                 };
-                let mut transitioned_direction = context.general.intersection.direction;
+                let mut transitioned_direction = (self.threshold_direction)(&context.general,
+                                                                            context.general.exiting);
 
                 context.general.origin_traceable.material().exit(&new_origin, &mut transitioned_direction);
                 destination_traceable.material().enter(&new_origin, &mut transitioned_direction);
@@ -218,6 +221,16 @@ pub fn reflection_direction_specular<F: CustomFloat, P: CustomPoint<F, V>, V: Cu
 
         normal * <F as NumCast>::from(-2.0).unwrap() *
         na::dot(&context.intersection.direction, &normal) + context.intersection.direction
+    })
+}
+
+#[allow(unused_variables)]
+pub fn threshold_direction_identity<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+    ()
+    -> Box<ThresholdDirectionProvider<F, P, V>>
+{
+    Box::new(move |context: &TracingContext<F, P, V>, entering: bool| {
+        context.intersection.direction
     })
 }
 

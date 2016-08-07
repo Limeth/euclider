@@ -795,6 +795,14 @@ impl Parser {
                                                  }))
                                              ));
 
+                                     let threshold_direction: Box<Box<ThresholdDirectionProvider<F, Point3<F>, Vector3<F>>>> = 
+                                         try!(parser.deserialize_constructor::<Box<ThresholdDirectionProvider<F, Point3<F>, Vector3<F>>>>(
+                                                 try!(object.get("threshold_direction").ok_or_else(|| ParserError::InvalidStructure {
+                                                     description: "The `threshold_direction` field is missing.".to_owned(),
+                                                     json: json.clone(),
+                                                 }))
+                                             ));
+
                                      let surface_color: Box<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>> = 
                                          try!(parser.deserialize_constructor::<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>>(
                                                  try!(object.get("surface_color").ok_or_else(|| ParserError::InvalidStructure {
@@ -807,6 +815,7 @@ impl Parser {
                                          Box::new(Box::new(ComposableSurface {
                                              reflection_ratio: *reflection_ratio,
                                              reflection_direction: *reflection_direction,
+                                             threshold_direction: *threshold_direction,
                                              surface_color: *surface_color
                                          }));
 
@@ -944,6 +953,36 @@ impl Parser {
                                  Box::new(|json: &JsonValue, parser: &Parser| {
                                      let result: Box<Box<ReflectionDirectionProvider<F, Point3<F>, Vector3<F>>>>
                                          = Box::new(reflection_direction_specular());
+
+                                     Ok(result)
+                                 }));
+
+            deserializers.insert("threshold_direction_snell",
+                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                    let mut members: Members = json.members();
+                                    let refractive_index: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
+                                            .ok_or_else(|| {
+                                                ParserError::InvalidStructure {
+                                                    description: "Missing a refractive index as the first argument.".to_owned(),
+                                                    json: json.clone(),
+                                                }
+                                            })))
+                                        .ok_or_else(|| {
+                                            ParserError::InvalidStructure {
+                                                description: "Could not parse the refractive index.".to_owned(),
+                                                json: json.clone(),
+                                            }
+                                        }));
+                                     let result: Box<Box<ThresholdDirectionProvider<F, Point3<F>, Vector3<F>>>>
+                                         = Box::new(threshold_direction_snell(refractive_index));
+
+                                     Ok(result)
+                                 }));
+
+            deserializers.insert("threshold_direction_identity",
+                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                     let result: Box<Box<ThresholdDirectionProvider<F, Point3<F>, Vector3<F>>>>
+                                         = Box::new(threshold_direction_identity());
 
                                      Ok(result)
                                  }));

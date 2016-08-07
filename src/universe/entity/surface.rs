@@ -26,7 +26,7 @@ use na::BaseFloat;
 
 pub type ReflectionRatioProvider<F, P, V> = Fn(&TracingContext<F, P, V>) -> F;
 pub type ReflectionDirectionProvider<F, P, V> = Fn(&TracingContext<F, P, V>) -> V;
-pub type ThresholdDirectionProvider<F, P, V> = Fn(&TracingContext<F, P, V>, bool) -> V;
+pub type ThresholdDirectionProvider<F, P, V> = Fn(&TracingContext<F, P, V>) -> V;
 pub type SurfaceColorProvider<F, P, V> = Fn(&TracingContext<F, P, V>) -> Rgba<F>;
 
 pub trait Surface<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
@@ -90,8 +90,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
                 } else {
                     context.general.intersection_traceable
                 };
-                let mut transitioned_direction = (self.threshold_direction)(&context.general,
-                                                                            context.general.exiting);
+                let mut transitioned_direction = (self.threshold_direction)(&context.general);
 
                 context.general.origin_traceable.material().exit(&new_origin, &mut transitioned_direction);
                 destination_traceable.material().enter(&new_origin, &mut transitioned_direction);
@@ -207,6 +206,26 @@ pub fn reflection_ratio_uniform<F: CustomFloat, P: CustomPoint<F, V>, V: CustomV
     Box::new(move |context: &TracingContext<F, P, V>| ratio)
 }
 
+#[allow(unused_variables)]
+pub fn reflection_ratio_fresnel<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+    (refractive_index_inside: F, refractive_index_outside: F)
+     -> Box<ReflectionRatioProvider<F, P, V>> {
+    Box::new(move |context: &TracingContext<F, P, V>| {
+        let normal = -context.intersection_normal_closer;
+        let from_theta = context.intersection.direction.angle_between(&normal);
+        let (from_index, to_index) = if context.exiting {
+            (refractive_index_inside, refractive_index_outside)
+        } else {
+            (refractive_index_outside, refractive_index_inside)
+        };
+        let to_theta = ((from_index / to_index) * from_theta.sin()).asin();
+        let product_1 = from_index * to_theta.cos();
+        let product_2 = to_index * from_theta.cos();
+
+        ((product_1 - product_2) / (product_1 + product_2)).powi(2)
+    })
+}
+
 pub fn reflection_direction_specular<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
     ()
     -> Box<ReflectionDirectionProvider<F, P, V>>
@@ -229,7 +248,7 @@ pub fn threshold_direction_identity<F: CustomFloat, P: CustomPoint<F, V>, V: Cus
     ()
     -> Box<ThresholdDirectionProvider<F, P, V>>
 {
-    Box::new(move |context: &TracingContext<F, P, V>, entering: bool| {
+    Box::new(move |context: &TracingContext<F, P, V>| {
         context.intersection.direction
     })
 }

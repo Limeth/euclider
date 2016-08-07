@@ -21,8 +21,9 @@
           {
             "ComposableSurface": {
               "reflection_ratio": {
-                "reflection_ratio_uniform": [
-                  0
+                "reflection_ratio_fresnel": [
+                  1.458,
+                  1
                 ]
               },
               "reflection_direction": {

@@ -49,11 +49,11 @@ pub fn threshold_direction_snell<F: CustomFloat>
     (refractive_index: F)
     -> Box<ThresholdDirectionProvider<F, Point3<F>, Vector3<F>>>
 {
-    Box::new(move |context: &TracingContext<F, Point3<F>, Vector3<F>>, exiting: bool| {
+    Box::new(move |context: &TracingContext<F, Point3<F>, Vector3<F>>| {
         let normal = -context.intersection_normal_closer;
         let axis = na::cross(&context.intersection.direction, &normal);
         let from_theta = context.intersection.direction.angle_between(&normal);
-        let refractive_index_modifier = if exiting {
+        let refractive_index_modifier = if context.exiting {
             refractive_index
         } else {
             <F as One>::one() / refractive_index

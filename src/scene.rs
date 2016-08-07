@@ -1005,6 +1005,43 @@ impl Parser {
                 Ok(result)
             }));
 
+            deserializers.insert("reflection_ratio_fresnel",
+                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                let mut members: Members = json.members();
+                let refractive_index_inside: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing the inside refractive index as the first argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        })))
+                    .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the inside refractive index.".to_owned(),
+                            json: json.clone(),
+                        }
+                    }));
+                let refractive_index_outside: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing the outside refractive index as the first argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        })))
+                    .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the outside refractive index.".to_owned(),
+                            json: json.clone(),
+                        }
+                    }));
+
+                let result: Box<Box<ReflectionRatioProvider<F, Point3<F>, Vector3<F>>>> =
+                    Box::new(reflection_ratio_fresnel(refractive_index_inside,
+                                                      refractive_index_outside));
+
+                Ok(result)
+            }));
+
             deserializers.insert("surface_color_texture",
                                  Box::new(|json: &JsonValue, parser: &Parser| {
                                      let mut members: Members = json.members();

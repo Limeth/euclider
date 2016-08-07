@@ -94,7 +94,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
                 destination_traceable.material().enter(&new_origin, &mut transitioned_direction);
 
                 let transition_color = trace(&context.general.time,
-                      context.general.intersection_traceable,
+                      destination_traceable,
                       &new_origin,
                       &transitioned_direction);
                 let surface_palette: Rgba<F> = palette::Rgba::new_u8(surface_color_data[0],
@@ -190,7 +190,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Surface<F, P, 
 
             Some(trace(&context.general.time,
                        &new_distance,
-                       context.general.intersection_traceable,
+                       destination_traceable,
                        &new_origin,
                        &transitioned_direction))
         }

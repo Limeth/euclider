@@ -100,8 +100,8 @@ impl<F: CustomFloat> Simulation<F> {
         }
 
         self.last_updated_instant = Some(now);
-
         let result = self.context.update(self.facade.as_mut().unwrap());
+
         self.environment.update(&delta, &self.context);
 
         result

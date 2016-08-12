@@ -13,7 +13,6 @@ use universe::d3::entity::Camera3;
 use universe::d3::entity::Entity3;
 use universe::entity::material::*;
 use universe::entity::shape::*;
-use universe::d3::entity::shape::*;
 use universe::Universe;
 use util::CustomFloat;
 use util::HasId;
@@ -32,7 +31,7 @@ impl<F: CustomFloat> Universe3<F> {
         intersectors.insert((Vacuum::id_static(), VoidShape::id_static()),
                             Box::new(intersect_void));
         intersectors.insert((Vacuum::id_static(), Sphere::<F, Point3<F>, Vector3<F>>::id_static()),
-                            Box::new(intersect_sphere3_linear));
+                            Box::new(Sphere::<F, Point3<F>, Vector3<F>>::intersect_linear));
         intersectors.insert((Vacuum::id_static(), Plane::<F, Point3<F>, Vector3<F>>::id_static()),
                             Box::new(Plane::<F, Point3<F>, Vector3<F>>::intersect_linear));
         intersectors.insert((Vacuum::id_static(), HalfSpace::<F, Point3<F>, Vector3<F>>::id_static()),
@@ -43,7 +42,7 @@ impl<F: CustomFloat> Universe3<F> {
         intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), VoidShape::id_static()),
                             Box::new(intersect_void));
         intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), Sphere::<F, Point3<F>, Vector3<F>>::id_static()),
-                            Box::new(intersect_sphere3_linear));
+                            Box::new(Sphere::<F, Point3<F>, Vector3<F>>::intersect_linear));
         intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), Plane::<F, Point3<F>, Vector3<F>>::id_static()),
                             Box::new(Plane::<F, Point3<F>, Vector3<F>>::intersect_linear));
         intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), HalfSpace::<F, Point3<F>, Vector3<F>>::id_static()),

@@ -1,4 +1,6 @@
 use std::marker::PhantomData;
+use util::VecLazy;
+use util::IterLazy;
 use std::fmt;
 use std::fmt::Debug;
 use std::fmt::Display;
@@ -18,6 +20,7 @@ use util::HasId;
 use util::Provider;
 use util::TypePairMap;
 use num::Zero;
+use num::NumCast;
 use mopa;
 use na;
 
@@ -642,6 +645,88 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Sphere<F, P, V
             radius: radius,
             marker_vector: PhantomData,
         }
+    }
+
+    #[allow(unused_variables)]
+    pub fn intersect_linear
+        (location: &P,
+         direction: &V,
+         vacuum: &Material<F, P, V>,
+         sphere: &Shape<F, P, V>,
+         intersect: Intersector<F, P, V>)
+         -> Box<IntersectionMarcher<F, P, V>> {
+        let sphere: &Sphere<F, P, V> =
+            sphere.as_any().downcast_ref::<Sphere<F, P, V>>().unwrap();
+
+        let rel = *location - sphere.location;
+        let a: F = direction.norm_squared();
+        let b: F = <F as NumCast>::from(2.0).unwrap() * direction.dot(&rel);
+        let c: F = rel.norm_squared() - sphere.radius * sphere.radius;
+
+        // Discriminant = b^2 - 4*a*c
+        let d: F = b * b - <F as NumCast>::from(4.0).unwrap() * a * c;
+
+        if d < <F as Zero>::zero() {
+            return Box::new(iter::empty());
+        }
+
+        let d_sqrt = d.sqrt();
+        let mut t_first: Option<F> = None;  // The smallest non-negative vector modifier
+        let mut t_second: Option<F> = None;  // The second smallest non-negative vector modifier
+        let t1: F = (-b - d_sqrt) / (<F as NumCast>::from(2.0).unwrap() * a);
+        let t2: F = (-b + d_sqrt) / (<F as NumCast>::from(2.0).unwrap() * a);
+
+        if t1 >= <F as Zero>::zero() {
+            t_first = Some(t1);
+
+            if t2 >= <F as Zero>::zero() {
+                t_second = Some(t2);
+            }
+        } else if t2 >= <F as Zero>::zero() {
+            t_first = Some(t2);
+        }
+
+        if t_first.is_none() {
+            return Box::new(iter::empty());  // Don't trace in the opposite direction
+        }
+
+        let t_first = t_first.unwrap();
+        let mut closures: VecLazy<Intersection<F, P, V>> = Vec::new();
+        // Move the following variables inside the closures.
+        // This lets the closures move outside the scope.
+        let direction = *direction;
+        let location = *location;
+        let sphere_location = sphere.location;
+
+        closures.push(Box::new(move || {
+            let result_vector = direction * t_first;
+            let result_point = location + result_vector;
+
+            let mut normal = result_point - sphere_location;
+            normal = na::normalize(&normal);
+
+            Some(Intersection::new(result_point,
+                                   direction,
+                                   normal,
+                                   t_first))
+        }));
+
+        if let Some(t_second) = t_second {
+            closures.push(Box::new(move || {
+                let result_vector = direction * t_second;
+                let result_point = location + result_vector;
+
+                let mut normal = result_point - sphere_location;
+                normal = na::normalize(&normal);
+
+                Some(Intersection::new(result_point,
+                                       direction,
+                                       normal,
+                                       t_second))
+            }));
+        }
+
+        Box::new(IterLazy::new(closures))
     }
 }
 

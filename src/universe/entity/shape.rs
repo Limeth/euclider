@@ -716,7 +716,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Plane<F, P, V>
         Box::new(iter::once(Intersection::new(result_point,
                                               *direction,
                                               normal,
-                                              na::distance_squared(location, &result_point))))
+                                              t)))
     }
 }
 

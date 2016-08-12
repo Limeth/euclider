@@ -119,6 +119,7 @@ pub fn intersect_sphere3_linear<F: CustomFloat>
         return Box::new(iter::empty());  // Don't trace in the opposite direction
     }
 
+    let t_first = t_first.unwrap();
     let mut closures: VecLazy<Intersection<F, Point3<F>, Vector3<F>>> = Vec::new();
     // Move the following variables inside the closures.
     // This lets the closures move outside the scope.
@@ -127,7 +128,7 @@ pub fn intersect_sphere3_linear<F: CustomFloat>
     let sphere_location = sphere.location;
 
     closures.push(Box::new(move || {
-        let result_vector = direction * t_first.unwrap();
+        let result_vector = direction * t_first;
         let result_point = Point3::new(location.x + result_vector.x,
                                        location.y + result_vector.y,
                                        location.z + result_vector.z);
@@ -138,12 +139,12 @@ pub fn intersect_sphere3_linear<F: CustomFloat>
         Some(Intersection::new(result_point,
                                direction,
                                normal,
-                               na::distance_squared(&location, &result_point)))
+                               t_first))
     }));
 
-    if t_second.is_some() {
+    if let Some(t_second) = t_second {
         closures.push(Box::new(move || {
-            let result_vector = direction * t_second.unwrap();
+            let result_vector = direction * t_second;
             let result_point = Point3::new(location.x + result_vector.x,
                                            location.y + result_vector.y,
                                            location.z + result_vector.z);
@@ -154,7 +155,7 @@ pub fn intersect_sphere3_linear<F: CustomFloat>
             Some(Intersection::new(result_point,
                                    direction,
                                    normal,
-                                   na::distance_squared(&location, &result_point)))
+                                   t_second))
         }));
     }
 

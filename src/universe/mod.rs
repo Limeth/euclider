@@ -368,6 +368,6 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, U: Universe<F,
             .try_write()
             .expect("Could not update the camera. It is already borrowed.");
 
-        camera.update(delta_time, context, self)
+        camera.update(delta_time, context, self);
     }
 }

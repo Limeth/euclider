@@ -150,6 +150,11 @@ impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for Camera3Impl<F> {
         let delta_millis = <F as NumCast>::from((*delta_time * 1000u32).as_secs()).unwrap() /
                            Cast::from(1000.0);
         let distance = self.speed * delta_millis;
+
+        if distance == <F as Zero>::zero() {
+            return;
+        }
+
         let mut direction: Vector3<F> = na::zero();
 
         for &(_, keycode) in pressed_keys {
@@ -166,13 +171,12 @@ impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for Camera3Impl<F> {
             }
         }
 
-        let velocity = direction * distance;
-
-        if velocity.norm_squared() != <F as Zero>::zero() {
-            if let Some((new_location, new_direction)) = universe.trace_path_unknown(delta_time,
-                                                            &distance,
-                                                            &self.location,
-                                                            &velocity) {
+        if direction.norm_squared() != <F as Zero>::zero() {
+            if let Some((new_location, new_direction))
+                    = universe.trace_path_unknown(delta_time,
+                                                  &distance,
+                                                  &self.location,
+                                                  &direction) {
                 let rotation_scale = direction.angle_between(&new_direction);
 
                 if rotation_scale == <F as Zero>::zero() {

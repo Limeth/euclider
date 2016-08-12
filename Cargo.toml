@@ -1,6 +1,6 @@
 [package]
 name = "euclider"
-version = "0.13.0"
+version = "0.13.1"
 description = "A non-euclidean ray tracer"
 license = "MIT/Unlicense"
 authors = ["Jakub Hlusička <jakub.hlusicka@email.cz>"]

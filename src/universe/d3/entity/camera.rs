@@ -152,32 +152,27 @@ impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for Camera3Impl<F> {
         let distance = self.speed * delta_millis;
         let mut direction: Vector3<F> = na::zero();
 
-        for pressed_key in pressed_keys {
-            if pressed_key.1.is_none() {
-                continue;
+        for &(_, keycode) in pressed_keys {
+            if let Some(keycode) = keycode {
+                direction += match keycode {
+                    VirtualKeyCode::W => self.forward,
+                    VirtualKeyCode::S => -self.forward,
+                    VirtualKeyCode::A => self.get_left(),
+                    VirtualKeyCode::D => self.get_right(),
+                    VirtualKeyCode::LControl => -AXIS_Z(),
+                    VirtualKeyCode::LShift => AXIS_Z(),
+                    _ => continue,
+                };
             }
-
-            direction += match pressed_key.1.unwrap() {
-                VirtualKeyCode::W => self.forward,
-                VirtualKeyCode::S => -self.forward,
-                VirtualKeyCode::A => self.get_left(),
-                VirtualKeyCode::D => self.get_right(),
-                VirtualKeyCode::LControl => -AXIS_Z(),
-                VirtualKeyCode::LShift => AXIS_Z(),
-                _ => continue,
-            };
         }
 
         let velocity = direction * distance;
 
         if velocity.norm_squared() != <F as Zero>::zero() {
-            let path = universe.trace_path_unknown(delta_time,
-                                                   &distance,
-                                                   &self.location,
-                                                   &velocity);
-
-            if path.is_some() {
-                let (new_location, new_direction) = path.unwrap();
+            if let Some((new_location, new_direction)) = universe.trace_path_unknown(delta_time,
+                                                            &distance,
+                                                            &self.location,
+                                                            &velocity) {
                 let rotation_scale = direction.angle_between(&new_direction);
 
                 if rotation_scale == <F as Zero>::zero() {

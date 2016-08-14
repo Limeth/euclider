@@ -1,4 +1,6 @@
 use std;
+use palette::ComponentWise;
+use palette::blend::PreAlpha;
 use num::traits::NumCast;
 use std::marker::PhantomData;
 use palette;
@@ -251,6 +253,105 @@ pub fn threshold_direction_identity<F: CustomFloat, P: CustomPoint<F, V>, V: Cus
     Box::new(move |context: &TracingContext<F, P, V>| {
         context.intersection.direction
     })
+}
+
+pub type BlendFunction<F> = Fn(Rgba<F>, Rgba<F>) -> Rgba<F>;
+pub type PaletteBlendFunction<C: Blend<Color=C> + ComponentWise> =
+    Fn(PreAlpha<C, C::Scalar>, PreAlpha<C, C::Scalar>) -> PreAlpha<C, C::Scalar>;
+
+pub fn surface_color_blend<F: CustomFloat,
+                           P: CustomPoint<F, V>,
+                           V: CustomVector<F, P>>
+    (source: Box<SurfaceColorProvider<F, P, V>>,
+     destination: Box<SurfaceColorProvider<F, P, V>>,
+     blend_function: Box<BlendFunction<F>>)
+     -> Box<SurfaceColorProvider<F, P, V>> {
+    Box::new(move |context: &TracingContext<F, P, V>| {
+        blend_function(source(context), destination(context))
+    })
+}
+
+pub fn blend_function_ratio<F: CustomFloat>(ratio: F) -> Box<BlendFunction<F>> {
+    Box::new(move |source, destination| {
+        util::combine_palette_color(source, destination, ratio)
+    })
+}
+
+pub fn blend_premultiplied<F: CustomFloat>(blend_function: Box<PaletteBlendFunction<Rgb<F>>>)
+        -> Box<BlendFunction<F>> {
+    Box::new(move |source_color: Rgba<F>, destination_color: Rgba<F>| {
+        Blend::from_premultiplied(
+            (&blend_function)(source_color.into_premultiplied(), destination_color.into_premultiplied())
+        )
+    })
+}
+
+pub fn blend_function_over<F: CustomFloat>() -> Box<BlendFunction<F>> {
+    blend_premultiplied(Box::new(Blend::over))
+}
+
+pub fn blend_function_inside<F: CustomFloat>() -> Box<BlendFunction<F>> {
+    blend_premultiplied(Box::new(Blend::inside))
+}
+
+pub fn blend_function_outside<F: CustomFloat>() -> Box<BlendFunction<F>> {
+    blend_premultiplied(Box::new(Blend::outside))
+}
+
+pub fn blend_function_atop<F: CustomFloat>() -> Box<BlendFunction<F>> {
+    blend_premultiplied(Box::new(Blend::atop))
+}
+
+pub fn blend_function_xor<F: CustomFloat>() -> Box<BlendFunction<F>> {
+    blend_premultiplied(Box::new(Blend::xor))
+}
+
+pub fn blend_function_plus<F: CustomFloat>() -> Box<BlendFunction<F>> {
+    blend_premultiplied(Box::new(Blend::plus))
+}
+
+pub fn blend_function_multiply<F: CustomFloat>() -> Box<BlendFunction<F>> {
+    blend_premultiplied(Box::new(Blend::multiply))
+}
+
+pub fn blend_function_screen<F: CustomFloat>() -> Box<BlendFunction<F>> {
+    blend_premultiplied(Box::new(Blend::screen))
+}
+
+pub fn blend_function_overlay<F: CustomFloat>() -> Box<BlendFunction<F>> {
+    blend_premultiplied(Box::new(Blend::overlay))
+}
+
+pub fn blend_function_darken<F: CustomFloat>() -> Box<BlendFunction<F>> {
+    blend_premultiplied(Box::new(Blend::darken))
+}
+
+pub fn blend_function_lighten<F: CustomFloat>() -> Box<BlendFunction<F>> {
+    blend_premultiplied(Box::new(Blend::lighten))
+}
+
+pub fn blend_function_dodge<F: CustomFloat>() -> Box<BlendFunction<F>> {
+    blend_premultiplied(Box::new(Blend::dodge))
+}
+
+pub fn blend_function_burn<F: CustomFloat>() -> Box<BlendFunction<F>> {
+    blend_premultiplied(Box::new(Blend::burn))
+}
+
+pub fn blend_function_hard_light<F: CustomFloat>() -> Box<BlendFunction<F>> {
+    blend_premultiplied(Box::new(Blend::hard_light))
+}
+
+pub fn blend_function_soft_light<F: CustomFloat>() -> Box<BlendFunction<F>> {
+    blend_premultiplied(Box::new(Blend::soft_light))
+}
+
+pub fn blend_function_difference<F: CustomFloat>() -> Box<BlendFunction<F>> {
+    blend_premultiplied(Box::new(Blend::difference))
+}
+
+pub fn blend_function_exclusion<F: CustomFloat>() -> Box<BlendFunction<F>> {
+    blend_premultiplied(Box::new(Blend::exclusion))
 }
 
 pub fn surface_color_illumination_directional<F: CustomFloat,

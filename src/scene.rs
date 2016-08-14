@@ -822,6 +822,86 @@ impl Parser {
                                      Ok(result)
                                  }));
 
+            deserializers.insert("blend_function_ratio",
+                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                let mut members: Members = json.members();
+                let ratio: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a `ratio` as the second argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        })))
+                    .ok_or_else(|| {
+                        ParserError::InvalidStructure {
+                            description: "Could not parse the ratio.".to_owned(),
+                            json: json.clone(),
+                        }
+                    }));
+
+                let result: Box<Box<BlendFunction<F>>> =
+                    Box::new(blend_function_ratio(ratio));
+
+                Ok(result)
+            }));
+
+            macro_rules! deserialize_blending_functions {
+                (
+                    $($name:ident),+
+                ) => {
+                    $(
+                        deserializers.insert(
+                            concat!(
+                                "blend_function_",
+                                stringify!($name)
+                            ), Box::new(|json: &JsonValue, parser: &Parser| {
+                                let result: Box<Box<BlendFunction<F>>> =
+                                    Box::new(concat_idents!(blend_function_, $name)());
+                                Ok(result)
+                            })
+                        );
+                    )+
+                }
+            }
+
+            deserialize_blending_functions!(over, inside, outside, atop, xor, plus, multiply,
+                                            screen, overlay, darken, lighten, dodge, burn,
+                                            hard_light, soft_light, difference, exclusion);
+
+            deserializers.insert("surface_color_blend",
+                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                let mut members: Members = json.members();
+                let source: Box<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>> =
+                    try!(parser.deserialize_constructor::<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>>(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a `SurfaceColorProvider` as the first argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
+                let destination: Box<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>> =
+                    try!(parser.deserialize_constructor::<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>>(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a `SurfaceColorProvider` as the second argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
+                let blend_function: Box<Box<BlendFunction<F>>> =
+                    try!(parser.deserialize_constructor::<Box<BlendFunction<F>>>(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a `BlendFunction` as the third argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
+
+                let result: Box<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>> =
+                    Box::new(surface_color_blend(*source, *destination, *blend_function));
+
+                Ok(result)
+            }));
+
             deserializers.insert("surface_color_perlin_hue_seed",
                                  Box::new(|json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();

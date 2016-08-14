@@ -84,9 +84,22 @@
                 "threshold_direction_identity": []
               },
               "surface_color": {
-                "surface_color_perlin_hue_random": [
-                  5,
-                  1
+                "surface_color_blend": [
+                  {
+                    "surface_color_perlin_hue_random": [
+                      5,
+                      0.1
+                    ]
+                  },
+                  {
+                    "surface_color_perlin_hue_random": [
+                      2,
+                      0.3
+                    ]
+                  },
+                  {
+                    "blend_function_difference": []
+                  }
                 ]
               }
             }

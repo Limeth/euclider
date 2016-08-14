@@ -357,7 +357,7 @@ pub fn blend_function_exclusion<F: CustomFloat>() -> Box<BlendFunction<F>> {
 pub fn surface_color_illumination_directional<F: CustomFloat,
                                               P: CustomPoint<F, V>,
                                               V: CustomVector<F, P>>
-    (light_direction: V)
+    (light_direction: V, light_color: Rgba<F>, dark_color: Rgba<F>)
      -> Box<SurfaceColorProvider<F, P, V>> {
     Box::new(move |context: &TracingContext<F, P, V>| {
         let mut normal = context.intersection.normal;
@@ -367,14 +367,9 @@ pub fn surface_color_illumination_directional<F: CustomFloat,
         }
 
         let angle: F = normal.angle_between(&-light_direction);
+        let ratio: F = <F as One>::one() - angle / <F as BaseFloat>::pi();
 
-        Alpha {
-            color:
-                Rgb::from(Hsv::new(RgbHue::from(<F as Zero>::zero()),
-                                   <F as Zero>::zero(),
-                                   <F as NumCast>::from(angle / <F as BaseFloat>::pi()).unwrap())),
-            alpha: Cast::from(1.0),
-        }
+        util::combine_palette_color(dark_color, light_color, ratio)
     })
 }
 

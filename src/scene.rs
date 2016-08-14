@@ -989,9 +989,27 @@ impl Parser {
                                 json: json.clone(),
                             }
                         }))));
+                let light_color: Box<Rgba<F>> =
+                    try!(parser.deserialize_constructor::<Rgba<F>>(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a `Color` as the second argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
+                let dark_color: Box<Rgba<F>> =
+                    try!(parser.deserialize_constructor::<Rgba<F>>(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a `Color` as the third argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
 
                 let result: Box<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>> =
-                    Box::new(surface_color_illumination_directional(*direction));
+                    Box::new(surface_color_illumination_directional(*direction,
+                                                                    *light_color,
+                                                                    *dark_color));
 
                 Ok(result)
             }));

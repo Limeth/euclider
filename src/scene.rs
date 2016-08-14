@@ -902,6 +902,32 @@ impl Parser {
                 Ok(result)
             }));
 
+            deserializers.insert("surface_color_illumination_global",
+                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                let mut members: Members = json.members();
+                let light_color: Box<Rgba<F>> =
+                    try!(parser.deserialize_constructor::<Rgba<F>>(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a `Color` as the first argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
+                let dark_color: Box<Rgba<F>> =
+                    try!(parser.deserialize_constructor::<Rgba<F>>(try!(members.next()
+                        .ok_or_else(|| {
+                            ParserError::InvalidStructure {
+                                description: "Missing a `Color` as the second argument.".to_owned(),
+                                json: json.clone(),
+                            }
+                        }))));
+
+                let result: Box<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>> =
+                    Box::new(surface_color_illumination_global(*light_color, *dark_color));
+
+                Ok(result)
+            }));
+
             deserializers.insert("surface_color_perlin_hue_seed",
                                  Box::new(|json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();

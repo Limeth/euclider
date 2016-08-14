@@ -32,14 +32,41 @@
                 "threshold_direction_identity": []
               },
               "surface_color": {
-                "surface_color_uniform": [
+                "surface_color_blend": [
                   {
-                    "Rgba::new": [
-                      0,
-                      0,
-                      1,
-                      0.25
+                    "surface_color_illumination_global": [
+                      {
+                        "Rgba::new": [
+                          1,
+                          1,
+                          1,
+                          0
+                        ]
+                      },
+                      {
+                        "Rgba::new": [
+                          0,
+                          0,
+                          0,
+                          0.5
+                        ]
+                      }
                     ]
+                  },
+                  {
+                    "surface_color_uniform": [
+                      {
+                        "Rgba::new": [
+                          0,
+                          0,
+                          1,
+                          0.25
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "blend_function_darken": []
                   }
                 ]
               }
@@ -86,19 +113,46 @@
               "surface_color": {
                 "surface_color_blend": [
                   {
-                    "surface_color_perlin_hue_random": [
-                      5,
-                      0.1
+                    "surface_color_illumination_global": [
+                      {
+                        "Rgba::new": [
+                          1,
+                          1,
+                          1,
+                          0
+                        ]
+                      },
+                      {
+                        "Rgba::new": [
+                          0,
+                          0,
+                          0,
+                          0.5
+                        ]
+                      }
                     ]
                   },
                   {
-                    "surface_color_perlin_hue_random": [
-                      2,
-                      0.3
+                    "surface_color_blend": [
+                      {
+                        "surface_color_perlin_hue_random": [
+                          5,
+                          0.1
+                        ]
+                      },
+                      {
+                        "surface_color_perlin_hue_random": [
+                          2,
+                          0.3
+                        ]
+                      },
+                      {
+                        "blend_function_difference": []
+                      }
                     ]
                   },
                   {
-                    "blend_function_difference": []
+                    "blend_function_darken": []
                   }
                 ]
               }
@@ -232,14 +286,41 @@
                 "threshold_direction_identity": []
               },
               "surface_color": {
-                "surface_color_uniform": [
+                "surface_color_blend": [
                   {
-                    "Rgba::new": [
-                      1,
-                      0,
-                      0,
-                      1
+                    "surface_color_illumination_global": [
+                      {
+                        "Rgba::new": [
+                          1,
+                          1,
+                          1,
+                          0
+                        ]
+                      },
+                      {
+                        "Rgba::new": [
+                          0,
+                          0,
+                          0,
+                          0.5
+                        ]
+                      }
                     ]
+                  },
+                  {
+                    "surface_color_uniform": [
+                      {
+                        "Rgba::new": [
+                          1,
+                          0,
+                          0,
+                          1
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "blend_function_darken": []
                   }
                 ]
               }
@@ -295,14 +376,41 @@
                 "threshold_direction_identity": []
               },
               "surface_color": {
-                "surface_color_uniform": [
+                "surface_color_blend": [
                   {
-                    "Rgba::new": [
-                      0,
-                      1,
-                      0,
-                      1
+                    "surface_color_illumination_global": [
+                      {
+                        "Rgba::new": [
+                          1,
+                          1,
+                          1,
+                          0
+                        ]
+                      },
+                      {
+                        "Rgba::new": [
+                          0,
+                          0,
+                          0,
+                          0.5
+                        ]
+                      }
                     ]
+                  },
+                  {
+                    "surface_color_uniform": [
+                      {
+                        "Rgba::new": [
+                          0,
+                          1,
+                          0,
+                          1
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "blend_function_darken": []
                   }
                 ]
               }
@@ -456,13 +564,40 @@
                 "threshold_direction_identity": []
               },
               "surface_color": {
-                "surface_color_illumination_directional": [
+                "surface_color_blend": [
                   {
-                    "Vector3::new": [
-                      0,
-                      0,
-                      -1
+                    "surface_color_illumination_global": [
+                      {
+                        "Rgba::new": [
+                          1,
+                          1,
+                          1,
+                          0
+                        ]
+                      },
+                      {
+                        "Rgba::new": [
+                          0,
+                          0,
+                          0,
+                          0.5
+                        ]
+                      }
                     ]
+                  },
+                  {
+                    "surface_color_illumination_directional": [
+                      {
+                        "Vector3::new": [
+                          0,
+                          0,
+                          -1
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "blend_function_darken": []
                   }
                 ]
               }

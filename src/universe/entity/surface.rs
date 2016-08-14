@@ -378,6 +378,21 @@ pub fn surface_color_illumination_directional<F: CustomFloat,
     })
 }
 
+pub fn surface_color_illumination_global<F: CustomFloat,
+                                         P: CustomPoint<F, V>,
+                                         V: CustomVector<F, P>>
+    (light_color: Rgba<F>, dark_color: Rgba<F>)
+     -> Box<SurfaceColorProvider<F, P, V>> {
+    Box::new(move |context: &TracingContext<F, P, V>| {
+        let original_angle = context.intersection_normal_closer
+            .angle_between(&context.intersection.direction);
+        let angle = <F as BaseFloat>::pi() - original_angle;
+        let ratio = angle / BaseFloat::frac_pi_2();
+
+        util::combine_palette_color(dark_color, light_color, ratio)
+    })
+}
+
 #[allow(unused_variables)]
 pub fn surface_color_uniform<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
     (color: Rgba<F>)

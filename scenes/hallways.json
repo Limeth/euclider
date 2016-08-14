@@ -141,13 +141,56 @@
                 "threshold_direction_identity": []
               },
               "surface_color": {
-                "surface_color_illumination_directional": [
+                "surface_color_blend": [
                   {
-                    "Vector3::new": [
-                      0,
-                      0,
-                      -1
+                    "surface_color_illumination_global": [
+                      {
+                        "Rgba::new": [
+                          1,
+                          1,
+                          1,
+                          0
+                        ]
+                      },
+                      {
+                        "Rgba::new": [
+                          0,
+                          0,
+                          0,
+                          0.5
+                        ]
+                      }
                     ]
+                  },
+                  {
+                    "surface_color_illumination_directional": [
+                      {
+                        "Vector3::new": [
+                          0,
+                          0,
+                          -1
+                        ]
+                      },
+                      {
+                        "Rgba::new": [
+                          0,
+                          0.5,
+                          1,
+                          1
+                        ]
+                      },
+                      {
+                        "Rgba::new": [
+                          0,
+                          0.25,
+                          0.5,
+                          1
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "blend_function_darken": []
                   }
                 ]
               }
@@ -295,13 +338,56 @@
                 "threshold_direction_identity": []
               },
               "surface_color": {
-                "surface_color_illumination_directional": [
+                "surface_color_blend": [
                   {
-                    "Vector3::new": [
-                      0,
-                      0,
-                      -1
+                    "surface_color_illumination_global": [
+                      {
+                        "Rgba::new": [
+                          1,
+                          1,
+                          1,
+                          0
+                        ]
+                      },
+                      {
+                        "Rgba::new": [
+                          0,
+                          0,
+                          0,
+                          0.5
+                        ]
+                      }
                     ]
+                  },
+                  {
+                    "surface_color_illumination_directional": [
+                      {
+                        "Vector3::new": [
+                          0,
+                          0,
+                          -1
+                        ]
+                      },
+                      {
+                        "Rgba::new": [
+                          1,
+                          0.5,
+                          0,
+                          1
+                        ]
+                      },
+                      {
+                        "Rgba::new": [
+                          0.5,
+                          0.25,
+                          0,
+                          1
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "blend_function_darken": []
                   }
                 ]
               }
@@ -357,13 +443,56 @@
                 "threshold_direction_identity": []
               },
               "surface_color": {
-                "surface_color_illumination_directional": [
+                "surface_color_blend": [
                   {
-                    "Vector3::new": [
-                      0,
-                      0,
-                      -1
+                    "surface_color_illumination_global": [
+                      {
+                        "Rgba::new": [
+                          1,
+                          1,
+                          1,
+                          0
+                        ]
+                      },
+                      {
+                        "Rgba::new": [
+                          0,
+                          0,
+                          0,
+                          0.5
+                        ]
+                      }
                     ]
+                  },
+                  {
+                    "surface_color_illumination_directional": [
+                      {
+                        "Vector3::new": [
+                          0,
+                          0,
+                          -1
+                        ]
+                      },
+                      {
+                        "Rgba::new": [
+                          1,
+                          1,
+                          1,
+                          1
+                        ]
+                      },
+                      {
+                        "Rgba::new": [
+                          0.5,
+                          0.5,
+                          0.5,
+                          1
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "blend_function_darken": []
                   }
                 ]
               }

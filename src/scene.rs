@@ -24,37 +24,311 @@ use meval::Expr;
 
 macro_rules! deserializer {
     (
-        @deserialize [F]
-        $parent_json:expr,
-        $parser:expr,
-        $json:expr
-    ) => {{
-        let json = $json;
-        try!(<F as JsonFloat>::float_from_json(json)
+        @try_unwrap
+        option: $option:expr,
+        type_name: $type_name:expr,
+        parent_json: $parent_json:expr,
+        parser: $parser:expr,
+        json: $json:expr
+    ) => {
+        try!($option
             .ok_or_else(|| {
                 ParserError::TypeMismatch {
                     description: format! {
-                        "Expected a floating-point number, got `{:?}`.",
-                        json,
+                        "Expected `{}`, could not parse from `{:?}`.",
+                        $type_name,
+                        $json,
                     },
                     parent_json: $parent_json.clone(),
                 }
             }))
+    };
+
+    (
+        @deserialize [ F ]
+        parent_json: $parent_json:expr,
+        parser: $parser:expr,
+        json: $json:expr
+    ) => {{
+        let json = $json;
+        deserializer! {
+            @try_unwrap
+            option: <F as JsonFloat>::float_from_json(json),
+            type_name: "floating point number",
+            parent_json: $parent_json,
+            parser: $parser,
+            json: json
+        }
+    }};
+
+    (
+        @deserialize [ &str ]
+        parent_json: $parent_json:expr,
+        parser: $parser:expr,
+        json: $json:expr
+    ) => {{
+        let json = $json;
+        deserializer! {
+            @try_unwrap
+            option: json.as_str(),
+            type_name: "string",
+            parent_json: $parent_json,
+            parser: $parser,
+            json: json
+        }
+    }};
+
+    (
+        @deserialize [ Number ]
+        parent_json: $parent_json:expr,
+        parser: $parser:expr,
+        json: $json:expr
+    ) => {{
+        let json = $json;
+        deserializer! {
+            @try_unwrap
+            option: json.as_number(),
+            type_name: "number",
+            parent_json: $parent_json,
+            parser: $parser,
+            json: json
+        }
+    }};
+
+    (
+        @deserialize [ f64 ]
+        parent_json: $parent_json:expr,
+        parser: $parser:expr,
+        json: $json:expr
+    ) => {{
+        let json = $json;
+        deserializer! {
+            @try_unwrap
+            option: json.as_f64(),
+            type_name: "64-bit floating point number",
+            parent_json: $parent_json,
+            parser: $parser,
+            json: json
+        }
+    }};
+
+    (
+        @deserialize [ f32 ]
+        parent_json: $parent_json:expr,
+        parser: $parser:expr,
+        json: $json:expr
+    ) => {{
+        let json = $json;
+        deserializer! {
+            @try_unwrap
+            option: json.as_f32(),
+            type_name: "32-bit floating point number",
+            parent_json: $parent_json,
+            parser: $parser,
+            json: json
+        }
+    }};
+
+    (
+        @deserialize [ u64 ]
+        parent_json: $parent_json:expr,
+        parser: $parser:expr,
+        json: $json:expr
+    ) => {{
+        let json = $json;
+        deserializer! {
+            @try_unwrap
+            option: json.as_u64(),
+            type_name: "unsigned 64-bit integer",
+            parent_json: $parent_json,
+            parser: $parser,
+            json: json
+        }
+    }};
+
+    (
+        @deserialize [ u32 ]
+        parent_json: $parent_json:expr,
+        parser: $parser:expr,
+        json: $json:expr
+    ) => {{
+        let json = $json;
+        deserializer! {
+            @try_unwrap
+            option: json.as_u32(),
+            type_name: "unsigned 32-bit integer",
+            parent_json: $parent_json,
+            parser: $parser,
+            json: json
+        }
+    }};
+
+    (
+        @deserialize [ u16 ]
+        parent_json: $parent_json:expr,
+        parser: $parser:expr,
+        json: $json:expr
+    ) => {{
+        let json = $json;
+        deserializer! {
+            @try_unwrap
+            option: json.as_u16(),
+            type_name: "unsigned 16-bit integer",
+            parent_json: $parent_json,
+            parser: $parser,
+            json: json
+        }
+    }};
+
+    (
+        @deserialize [ u8 ]
+        parent_json: $parent_json:expr,
+        parser: $parser:expr,
+        json: $json:expr
+    ) => {{
+        let json = $json;
+        deserializer! {
+            @try_unwrap
+            option: json.as_u8(),
+            type_name: "unsigned 8-bit integer",
+            parent_json: $parent_json,
+            parser: $parser,
+            json: json
+        }
+    }};
+
+    (
+        @deserialize [ usize ]
+        parent_json: $parent_json:expr,
+        parser: $parser:expr,
+        json: $json:expr
+    ) => {{
+        let json = $json;
+        deserializer! {
+            @try_unwrap
+            option: json.as_usize(),
+            type_name: "unsigned pointer-sized integer",
+            parent_json: $parent_json,
+            parser: $parser,
+            json: json
+        }
+    }};
+
+    (
+        @deserialize [ i64 ]
+        parent_json: $parent_json:expr,
+        parser: $parser:expr,
+        json: $json:expr
+    ) => {{
+        let json = $json;
+        deserializer! {
+            @try_unwrap
+            option: json.as_i64(),
+            type_name: "64-bit integer",
+            parent_json: $parent_json,
+            parser: $parser,
+            json: json
+        }
+    }};
+
+    (
+        @deserialize [ i32 ]
+        parent_json: $parent_json:expr,
+        parser: $parser:expr,
+        json: $json:expr
+    ) => {{
+        let json = $json;
+        deserializer! {
+            @try_unwrap
+            option: json.as_i32(),
+            type_name: "32-bit integer",
+            parent_json: $parent_json,
+            parser: $parser,
+            json: json
+        }
+    }};
+
+    (
+        @deserialize [ i16 ]
+        parent_json: $parent_json:expr,
+        parser: $parser:expr,
+        json: $json:expr
+    ) => {{
+        let json = $json;
+        deserializer! {
+            @try_unwrap
+            option: json.as_i16(),
+            type_name: "16-bit integer",
+            parent_json: $parent_json,
+            parser: $parser,
+            json: json
+        }
+    }};
+
+    (
+        @deserialize [ i8 ]
+        parent_json: $parent_json:expr,
+        parser: $parser:expr,
+        json: $json:expr
+    ) => {{
+        let json = $json;
+        deserializer! {
+            @try_unwrap
+            option: json.as_i8(),
+            type_name: "8-bit integer",
+            parent_json: $parent_json,
+            parser: $parser,
+            json: json
+        }
+    }};
+
+    (
+        @deserialize [ isize ]
+        parent_json: $parent_json:expr,
+        parser: $parser:expr,
+        json: $json:expr
+    ) => {{
+        let json = $json;
+        deserializer! {
+            @try_unwrap
+            option: json.as_isize(),
+            type_name: "pointer-sized integer",
+            parent_json: $parent_json,
+            parser: $parser,
+            json: json
+        }
+    }};
+
+    (
+        @deserialize [ bool ]
+        parent_json: $parent_json:expr,
+        parser: $parser:expr,
+        json: $json:expr
+    ) => {{
+        let json = $json;
+        deserializer! {
+            @try_unwrap
+            option: json.as_bool(),
+            type_name: "boolean value",
+            parent_json: $parent_json,
+            parser: $parser,
+            json: json
+        }
     }};
 
     (
         @deserialize [ $($item_type:tt)+ ]
-        $parent_json:expr,
-        $parser:expr,
-        $json:expr
+        parent_json: $parent_json:expr,
+        parser: $parser:expr,
+        json: $json:expr
     ) => {
         *try!($parser.deserialize_constructor::<$($item_type)+>($json))
     };
 
     (
         @iterator_next [ $($item_type:tt)+ ]
-        $parent_json:expr,
-        $iterator:expr,
+        parent_json: $parent_json:expr,
+        iterator: $iterator:expr,
     ) => {
         try!(
             $iterator.next()
@@ -76,9 +350,9 @@ macro_rules! deserializer {
 
     (
         @object_get [ $($item_type:tt)+ ]
-        $parent_json:expr,
-        $object:expr,
-        $key:expr
+        parent_json: $parent_json:expr,
+        object: $object:expr,
+        key: $key:expr
     ) => {
         try!(
             $object.get(stringify!($key))
@@ -98,7 +372,7 @@ macro_rules! deserializer {
 
     (
         @construct
-        $constructor:block
+        constructor: $constructor:block
     ) => {
         Ok(Box::new($constructor))
     };
@@ -113,35 +387,41 @@ macro_rules! deserializer {
                     $(
                         let $field_name: $($field_type)+ = deserializer! {
                             @deserialize [$($field_type)+]
-                            parent_json,
-                            parser,
-                            deserializer! {
+                            parent_json: parent_json,
+                            parser: parser,
+                            json: deserializer! {
                                 @object_get [$($field_type)+]
-                                parent_json,
-                                json,
-                                $field_name
+                                parent_json: parent_json,
+                                object: json,
+                                key: $field_name
                             }
                         };
                     )*
 
-                    deserializer!(@construct $constructor)
+                    deserializer! {
+                        @construct
+                        constructor: $constructor
+                    }
                 }
                 JsonValue::Array(ref json) => {
                     let mut __iterator = json.iter();
                     $(
                         let $field_name: $($field_type)+ = deserializer! {
                             @deserialize [$($field_type)+]
-                            parent_json,
-                            parser,
-                            deserializer! {
+                            parent_json: parent_json,
+                            parser: parser,
+                            json: deserializer! {
                                 @iterator_next [$($field_type)+]
-                                parent_json,
-                                __iterator,
+                                parent_json: parent_json,
+                                iterator: __iterator,
                             }
                         };
                     )*
 
-                    deserializer!(@construct $constructor)
+                    deserializer! {
+                        @construct
+                        constructor: $constructor
+                    }
                 }
                 _ => Err(ParserError::InvalidConstructor {
                     description: format! {
@@ -228,75 +508,17 @@ impl Parser {
 
             deserializers.insert("Rgba::new",
                 Box::new(deserializer! {
-                    [r: F] [g: F] [b: F] [a: F] -> Point3<F> {
-                        Rgba::new(r, g, b, a)
+                    [r: F] [g: F] [b: F] [a: F] -> Rgba<F> {
+                        Rgba::<F>::new(r, g, b, a)
                     }
                 }));
 
             deserializers.insert("Rgba::new_u8",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                let mut members: Members = json.members();
-
-                Ok(Box::new(Rgba::<F>::new_u8(try!(try!(members.next().ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Missing the red component of an `Rgba` color.".to_owned(),
-                            json: json.clone(),
-                        }
-                    }))
-                                                  .as_u8()
-                                                  .ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Could not parse the red component of an `Rgba` color."
-                                .to_owned(),
-                            json: json.clone(),
-                        }
-                    })),
-                                              try!(try!(members.next().ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Missing the green component of an `Rgba` color."
-                                .to_owned(),
-                            json: json.clone(),
-                        }
-                    }))
-                                                  .as_u8()
-                                                  .ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Could not parse the green component of an `Rgba` color."
-                                .to_owned(),
-                            json: json.clone(),
-                        }
-                    })),
-                                              try!(try!(members.next().ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Missing the blue component of an `Rgba` color."
-                                .to_owned(),
-                            json: json.clone(),
-                        }
-                    }))
-                                                  .as_u8()
-                                                  .ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Could not parse the blue component of an `Rgba` color."
-                                .to_owned(),
-                            json: json.clone(),
-                        }
-                    })),
-                                              try!(try!(members.next().ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Missing the alpha component of an `Rgba` color."
-                                .to_owned(),
-                            json: json.clone(),
-                        }
-                    }))
-                                                  .as_u8()
-                                                  .ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Could not parse the alpha component of an `Rgba` color."
-                                .to_owned(),
-                            json: json.clone(),
-                        }
-                    })))))
-            }));
+                Box::new(deserializer! {
+                    [r: u8] [g: u8] [b: u8] [a: u8] -> Rgba<F> {
+                        Rgba::<F>::new_u8(r, g, b, a)
+                    }
+                }));
 
             // Entities
 

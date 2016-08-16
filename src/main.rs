@@ -3,6 +3,7 @@
 #![feature(custom_attribute)]
 #![feature(const_fn)]
 #![feature(concat_idents)]
+#![feature(trace_macros)]
 
 #![plugin(clippy)]
 

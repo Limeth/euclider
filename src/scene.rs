@@ -22,17 +22,152 @@ use util::JsonFloat;
 use image;
 use meval::Expr;
 
-pub type Deserializer<T> = Fn(&JsonValue, &Parser) -> Result<T, ParserError>;
+macro_rules! deserializer {
+    (
+        @deserialize [F]
+        $parent_json:expr,
+        $parser:expr,
+        $json:expr
+    ) => {{
+        let json = $json;
+        try!(<F as JsonFloat>::float_from_json(json)
+            .ok_or_else(|| {
+                ParserError::TypeMismatch {
+                    description: format! {
+                        "Expected a floating-point number, got `{:?}`.",
+                        json,
+                    },
+                    parent_json: $parent_json.clone(),
+                }
+            }))
+    }};
+
+    (
+        @deserialize [ $($item_type:tt)+ ]
+        $parent_json:expr,
+        $parser:expr,
+        $json:expr
+    ) => {
+        *try!($parser.deserialize_constructor::<$($item_type)+>($json))
+    };
+
+    (
+        @iterator_next [ $($item_type:tt)+ ]
+        $parent_json:expr,
+        $iterator:expr,
+    ) => {
+        try!(
+            $iterator.next()
+                     .ok_or_else(|| {
+                ParserError::MissingField {
+                    description: format! {
+                        concat! {
+                            "Missing field of type {} in {:?}.",
+                            " To fix this, add the field at the end of the array."
+                        },
+                        stringify!($($item_type)+),
+                        $parent_json
+                    },
+                    parent_json: $parent_json.clone(),
+                }
+            })
+        )
+    };
+
+    (
+        @object_get [ $($item_type:tt)+ ]
+        $parent_json:expr,
+        $object:expr,
+        $key:expr
+    ) => {
+        try!(
+            $object.get(stringify!($key))
+                   .ok_or_else(|| {
+                ParserError::MissingField {
+                    description: format! {
+                        "Missing field of type {} with key {} in {:?}.",
+                        stringify!($($item_type)+),
+                        stringify!($key),
+                        $parent_json
+                    },
+                    parent_json: $parent_json.clone(),
+                }
+            })
+        )
+    };
+
+    (
+        @construct
+        $constructor:block
+    ) => {
+        Ok(Box::new($constructor))
+    };
+
+    (
+        $([ $field_name:ident : $($field_type:tt)+ ])* -> $return_type:ty
+        $constructor:block
+    ) => {
+        |parent_json: &JsonValue, json: &JsonValue, parser: &Parser| -> Result<Box<Any>, ParserError> {
+            match *json {
+                JsonValue::Object(ref json) => {
+                    $(
+                        let $field_name: $($field_type)+ = deserializer! {
+                            @deserialize [$($field_type)+]
+                            parent_json,
+                            parser,
+                            deserializer! {
+                                @object_get [$($field_type)+]
+                                parent_json,
+                                json,
+                                $field_name
+                            }
+                        };
+                    )*
+
+                    deserializer!(@construct $constructor)
+                }
+                JsonValue::Array(ref json) => {
+                    let mut __iterator = json.iter();
+                    $(
+                        let $field_name: $($field_type)+ = deserializer! {
+                            @deserialize [$($field_type)+]
+                            parent_json,
+                            parser,
+                            deserializer! {
+                                @iterator_next [$($field_type)+]
+                                parent_json,
+                                __iterator,
+                            }
+                        };
+                    )*
+
+                    deserializer!(@construct $constructor)
+                }
+                _ => Err(ParserError::InvalidConstructor {
+                    description: format! {
+                        concat! {
+                            "The constructor data may only be an array or an object,",
+                            " received {:?} instead."
+                        },
+                        json
+                    },
+                    parent_json: parent_json.clone(),
+                })
+            }
+        }
+    };
+}
+
+/// Fields:
+/// - Parent json object for printing on failure
+/// - The json value to parse
+/// - A parser with the deserializers
+pub type Deserializer<T> = Fn(&JsonValue, &JsonValue, &Parser) -> Result<T, ParserError>;
 
 #[derive(Debug)]
 pub enum ParserError {
     NoDeserializer {
         key: String,
-    },
-    TypeMismatch {
-        key: String,
-        value: Box<Any + 'static>,
-        json: JsonValue,
     },
     SyntaxError {
         key: String,
@@ -45,6 +180,18 @@ pub enum ParserError {
     MissingType {
         type_str: String,
     },
+    InvalidConstructor {
+        description: String,
+        parent_json: JsonValue,
+    },
+    MissingField {
+        description: String,
+        parent_json: JsonValue,
+    },
+    TypeMismatch {
+        description: String,
+        parent_json: JsonValue,
+    }
 }
 
 pub struct Parser {
@@ -66,103 +213,28 @@ impl Parser {
             // General
 
             deserializers.insert("Point3::new",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
-                                     let mut members: Members = json.members();
-
-                                     Ok(
-                                         Box::new(
-                                             Point3::<F>::new(
-                                                 <F as JsonFloat>::float_from_json(members.next().unwrap()).unwrap(),
-                                                 <F as JsonFloat>::float_from_json(members.next().unwrap()).unwrap(),
-                                                 <F as JsonFloat>::float_from_json(members.next().unwrap()).unwrap()
-                                             )
-                                         )
-                                     )
-                                 }));
+                Box::new(deserializer! {
+                    [x: F] [y: F] [z: F] -> Point3<F> {
+                        Point3::new(x, y, z)
+                    }
+                }));
 
             deserializers.insert("Vector3::new",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
-                                     let mut members: Members = json.members();
-
-                                     Ok(
-                                         Box::new(
-                                             Vector3::<F>::new(
-                                                 <F as JsonFloat>::float_from_json(members.next().unwrap()).unwrap(),
-                                                 <F as JsonFloat>::float_from_json(members.next().unwrap()).unwrap(),
-                                                 <F as JsonFloat>::float_from_json(members.next().unwrap()).unwrap()
-                                             )
-                                         )
-                                     )
-                                 }));
+                Box::new(deserializer! {
+                    [x: F] [y: F] [z: F] -> Point3<F> {
+                        Vector3::new(x, y, z)
+                    }
+                }));
 
             deserializers.insert("Rgba::new",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
-                let mut members: Members = json.members();
-
-                Ok(Box::new(Rgba::new(try!(<F as JsonFloat>::float_from_json(try!(members.next()
-                                              .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing the red component of an `Rgba` color."
-                                    .to_owned(),
-                                json: json.clone(),
-                            }
-                        })))
-                                          .ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Could not parse the red component of an `Rgba` color."
-                                .to_owned(),
-                            json: json.clone(),
-                        }
-                    })),
-                                      try!(<F as JsonFloat>::float_from_json(try!(members.next()
-                                              .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing the green component of an `Rgba` color."
-                                    .to_owned(),
-                                json: json.clone(),
-                            }
-                        })))
-                                          .ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Could not parse the green component of an `Rgba` color."
-                                .to_owned(),
-                            json: json.clone(),
-                        }
-                    })),
-                                      try!(<F as JsonFloat>::float_from_json(try!(members.next()
-                                              .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing the blue component of an `Rgba` color."
-                                    .to_owned(),
-                                json: json.clone(),
-                            }
-                        })))
-                                          .ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Could not parse the blue component of an `Rgba` color."
-                                .to_owned(),
-                            json: json.clone(),
-                        }
-                    })),
-                                      try!(<F as JsonFloat>::float_from_json(try!(members.next()
-                                              .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing the alpha component of an `Rgba` color."
-                                    .to_owned(),
-                                json: json.clone(),
-                            }
-                        })))
-                                          .ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Could not parse the alpha component of an `Rgba` color."
-                                .to_owned(),
-                            json: json.clone(),
-                        }
-                    })))))
-            }));
+                Box::new(deserializer! {
+                    [r: F] [g: F] [b: F] [a: F] -> Point3<F> {
+                        Rgba::new(r, g, b, a)
+                    }
+                }));
 
             deserializers.insert("Rgba::new_u8",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
 
                 Ok(Box::new(Rgba::<F>::new_u8(try!(try!(members.next().ok_or_else(|| {
@@ -229,7 +301,7 @@ impl Parser {
             // Entities
 
             deserializers.insert("Void::new_with_vacuum",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                                      let result: Box<Box<Entity<F, Point3<F>, Vector3<F>>>> =
                                          Box::new(Box::new(Void::new_with_vacuum()));
 
@@ -237,7 +309,7 @@ impl Parser {
                                  }));
 
             deserializers.insert("Entity3Impl::new",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
 
                 let shape: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
@@ -274,12 +346,12 @@ impl Parser {
             // Shapes
 
             deserializers.insert("VoidShape",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                                      Ok(Box::new(VoidShape::new()))
                                  }));
 
             deserializers.insert("ComposableShape::of",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
                 let shapes_json = try!(members.next()
                         .ok_or_else(|| {
@@ -316,7 +388,7 @@ impl Parser {
             }));
 
             deserializers.insert("SetOperation",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
                 let name = try!(try!(members.next()
                         .ok_or_else(|| {
@@ -344,7 +416,7 @@ impl Parser {
             }));
 
             deserializers.insert("Sphere3::new",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
 
                 let center: Box<Point3<F>> = try!(parser.deserialize_constructor(try!(members.next()
@@ -375,7 +447,7 @@ impl Parser {
             }));
 
             deserializers.insert("Plane3::new",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
 
                 let normal: Box<Vector3<F>> =
@@ -410,7 +482,7 @@ impl Parser {
             }));
 
             deserializers.insert("Plane3::new_with_point",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
 
                 let normal: Box<Vector3<F>> =
@@ -436,7 +508,7 @@ impl Parser {
             }));
 
             deserializers.insert("Plane3::new_with_vectors",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
 
                 let vector_a: Box<Vector3<F>> =
@@ -470,7 +542,7 @@ impl Parser {
             }));
 
             deserializers.insert("HalfSpace3::new",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
 
                 let plane: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
@@ -509,7 +581,7 @@ impl Parser {
             }));
 
             deserializers.insert("HalfSpace3::new_with_point",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
 
                 let plane: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
@@ -540,7 +612,7 @@ impl Parser {
             }));
 
             deserializers.insert("HalfSpace3::cuboid",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
 
                 let center: Box<Point3<F>> = try!(parser.deserialize_constructor(try!(members.next()
@@ -567,7 +639,7 @@ impl Parser {
             // Materials
 
             deserializers.insert("Vacuum",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                                      let result: Box<Box<Material<F, Point3<F>, Vector3<F>>>> =
                                          Box::new(Box::new(Vacuum::new()));
 
@@ -575,7 +647,7 @@ impl Parser {
                                  }));
 
             deserializers.insert("Vacuum::new",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                                      let result: Box<Box<Material<F, Point3<F>, Vector3<F>>>> =
                                          Box::new(Box::new(Vacuum::new()));
 
@@ -583,7 +655,7 @@ impl Parser {
                                  }));
             
             deserializers.insert("ComponentTransformation",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                                      let object: &Object = if let JsonValue::Object(ref object) = *json {
                                          object
                                      } else {
@@ -657,7 +729,7 @@ impl Parser {
                                  }));
             
             deserializers.insert("LinearSpace",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                                      let object: &Object = if let JsonValue::Object(ref object) = *json {
                                          object
                                      } else {
@@ -707,7 +779,7 @@ impl Parser {
             // Surfaces
 
             deserializers.insert("uv_sphere",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
                 let center = try!(parser.deserialize_constructor::<Point3<F>>(try!(members.next()
                     .ok_or_else(|| {
@@ -721,7 +793,7 @@ impl Parser {
             }));
 
             deserializers.insert("texture_image",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
                 let path = try!(try!(members.next().ok_or_else(|| {
                         ParserError::InvalidStructure {
@@ -745,7 +817,7 @@ impl Parser {
             }));
 
             deserializers.insert("MappedTextureImpl3::new",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                                      let mut members: Members = json.members();
                                      let uvfn = try!(parser.deserialize_constructor::<Box<UVFn<F, Point3<F>>>>(
                                                     try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
@@ -769,7 +841,7 @@ impl Parser {
                                  }));
 
             deserializers.insert("ComposableSurface",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                                      let object: &Object = if let JsonValue::Object(ref object) = *json {
                                          object
                                      } else {
@@ -823,7 +895,7 @@ impl Parser {
                                  }));
 
             deserializers.insert("blend_function_ratio",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
                 let ratio: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
                         .ok_or_else(|| {
@@ -854,7 +926,7 @@ impl Parser {
                             concat!(
                                 "blend_function_",
                                 stringify!($name)
-                            ), Box::new(|json: &JsonValue, parser: &Parser| {
+                            ), Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                                 let result: Box<Box<BlendFunction<F>>> =
                                     Box::new(concat_idents!(blend_function_, $name)());
                                 Ok(result)
@@ -869,7 +941,7 @@ impl Parser {
                                             hard_light, soft_light, difference, exclusion);
 
             deserializers.insert("surface_color_blend",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
                 let source: Box<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>> =
                     try!(parser.deserialize_constructor::<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>>(try!(members.next()
@@ -903,7 +975,7 @@ impl Parser {
             }));
 
             deserializers.insert("surface_color_illumination_global",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
                 let light_color: Box<Rgba<F>> =
                     try!(parser.deserialize_constructor::<Rgba<F>>(try!(members.next()
@@ -929,7 +1001,7 @@ impl Parser {
             }));
 
             deserializers.insert("surface_color_perlin_hue_seed",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
                 let seed: u32 = try!(try!(members.next()
                         .ok_or_else(|| {
@@ -979,7 +1051,7 @@ impl Parser {
             }));
 
             deserializers.insert("surface_color_illumination_directional",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
                 let direction: Box<Vector3<F>> =
                     try!(parser.deserialize_constructor::<Vector3<F>>(try!(members.next()
@@ -1015,7 +1087,7 @@ impl Parser {
             }));
 
             deserializers.insert("surface_color_perlin_hue_random",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
                 let size: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
                         .ok_or_else(|| {
@@ -1051,7 +1123,7 @@ impl Parser {
             }));
 
             deserializers.insert("reflection_ratio_uniform",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
                 let ratio: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
                         .ok_or_else(|| {
@@ -1074,7 +1146,7 @@ impl Parser {
             }));
 
             deserializers.insert("reflection_direction_specular",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                                      let result: Box<Box<ReflectionDirectionProvider<F, Point3<F>, Vector3<F>>>>
                                          = Box::new(reflection_direction_specular());
 
@@ -1082,7 +1154,7 @@ impl Parser {
                                  }));
 
             deserializers.insert("threshold_direction_snell",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                                     let mut members: Members = json.members();
                                     let refractive_index: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
                                             .ok_or_else(|| {
@@ -1104,7 +1176,7 @@ impl Parser {
                                  }));
 
             deserializers.insert("threshold_direction_identity",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                                      let result: Box<Box<ThresholdDirectionProvider<F, Point3<F>, Vector3<F>>>>
                                          = Box::new(threshold_direction_identity());
 
@@ -1112,7 +1184,7 @@ impl Parser {
                                  }));
 
             deserializers.insert("surface_color_uniform",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
                 let color: Box<Rgba<F>> =
                     try!(parser.deserialize_constructor::<Rgba<F>>(try!(members.next()
@@ -1130,7 +1202,7 @@ impl Parser {
             }));
 
             deserializers.insert("reflection_ratio_fresnel",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
                 let refractive_index_inside: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
                         .ok_or_else(|| {
@@ -1167,7 +1239,7 @@ impl Parser {
             }));
 
             deserializers.insert("surface_color_texture",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                                      let mut members: Members = json.members();
                                      let mapped_texture: Box<Box<MappedTexture<F, Point3<F>, Vector3<F>>>>
                                          = try!(parser.deserialize_constructor::<Box<MappedTexture<F, Point3<F>, Vector3<F>>>>(
@@ -1186,7 +1258,7 @@ impl Parser {
             // Environments
 
             deserializers.insert("Environment",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let object: &Object = if let JsonValue::Object(ref object) = *json {
                     object
                 } else {
@@ -1203,7 +1275,7 @@ impl Parser {
             }));
 
             deserializers.insert("Universe3",
-                                 Box::new(|json: &JsonValue, parser: &Parser| {
+                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                                      let object: &Object = if let JsonValue::Object(ref object) = *json {
                                          object
                                      } else {
@@ -1269,17 +1341,20 @@ impl Parser {
         }
     }
 
-    pub fn deserialize<T: Any>(&self, key: &str, json: &JsonValue) -> Result<Box<T>, ParserError> {
+    pub fn deserialize<T: Any>(&self, key: &str, json: &JsonValue, parent_json: &JsonValue) -> Result<Box<T>, ParserError> {
         let deserializer = try!(self.deserializer(key));
-        let result = try!(deserializer(json, &self)).downcast::<T>();
+        let result = try!(deserializer(parent_json, json, &self)).downcast::<T>();
 
         match result {
             Ok(value) => Ok(value),
-            Err(original_value) => {
+            Err(_) => {
                 Err(ParserError::TypeMismatch {
-                    key: key.to_owned(),
-                    value: original_value,
-                    json: json.clone(),
+                    description: format! {
+                        "The constructor used (`{}`) has an incorrect type for this field. {:?}",
+                        key,
+                        parent_json
+                    },
+                    parent_json: parent_json.clone(),
                 })
             }
         }
@@ -1290,7 +1365,7 @@ impl Parser {
 
         if entries.len() == 1 {
             let (constructor_key, constructor_value) = entries[0];
-            self.deserialize::<T>(constructor_key, constructor_value)
+            self.deserialize::<T>(constructor_key, constructor_value, json)
         } else {
             Err(ParserError::InvalidStructure {
                 description: "A constructor must be an object containing a single key pointing to \
@@ -1305,7 +1380,7 @@ impl Parser {
         let value = json::parse(json);
 
         match value {
-            Ok(value) => self.deserialize::<T>(key, &value),
+            Ok(value) => self.deserialize::<T>(key, &value, &value),
             Err(err) => {
                 Err(ParserError::SyntaxError {
                     key: key.to_owned(),

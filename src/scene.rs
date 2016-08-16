@@ -7,7 +7,6 @@ use universe::Universe;
 use universe::d3::Universe3;
 use json;
 use json::JsonValue;
-use json::iterators::Members;
 use json::object::Object;
 use universe::entity::*;
 use universe::entity::material::*;
@@ -336,6 +335,86 @@ macro_rules! deserializer {
         }
     }};
 
+    // Thanks to durka42 for this parsing algorithm for generics, much appreciated!
+    // done parsing: just the outer < and > from Vec are left over
+    (
+        @parse
+        (<)                     // counter for angle brackets
+        (>)                     // tokens remaining to be chomped
+        [ $($item_type:tt)+ ]   // already-chomped tokens
+
+        // TODO: Dispatch a specified macro with the result as an argument
+        // Here they are -- my arguments! (destructured `$($remaining:tt)*`)
+        parent_json: $parent_json:expr,
+        parser: $parser:expr,
+        json: $json:expr
+    ) => {{
+        let json = $json;
+        let mut result: Vec< $($item_type)+ > = Vec::new();
+
+        for member in json.members() {
+            result.push(
+                deserializer! {
+                    @deserialize [ $($item_type)+ ]
+                    parent_json: $parent_json,
+                    parser: $parser,
+                    json: member
+                }
+            );
+        }
+
+        result
+    }};
+
+    // the next two rules implement the angle bracket counter
+
+    // chomp a single <
+    (@parse ($($left:tt)*) (< $($rest:tt)*) [ $($item_type:tt)* ] $($remaining:tt)*) => {
+        deserializer!(@parse ($($left)* <) ($($rest)*) [ $($item_type)* < ] $($remaining)*)
+    };
+
+    // chomp a single >
+    (@parse (< $($left:tt)*) (> $($rest:tt)*) [ $($item_type:tt)* ] $($remaining:tt)*) => {
+        deserializer!(@parse ($($left)*) ($($rest)*) [ $($item_type)* > ] $($remaining)*)
+    };
+
+    // annoyingly, << and >> count as single tokens
+    // to solve this problem, I split them and push the two individual angle brackets back onto the stream of tokens to be parsed
+
+    // split << into < <
+    (@parse ($($left:tt)*) (<< $($rest:tt)*) [ $($item_type:tt)* ] $($remaining:tt)*) => {
+        deserializer!(@parse ($($left)*) (< < $($rest)*) [ $($item_type)* ] $($remaining)*)
+    };
+
+    // split >> into > >
+    (@parse ($($left:tt)*) (>> $($rest:tt)*) [ $($item_type:tt)* ] $($remaining:tt)*) => {
+        deserializer!(@parse ($($left)*) (> > $($rest)*) [ $($item_type)* ] $($remaining)*)
+    };
+
+    // chomp any non-angle-bracket token
+    (@parse ($($left:tt)*) ($first:tt $($rest:tt)*) [ $($item_type:tt)* ] $($remaining:tt)*) => {
+        deserializer!(@parse ($($left)*) ($($rest)*) [ $($item_type)* $first ] $($remaining)*)
+    };
+
+    (
+        @deserialize [ Vec< $($item_type:tt)+ ]
+        parent_json: $parent_json:expr,
+        parser: $parser:expr,
+        json: $json:expr
+    ) => {
+        deserializer! {
+            @parse
+            (<)           // counter for angle brackets
+            ($($item_type)+)   // tokens remaining to be chomped
+            []            // already-chomped tokens
+
+            // Arguments I want accessible with the parsed result
+            parent_json: $parent_json,
+            parser: $parser,
+            json: $json
+        }
+    };
+
     (
         @deserialize [ $($item_type:tt)+ ]
         parent_json: $parent_json:expr,
@@ -613,43 +692,14 @@ impl Parser {
                 }
             }
 
-            // TODO add the ability to deserialize `Vec`s
-            deserializers.insert("ComposableShape::of",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                let mut members: Members = json.members();
-                let shapes_json = try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing an array of `Shapes` as the first argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        })).members();
-
-                let operation: Box<SetOperation> = try!(parser.deserialize_constructor(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing a `SetOperation` as the second argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
-
-                let mut shapes: Vec<Box<Shape<F, Point3<F>, Vector3<F>>>> = Vec::new();
-
-                for shape_json in shapes_json {
-                    let shape: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
-                        try!(parser.deserialize_constructor(shape_json)
-                                   .or_else(|err| Err(ParserError::InvalidStructure {
-                                       description: "Could not parse a `Shape`.".to_owned(),
-                                       json: shape_json.clone(),
-                                   })));
-                    shapes.push(*shape);
+            add_deserializer! {
+                "ComposableShape::of",
+                [shapes: Vec<Box<Shape<F, Point3<F>, Vector3<F>>>> ]
+                [operation: SetOperation]
+                -> Box<Shape<F, Point3<F>, Vector3<F>>> {
+                    Box::new(ComposableShape::of(shapes, operation))
                 }
-
-                let result: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
-                    Box::new(Box::new(ComposableShape::of(shapes, *operation)));
-
-                Ok(result)
-            }));
+            }
 
             add_deserializer! {
                 "SetOperation",

@@ -874,54 +874,17 @@ impl Parser {
                                      Ok(result)
                                  }));
 
-            // TODO
-            deserializers.insert("LinearSpace",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                                     let object: &Object = if let JsonValue::Object(ref object) = *json {
-                                         object
-                                     } else {
-                                         return Err(ParserError::InvalidStructure {
-                                             description: "The JSON value must be an object.".to_owned(),
-                                             json: json.clone(),
-                                         });
-                                     };
-
-                                     let legend = try!(try!(object.get("legend").ok_or_else(|| ParserError::InvalidStructure {
-                                                      description: "The `legend` field is missing.".to_owned(),
-                                                      json: json.clone(),
-                                                  })).as_str().ok_or_else(|| ParserError::InvalidStructure {
-                                                      description: "Expected a string as the legend.".to_owned(),
-                                                      json: json.clone(),
-                                                  }));
-
-                                     let array = try!(object.get("transformations").ok_or_else(|| ParserError::InvalidStructure {
-                                         description: "Could not find `transformations`.".to_owned(),
-                                         json: json.clone(),
-                                     }));
-                                     let array: &Vec<JsonValue> = if let JsonValue::Array(ref object) = *array {
-                                         object
-                                     } else {
-                                         return Err(ParserError::InvalidStructure {
-                                             description: "The `transformations` field must be an array.".to_owned(),
-                                             json: json.clone(),
-                                         });
-                                     };
-
-                                     let mut transformations: Vec<Box<LinearTransformation<F, Point3<F>, Vector3<F>>>> = Vec::new();
-
-                                     for json in array {
-                                         let transformation = try!(parser.deserialize_constructor::<Box<LinearTransformation<F, Point3<F>, Vector3<F>>>>(json));
-                                         transformations.push(*transformation);
-                                     }
-
-                                     let result: Box<Box<Material<F, Point3<F>, Vector3<F>>>> =
-                                         Box::new(Box::new(LinearSpace {
-                                             legend: legend.to_owned(),
-                                             transformations: transformations,
-                                         }));
-
-                                     Ok(result)
-                                 }));
+            add_deserializer! {
+                "LinearSpace",
+                [legend: String]
+                [transformations: Vec<Box<LinearTransformation<F, Point3<F>, Vector3<F>>>>]
+                -> Box<Material<F, Point3<F>, Vector3<F>>> {
+                    Box::new(LinearSpace {
+                        legend: legend,
+                        transformations: transformations,
+                    })
+                }
+            }
 
             // Surfaces
 

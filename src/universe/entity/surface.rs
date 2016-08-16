@@ -20,9 +20,6 @@ use num::One;
 use na;
 use na::Cast;
 use na::Point2;
-use palette::Hsv;
-use palette::RgbHue;
-use palette::Alpha;
 use palette::Rgb;
 use na::BaseFloat;
 

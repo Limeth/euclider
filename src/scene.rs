@@ -371,11 +371,14 @@ macro_rules! deserializer {
     };
 
     (
-        @construct
+        @construct [ $return_type:ty ]
         constructor: $constructor:block
-    ) => {
-        Ok(Box::new($constructor))
-    };
+    ) => {{
+        let result: $return_type = $constructor;
+        let result: Box<Any> = Box::new(result);
+
+        Ok(result)
+    }};
 
     (
         $([ $field_name:ident : $($field_type:tt)+ ])* -> $return_type:ty
@@ -399,7 +402,7 @@ macro_rules! deserializer {
                     )*
 
                     deserializer! {
-                        @construct
+                        @construct [ $return_type ]
                         constructor: $constructor
                     }
                 }
@@ -419,7 +422,7 @@ macro_rules! deserializer {
                     )*
 
                     deserializer! {
-                        @construct
+                        @construct [ $return_type ]
                         constructor: $constructor
                     }
                 }
@@ -501,7 +504,7 @@ impl Parser {
 
             deserializers.insert("Vector3::new",
                 Box::new(deserializer! {
-                    [x: F] [y: F] [z: F] -> Point3<F> {
+                    [x: F] [y: F] [z: F] -> Vector3<F> {
                         Vector3::new(x, y, z)
                     }
                 }));
@@ -523,12 +526,11 @@ impl Parser {
             // Entities
 
             deserializers.insert("Void::new_with_vacuum",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                                     let result: Box<Box<Entity<F, Point3<F>, Vector3<F>>>> =
-                                         Box::new(Box::new(Void::new_with_vacuum()));
-
-                                     Ok(result)
-                                 }));
+                Box::new(deserializer! {
+                    -> Box<Entity<F, Point3<F>, Vector3<F>>> {
+                        Box::new(Void::<F, Point3<F>, Vector3<F>>::new_with_vacuum())
+                    }
+                }));
 
             deserializers.insert("Entity3Impl::new",
                                  Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {

@@ -79,6 +79,26 @@ macro_rules! deserializer {
     }};
 
     (
+        @deserialize [ String ]
+        parent_json: $parent_json:expr,
+        parser: $parser:expr,
+        json: $json:expr
+    ) => {{
+        let json = $json;
+
+        {
+            deserializer! {
+                @try_unwrap
+                option: json.as_str(),
+                type_name: "string",
+                parent_json: $parent_json,
+                parser: $parser,
+                json: json
+            }
+        }.to_string()
+    }};
+
+    (
         @deserialize [ Number ]
         parent_json: $parent_json:expr,
         parser: $parser:expr,
@@ -474,6 +494,9 @@ pub enum ParserError {
     TypeMismatch {
         description: String,
         parent_json: JsonValue,
+    },
+    CustomError {
+        description: String,
     }
 }
 
@@ -493,87 +516,104 @@ impl Parser {
         {
             let deserializers = &mut parser.deserializers;
 
+            macro_rules! add_deserializer {
+                (
+                    $constructor_name:expr,
+                    $($rest:tt)+
+                ) => {
+                    deserializers.insert(
+                        $constructor_name,
+                        Box::new(deserializer! {
+                            $($rest)+
+                        })
+                    );
+                }
+            }
+
             // General
 
-            deserializers.insert("Point3::new",
-                Box::new(deserializer! {
-                    [x: F] [y: F] [z: F] -> Point3<F> {
-                        Point3::new(x, y, z)
-                    }
-                }));
+            add_deserializer! {
+                "Point3::new",
+                [x: F] [y: F] [z: F] -> Point3<F> {
+                    Point3::new(x, y, z)
+                }
+            };
 
-            deserializers.insert("Vector3::new",
-                Box::new(deserializer! {
-                    [x: F] [y: F] [z: F] -> Vector3<F> {
-                        Vector3::new(x, y, z)
-                    }
-                }));
+            add_deserializer! {
+                "Vector3::new",
+                [x: F] [y: F] [z: F] -> Vector3<F> {
+                    Vector3::new(x, y, z)
+                }
+            };
 
-            deserializers.insert("Rgba::new",
-                Box::new(deserializer! {
-                    [r: F] [g: F] [b: F] [a: F] -> Rgba<F> {
-                        Rgba::<F>::new(r, g, b, a)
-                    }
-                }));
+            add_deserializer! {
+                "Rgba::new",
+                [r: F] [g: F] [b: F] [a: F] -> Rgba<F> {
+                    Rgba::<F>::new(r, g, b, a)
+                }
+            };
 
-            deserializers.insert("Rgba::new_u8",
-                Box::new(deserializer! {
-                    [r: u8] [g: u8] [b: u8] [a: u8] -> Rgba<F> {
-                        Rgba::<F>::new_u8(r, g, b, a)
-                    }
-                }));
+            add_deserializer! {
+                "Rgba::new_u8",
+                [r: u8] [g: u8] [b: u8] [a: u8] -> Rgba<F> {
+                    Rgba::<F>::new_u8(r, g, b, a)
+                }
+            };
 
             // Entities
 
-            deserializers.insert("Void::new_with_vacuum",
-                Box::new(deserializer! {
-                    -> Box<Entity<F, Point3<F>, Vector3<F>>> {
-                        Box::new(Void::<F, Point3<F>, Vector3<F>>::new_with_vacuum())
-                    }
-                }));
+            add_deserializer! {
+                "Void::new",
+                [material: Box<Material<F, Point3<F>, Vector3<F>>>]
+                -> Box<Entity<F, Point3<F>, Vector3<F>>> {
+                    Box::new(Void::<F, Point3<F>, Vector3<F>>::new(material))
+                }
+            };
 
-            deserializers.insert("Entity3Impl::new",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                let mut members: Members = json.members();
+            add_deserializer! {
+                "Void::new_with_vacuum",
+                -> Box<Entity<F, Point3<F>, Vector3<F>>> {
+                    Box::new(Void::<F, Point3<F>, Vector3<F>>::new_with_vacuum())
+                }
+            };
 
-                let shape: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
-                    try!(parser.deserialize_constructor(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing the `Shape` parameter.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
+            add_deserializer! {
+                "Entity3Impl::new_with_surface",
+                [shape: Box<Shape<F, Point3<F>, Vector3<F>>>]
+                [material: Box<Material<F, Point3<F>, Vector3<F>>>]
+                [surface: Box<Surface<F, Point3<F>, Vector3<F>>>]
+                -> Box<Entity<F, Point3<F>, Vector3<F>>> {
+                    Box::new(Entity3Impl::new_with_surface(shape, material, surface))
+                }
+            }
 
-                let material: Box<Box<Material<F, Point3<F>, Vector3<F>>>> =
-                    try!(parser.deserialize_constructor(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing the `Material` parameter.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
-
-                let surface: Option<Box<Surface<F, Point3<F>, Vector3<F>>>> =
-                    if let Some(surface_json) = members.next() {
-                        Some(*try!(parser.deserialize_constructor(surface_json)))
-                    } else {
-                        None
-                    };
-
-                let result: Box<Box<Entity<F, Point3<F>, Vector3<F>>>> =
-                    Box::new(Box::new(Entity3Impl::new(*shape, *material, surface)));
-
-                Ok(result)
-            }));
+            add_deserializer! {
+                "Entity3Impl::new_without_surface",
+                [shape: Box<Shape<F, Point3<F>, Vector3<F>>>]
+                [material: Box<Material<F, Point3<F>, Vector3<F>>>]
+                -> Box<Entity<F, Point3<F>, Vector3<F>>> {
+                    Box::new(Entity3Impl::new_without_surface(shape, material))
+                }
+            }
 
             // Shapes
 
-            deserializers.insert("VoidShape",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                                     Ok(Box::new(VoidShape::new()))
-                                 }));
+            // TODO merge those two together
+            add_deserializer! {
+                "VoidShape",
+                -> Box<Shape<F, Point3<F>, Vector3<F>>> {
+                    Box::new(VoidShape::new())
+                }
+            }
 
+            add_deserializer! {
+                "VoidShape::new",
+                -> Box<Shape<F, Point3<F>, Vector3<F>>> {
+                    Box::new(VoidShape::new())
+                }
+            }
+
+            // TODO add the ability to deserialize `Vec`s
             deserializers.insert("ComposableShape::of",
                                  Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                 let mut members: Members = json.members();
@@ -611,273 +651,105 @@ impl Parser {
                 Ok(result)
             }));
 
-            deserializers.insert("SetOperation",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                let mut members: Members = json.members();
-                let name = try!(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing a `String` as the first argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        })).as_str().ok_or_else(|| ParserError::InvalidStructure {
-                            description: "The first argument must be a `String`.".to_owned(),
-                            json: json.clone(),
-                        }));
+            add_deserializer! {
+                "SetOperation",
+                [name: &str] -> SetOperation {
+                    match name {
+                        "Union" => SetOperation::Union,
+                        "Intersection" => SetOperation::Intersection,
+                        "Complement" => SetOperation::Complement,
+                        "SymmetricDifference" => SetOperation::SymmetricDifference,
+                        _ => return Err(ParserError::CustomError {
+                            description: format!("Invalid `SetOperation`: \"{}\"", name),
+                        }),
+                    }
+                }
+            }
 
-                let result = match name {
-                    "Union" => SetOperation::Union,
-                    "Intersection" => SetOperation::Intersection,
-                    "Complement" => SetOperation::Complement,
-                    "SymmetricDifference" => SetOperation::SymmetricDifference,
-                    _ => return Err(ParserError::InvalidStructure {
-                        description: format!("Invalid `SetOperation`: \"{}\"", name),
-                        json: json.clone(),
-                    }),
-                };
+            add_deserializer! {
+                "Sphere3::new",
+                [center: Point3<F>] [radius: F]
+                -> Box<Shape<F, Point3<F>, Vector3<F>>> {
+                    Box::new(Sphere::<F, Point3<F>, Vector3<F>>::new(center, radius))
+                }
+            }
 
-                Ok(Box::new(result))
-            }));
+            add_deserializer! {
+                "Plane3::new",
+                [normal: Vector3<F>] [constant: F]
+                -> Box<Shape<F, Point3<F>, Vector3<F>>> {
+                    Box::new(Plane::new(normal, constant))
+                }
+            }
 
-            deserializers.insert("Sphere3::new",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                let mut members: Members = json.members();
+            add_deserializer! {
+                "Plane3::new_with_point",
+                [normal: Vector3<F>] [point: Point3<F>]
+                -> Box<Shape<F, Point3<F>, Vector3<F>>> {
+                    Box::new(Plane::new_with_point(normal, &point))
+                }
+            }
 
-                let center: Box<Point3<F>> = try!(parser.deserialize_constructor(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing the `radius` argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
-                let radius: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing the `radius` argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        })))
-                    .ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Could not parse the `radius`.".to_owned(),
-                            json: json.clone(),
-                        }
-                    }));
+            add_deserializer! {
+                "Plane3::new_with_vectors",
+                [first: Vector3<F>] [second: Vector3<F>] [point: Point3<F>]
+                -> Box<Shape<F, Point3<F>, Vector3<F>>> {
+                    Box::new(Plane::new_with_vectors(&first, &second, &point))
+                }
+            }
 
-                let result: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
-                    Box::new(Box::new(Sphere::<F, Point3<F>, Vector3<F>>::new(*center, radius)));
+            add_deserializer! {
+                "HalfSpace3::new",
+                [plane: Box<Shape<F, Point3<F>, Vector3<F>>>]
+                [sign: F] -> Box<Shape<F, Point3<F>, Vector3<F>>> {
+                    let plane: Plane<F, Point3<F>, Vector3<F>>
+                        = *try!(<Shape<F, Point3<F>, Vector3<F>>>::downcast(plane)
+                            .or_else(|err| Err(ParserError::CustomError {
+                                description: "Invalid type, expected a `Plane3`.".to_string(),
+                            })));
+                    Box::new(HalfSpace::new(plane, sign))
+                }
+            }
 
-                Ok(result)
-            }));
+            add_deserializer! {
+                "HalfSpace3::new_with_point",
+                [plane: Box<Shape<F, Point3<F>, Vector3<F>>>]
+                [point: Point3<F>] -> Box<Shape<F, Point3<F>, Vector3<F>>> {
+                    let plane: Plane<F, Point3<F>, Vector3<F>>
+                        = *try!(<Shape<F, Point3<F>, Vector3<F>>>::downcast(plane)
+                            .or_else(|err| Err(ParserError::CustomError {
+                                description: "Invalid type, expected a `Plane3`.".to_string(),
+                            })));
+                    Box::new(HalfSpace::new_with_point(plane, &point))
+                }
+            }
 
-            deserializers.insert("Plane3::new",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                let mut members: Members = json.members();
-
-                let normal: Box<Vector3<F>> =
-                    try!(parser.deserialize_constructor(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing `Vector3` as the first argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
-                let constant: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing a floating point number as the second \
-                                              argument."
-                                    .to_owned(),
-                                json: json.clone(),
-                            }
-                        })))
-                    .ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Could not parse the constant (second argument)."
-                                .to_owned(),
-                            json: json.clone(),
-                        }
-                    }));
-
-                let result: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
-                    Box::new(Box::new(Plane::new(*normal, constant)));
-
-                Ok(result)
-            }));
-
-            deserializers.insert("Plane3::new_with_point",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                let mut members: Members = json.members();
-
-                let normal: Box<Vector3<F>> =
-                    try!(parser.deserialize_constructor(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing `Vector3` as the first argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
-                let point: Box<Point3<F>> = try!(parser.deserialize_constructor(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing `Point3` as the second argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
-
-                let result: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
-                    Box::new(Box::new(Plane::new_with_point(*normal, &*point)));
-
-                Ok(result)
-            }));
-
-            deserializers.insert("Plane3::new_with_vectors",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                let mut members: Members = json.members();
-
-                let vector_a: Box<Vector3<F>> =
-                    try!(parser.deserialize_constructor(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing `Vector3` as the first argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
-                let vector_b: Box<Vector3<F>> =
-                    try!(parser.deserialize_constructor(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing `Vector3` as the second argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
-                let point: Box<Point3<F>> = try!(parser.deserialize_constructor(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing `Point3` as the third argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
-
-                let result: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
-                    Box::new(Box::new(Plane::new_with_vectors(&*vector_a, &*vector_b, &*point)));
-
-                Ok(result)
-            }));
-
-            deserializers.insert("HalfSpace3::new",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                let mut members: Members = json.members();
-
-                let plane: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
-                    try!(parser.deserialize_constructor(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing `Plane3` as the first argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
-                let plane: Plane<F, Point3<F>, Vector3<F>> = *try!(<Shape<F, Point3<F>, Vector3<F>>>::downcast(*plane)
-                    .or_else(|err| Err(ParserError::InvalidStructure {
-                        description: "Invalid type, expected a `Plane3`.".to_owned(),
-                        json: json.clone(),
-                    })));
-                let signum: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing a floating point number as the second \
-                                              argument."
-                                    .to_owned(),
-                                json: json.clone(),
-                            }
-                        })))
-                    .ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Could not parse the sign (second argument).".to_owned(),
-                            json: json.clone(),
-                        }
-                    }));
-
-                let result: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
-                    Box::new(Box::new(HalfSpace::new(plane, signum)));
-
-                Ok(result)
-            }));
-
-            deserializers.insert("HalfSpace3::new_with_point",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                let mut members: Members = json.members();
-
-                let plane: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
-                    try!(parser.deserialize_constructor(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing `Plane3` as the first argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
-                let plane: Plane<F, Point3<F>, Vector3<F>> = *try!(<Shape<F, Point3<F>, Vector3<F>>>::downcast(*plane)
-                    .or_else(|err| Err(ParserError::InvalidStructure {
-                        description: "Invalid type, expected a `Plane3`.".to_owned(),
-                        json: json.clone(),
-                    })));
-                let point: Box<Point3<F>> = try!(parser.deserialize_constructor(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing `Point3` as the second argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
-
-                let result: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
-                    Box::new(Box::new(HalfSpace::new_with_point(plane, &point)));
-
-                Ok(result)
-            }));
-
-            deserializers.insert("HalfSpace3::cuboid",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                let mut members: Members = json.members();
-
-                let center: Box<Point3<F>> = try!(parser.deserialize_constructor(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing `Point3` as the first argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
-                let abc: Box<Vector3<F>> = try!(parser.deserialize_constructor(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing `Vector3` as the second argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
-
-                let result: Box<Box<Shape<F, Point3<F>, Vector3<F>>>> =
-                    Box::new(Box::new(cuboid(*center, *abc)));
-
-                Ok(result)
-            }));
+            add_deserializer! {
+                "HalfSpace3::cuboid",
+                [center: Point3<F>] [dimensions: Vector3<F>]
+                -> Box<Shape<F, Point3<F>, Vector3<F>>> {
+                    Box::new(cuboid(center, dimensions))
+                }
+            }
 
             // Materials
 
-            deserializers.insert("Vacuum",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                                     let result: Box<Box<Material<F, Point3<F>, Vector3<F>>>> =
-                                         Box::new(Box::new(Vacuum::new()));
+            // TODO merge those two together
+            add_deserializer! {
+                "Vacuum",
+                -> Box<Material<F, Point3<F>, Vector3<F>>> {
+                    Box::new(Vacuum::new())
+                }
+            }
 
-                                     Ok(result)
-                                 }));
+            add_deserializer! {
+                "Vacuum::new",
+                -> Box<Material<F, Point3<F>, Vector3<F>>> {
+                    Box::new(Vacuum::new())
+                }
+            }
 
-            deserializers.insert("Vacuum::new",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                                     let result: Box<Box<Material<F, Point3<F>, Vector3<F>>>> =
-                                         Box::new(Box::new(Vacuum::new()));
-
-                                     Ok(result)
-                                 }));
-            
+            // TODO
             deserializers.insert("ComponentTransformation",
                                  Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                                      let object: &Object = if let JsonValue::Object(ref object) = *json {
@@ -951,7 +823,8 @@ impl Parser {
 
                                      Ok(result)
                                  }));
-            
+
+            // TODO
             deserializers.insert("LinearSpace",
                                  Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
                                      let object: &Object = if let JsonValue::Object(ref object) = *json {
@@ -1002,160 +875,71 @@ impl Parser {
 
             // Surfaces
 
-            deserializers.insert("uv_sphere",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                let mut members: Members = json.members();
-                let center = try!(parser.deserialize_constructor::<Point3<F>>(try!(members.next()
-                    .ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Center location not specified.".to_owned(),
-                            json: json.clone(),
-                        }
-                    }))));
+            add_deserializer! {
+                "uv_sphere",
+                [center: Point3<F>] -> Box<UVFn<F, Point3<F>>> {
+                    uv_sphere(center)
+                }
+            }
 
-                Ok(Box::new(uv_sphere(*center)))
-            }));
+            add_deserializer! {
+                "texture_image",
+                [path: &str] -> Box<Texture<F>> {
+                    let data = try!(image::open(path)
+                        .map_err(|_| ParserError::CustomError {
+                            description: format!("Could not load texture `{}`", path),
+                        }));
 
-            deserializers.insert("texture_image",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                let mut members: Members = json.members();
-                let path = try!(try!(members.next().ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Missing a path to the image as the first argument."
-                                .to_owned(),
-                            json: json.clone(),
-                        }
-                    }))
-                    .as_str()
-                    .ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "The `texture_image` must be a string.".to_owned(),
-                            json: json.clone(),
-                        }
-                    }));
+                    texture_image(data)
+                }
+            }
 
-                let result: Box<Box<Texture<F>>> = Box::new(texture_image(image::open(path)
-                    .expect(&format!("Could not find texture `{}`.", path))));
+            add_deserializer! {
+                "MappedTextureImpl3::new",
+                [uvfn: Box<UVFn<F, Point3<F>>>]
+                [texture: Box<Texture<F>>]
+                -> Box<MappedTexture<F, Point3<F>, Vector3<F>>> {
+                    Box::new(MappedTextureImpl::new(uvfn, texture))
+                }
+            }
 
-                Ok(result)
-            }));
+            add_deserializer! {
+                "ComposableSurface",
+                [reflection_ratio: Box<ReflectionRatioProvider<F, Point3<F>, Vector3<F>>>]
+                [reflection_direction: Box<ReflectionDirectionProvider<F, Point3<F>, Vector3<F>>>]
+                [threshold_direction: Box<ThresholdDirectionProvider<F, Point3<F>, Vector3<F>>>]
+                [surface_color: Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>]
+                -> Box<Surface<F, Point3<F>, Vector3<F>>> {
+                    Box::new(ComposableSurface {
+                        reflection_ratio: reflection_ratio,
+                        reflection_direction: reflection_direction,
+                        threshold_direction: threshold_direction,
+                        surface_color: surface_color
+                    })
+                }
+            }
 
-            deserializers.insert("MappedTextureImpl3::new",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                                     let mut members: Members = json.members();
-                                     let uvfn = try!(parser.deserialize_constructor::<Box<UVFn<F, Point3<F>>>>(
-                                                    try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
-                                                        description: "Missing a `UVFn` as the first argument.".to_owned(),
-                                                        json: json.clone(),
-                                                    })
-                                                )));
-                                     let texture = try!(parser.deserialize_constructor::<Box<Texture<F>>>(
-                                                    try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
-                                                        description: "Missing a `Texture` as the second argument.".to_owned(),
-                                                        json: json.clone(),
-                                                    })
-                                                )));
-
-                                     let result: Box<Box<MappedTexture<F, Point3<F>, Vector3<F>>>> = Box::new(Box::new(MappedTextureImpl::new(
-                                                 *uvfn,
-                                                 *texture
-                                             )));
-
-                                     Ok(result)
-                                 }));
-
-            deserializers.insert("ComposableSurface",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                                     let object: &Object = if let JsonValue::Object(ref object) = *json {
-                                         object
-                                     } else {
-                                         return Err(ParserError::InvalidStructure {
-                                             description: "The JSON value must be an object.".to_owned(),
-                                             json: json.clone(),
-                                         });
-                                     };
-
-                                     let reflection_ratio: Box<Box<ReflectionRatioProvider<F, Point3<F>, Vector3<F>>>> = 
-                                         try!(parser.deserialize_constructor::<Box<ReflectionRatioProvider<F, Point3<F>, Vector3<F>>>>(
-                                                 try!(object.get("reflection_ratio").ok_or_else(|| ParserError::InvalidStructure {
-                                                     description: "The `reflection_ratio` field is missing.".to_owned(),
-                                                     json: json.clone(),
-                                                 }))
-                                             ));
-
-                                     let reflection_direction: Box<Box<ReflectionDirectionProvider<F, Point3<F>, Vector3<F>>>> = 
-                                         try!(parser.deserialize_constructor::<Box<ReflectionDirectionProvider<F, Point3<F>, Vector3<F>>>>(
-                                                 try!(object.get("reflection_direction").ok_or_else(|| ParserError::InvalidStructure {
-                                                     description: "The `reflection_direction` field is missing.".to_owned(),
-                                                     json: json.clone(),
-                                                 }))
-                                             ));
-
-                                     let threshold_direction: Box<Box<ThresholdDirectionProvider<F, Point3<F>, Vector3<F>>>> = 
-                                         try!(parser.deserialize_constructor::<Box<ThresholdDirectionProvider<F, Point3<F>, Vector3<F>>>>(
-                                                 try!(object.get("threshold_direction").ok_or_else(|| ParserError::InvalidStructure {
-                                                     description: "The `threshold_direction` field is missing.".to_owned(),
-                                                     json: json.clone(),
-                                                 }))
-                                             ));
-
-                                     let surface_color: Box<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>> = 
-                                         try!(parser.deserialize_constructor::<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>>(
-                                                 try!(object.get("surface_color").ok_or_else(|| ParserError::InvalidStructure {
-                                                     description: "The `surface_color` field is missing.".to_owned(),
-                                                     json: json.clone(),
-                                                 }))
-                                             ));
-
-                                     let result: Box<Box<Surface<F, Point3<F>, Vector3<F>>>> =
-                                         Box::new(Box::new(ComposableSurface {
-                                             reflection_ratio: *reflection_ratio,
-                                             reflection_direction: *reflection_direction,
-                                             threshold_direction: *threshold_direction,
-                                             surface_color: *surface_color
-                                         }));
-
-                                     Ok(result)
-                                 }));
-
-            deserializers.insert("blend_function_ratio",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                let mut members: Members = json.members();
-                let ratio: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing a `ratio` as the second argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        })))
-                    .ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Could not parse the ratio.".to_owned(),
-                            json: json.clone(),
-                        }
-                    }));
-
-                let result: Box<Box<BlendFunction<F>>> =
-                    Box::new(blend_function_ratio(ratio));
-
-                Ok(result)
-            }));
+            add_deserializer! {
+                "blend_function_ratio",
+                [ratio: F] -> Box<BlendFunction<F>> {
+                    blend_function_ratio(ratio)
+                }
+            }
 
             macro_rules! deserialize_blending_functions {
                 (
                     $($name:ident),+
                 ) => {
                     $(
-                        deserializers.insert(
+                        add_deserializer! {
                             concat!(
                                 "blend_function_",
                                 stringify!($name)
-                            ), Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                                let result: Box<Box<BlendFunction<F>>> =
-                                    Box::new(concat_idents!(blend_function_, $name)());
-                                Ok(result)
-                            })
-                        );
+                            ),
+                            -> Box<BlendFunction<F>> {
+                                concat_idents!(blend_function_, $name)()
+                            }
+                        }
                     )+
                 }
             }
@@ -1164,320 +948,101 @@ impl Parser {
                                             screen, overlay, darken, lighten, dodge, burn,
                                             hard_light, soft_light, difference, exclusion);
 
-            deserializers.insert("surface_color_blend",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                let mut members: Members = json.members();
-                let source: Box<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>> =
-                    try!(parser.deserialize_constructor::<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>>(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing a `SurfaceColorProvider` as the first argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
-                let destination: Box<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>> =
-                    try!(parser.deserialize_constructor::<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>>(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing a `SurfaceColorProvider` as the second argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
-                let blend_function: Box<Box<BlendFunction<F>>> =
-                    try!(parser.deserialize_constructor::<Box<BlendFunction<F>>>(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing a `BlendFunction` as the third argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
+            add_deserializer! {
+                "surface_color_blend",
+                [source: Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>]
+                [destination: Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>]
+                [blend_function: Box<BlendFunction<F>>]
+                -> Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>> {
+                    surface_color_blend(source, destination, blend_function)
+                }
+            }
 
-                let result: Box<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>> =
-                    Box::new(surface_color_blend(*source, *destination, *blend_function));
+            add_deserializer! {
+                "surface_color_illumination_global",
+                [light_color: Rgba<F>]
+                [dark_color: Rgba<F>]
+                -> Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>> {
+                    surface_color_illumination_global(light_color, dark_color)
+                }
+            }
 
-                Ok(result)
-            }));
+            add_deserializer! {
+                "surface_color_perlin_hue_seed",
+                [seed: u32] [size: F] [speed: F]
+                -> Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>> {
+                    surface_color_perlin_hue_seed(seed, size, speed)
+                }
+            }
 
-            deserializers.insert("surface_color_illumination_global",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                let mut members: Members = json.members();
-                let light_color: Box<Rgba<F>> =
-                    try!(parser.deserialize_constructor::<Rgba<F>>(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing a `Color` as the first argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
-                let dark_color: Box<Rgba<F>> =
-                    try!(parser.deserialize_constructor::<Rgba<F>>(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing a `Color` as the second argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
+            add_deserializer! {
+                "surface_color_perlin_hue_random",
+                [size: F] [speed: F]
+                -> Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>> {
+                    surface_color_perlin_hue_random(size, speed)
+                }
+            }
 
-                let result: Box<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>> =
-                    Box::new(surface_color_illumination_global(*light_color, *dark_color));
+            add_deserializer! {
+                "surface_color_illumination_directional",
+                [direction: Vector3<F>] [light_color: Rgba<F>] [dark_color: Rgba<F>]
+                -> Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>> {
+                    surface_color_illumination_directional(direction, light_color, dark_color)
+                }
+            }
 
-                Ok(result)
-            }));
+            add_deserializer! {
+                "reflection_ratio_uniform",
+                [ratio: F] -> Box<ReflectionRatioProvider<F, Point3<F>, Vector3<F>>> {
+                    reflection_ratio_uniform(ratio)
+                }
+            }
 
-            deserializers.insert("surface_color_perlin_hue_seed",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                let mut members: Members = json.members();
-                let seed: u32 = try!(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing a `seed` as the first argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))
-                    .as_u32()
-                    .ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Could not parse the seed.".to_owned(),
-                            json: json.clone(),
-                        }
-                    }));
-                let size: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing a `size` as the second argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        })))
-                    .ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Could not parse the size.".to_owned(),
-                            json: json.clone(),
-                        }
-                    }));
-                let speed: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing a `speed` as the third argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        })))
-                    .ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Could not parse the speed.".to_owned(),
-                            json: json.clone(),
-                        }
-                    }));
+            add_deserializer! {
+                "reflection_direction_specular",
+                -> Box<ReflectionDirectionProvider<F, Point3<F>, Vector3<F>>> {
+                    reflection_direction_specular()
+                }
+            }
 
-                let result: Box<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>> =
-                    Box::new(surface_color_perlin_hue_seed(seed, size, speed));
+            add_deserializer! {
+                "threshold_direction_snell",
+                [refractive_index: F]
+                -> Box<ThresholdDirectionProvider<F, Point3<F>, Vector3<F>>> {
+                    threshold_direction_snell(refractive_index)
+                }
+            }
 
-                Ok(result)
-            }));
+            add_deserializer! {
+                "threshold_direction_identity",
+                -> Box<ThresholdDirectionProvider<F, Point3<F>, Vector3<F>>> {
+                    threshold_direction_identity()
+                }
+            }
 
-            deserializers.insert("surface_color_illumination_directional",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                let mut members: Members = json.members();
-                let direction: Box<Vector3<F>> =
-                    try!(parser.deserialize_constructor::<Vector3<F>>(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing a `Vector3` as the first argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
-                let light_color: Box<Rgba<F>> =
-                    try!(parser.deserialize_constructor::<Rgba<F>>(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing a `Color` as the second argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
-                let dark_color: Box<Rgba<F>> =
-                    try!(parser.deserialize_constructor::<Rgba<F>>(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing a `Color` as the third argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
+            add_deserializer! {
+                "surface_color_uniform",
+                [color: Rgba<F>] -> Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>> {
+                    surface_color_uniform(color)
+                }
+            }
 
-                let result: Box<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>> =
-                    Box::new(surface_color_illumination_directional(*direction,
-                                                                    *light_color,
-                                                                    *dark_color));
+            add_deserializer! {
+                "reflection_ratio_fresnel",
+                [refractive_index_inside: F] [refractive_index_outside: F]
+                -> Box<ReflectionRatioProvider<F, Point3<F>, Vector3<F>>> {
+                    reflection_ratio_fresnel(refractive_index_inside,
+                                             refractive_index_outside)
+                }
+            }
 
-                Ok(result)
-            }));
-
-            deserializers.insert("surface_color_perlin_hue_random",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                let mut members: Members = json.members();
-                let size: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing a `size` as the second argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        })))
-                    .ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Could not parse the size.".to_owned(),
-                            json: json.clone(),
-                        }
-                    }));
-                let speed: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing a `speed` as the third argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        })))
-                    .ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Could not parse the speed.".to_owned(),
-                            json: json.clone(),
-                        }
-                    }));
-
-                let result: Box<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>> =
-                    Box::new(surface_color_perlin_hue_random(size, speed));
-
-                Ok(result)
-            }));
-
-            deserializers.insert("reflection_ratio_uniform",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                let mut members: Members = json.members();
-                let ratio: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing a `ratio` as the first argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        })))
-                    .ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Could not parse the ratio.".to_owned(),
-                            json: json.clone(),
-                        }
-                    }));
-
-                let result: Box<Box<ReflectionRatioProvider<F, Point3<F>, Vector3<F>>>> =
-                    Box::new(reflection_ratio_uniform(ratio));
-
-                Ok(result)
-            }));
-
-            deserializers.insert("reflection_direction_specular",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                                     let result: Box<Box<ReflectionDirectionProvider<F, Point3<F>, Vector3<F>>>>
-                                         = Box::new(reflection_direction_specular());
-
-                                     Ok(result)
-                                 }));
-
-            deserializers.insert("threshold_direction_snell",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                                    let mut members: Members = json.members();
-                                    let refractive_index: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
-                                            .ok_or_else(|| {
-                                                ParserError::InvalidStructure {
-                                                    description: "Missing a refractive index as the first argument.".to_owned(),
-                                                    json: json.clone(),
-                                                }
-                                            })))
-                                        .ok_or_else(|| {
-                                            ParserError::InvalidStructure {
-                                                description: "Could not parse the refractive index.".to_owned(),
-                                                json: json.clone(),
-                                            }
-                                        }));
-                                     let result: Box<Box<ThresholdDirectionProvider<F, Point3<F>, Vector3<F>>>>
-                                         = Box::new(threshold_direction_snell(refractive_index));
-
-                                     Ok(result)
-                                 }));
-
-            deserializers.insert("threshold_direction_identity",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                                     let result: Box<Box<ThresholdDirectionProvider<F, Point3<F>, Vector3<F>>>>
-                                         = Box::new(threshold_direction_identity());
-
-                                     Ok(result)
-                                 }));
-
-            deserializers.insert("surface_color_uniform",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                let mut members: Members = json.members();
-                let color: Box<Rgba<F>> =
-                    try!(parser.deserialize_constructor::<Rgba<F>>(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing a `Rgba` as the first argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        }))));
-
-                let result: Box<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>> =
-                    Box::new(surface_color_uniform(*color));
-
-                Ok(result)
-            }));
-
-            deserializers.insert("reflection_ratio_fresnel",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                let mut members: Members = json.members();
-                let refractive_index_inside: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing the inside refractive index as the first argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        })))
-                    .ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Could not parse the inside refractive index.".to_owned(),
-                            json: json.clone(),
-                        }
-                    }));
-                let refractive_index_outside: F = try!(<F as JsonFloat>::float_from_json(try!(members.next()
-                        .ok_or_else(|| {
-                            ParserError::InvalidStructure {
-                                description: "Missing the outside refractive index as the first argument.".to_owned(),
-                                json: json.clone(),
-                            }
-                        })))
-                    .ok_or_else(|| {
-                        ParserError::InvalidStructure {
-                            description: "Could not parse the outside refractive index.".to_owned(),
-                            json: json.clone(),
-                        }
-                    }));
-
-                let result: Box<Box<ReflectionRatioProvider<F, Point3<F>, Vector3<F>>>> =
-                    Box::new(reflection_ratio_fresnel(refractive_index_inside,
-                                                      refractive_index_outside));
-
-                Ok(result)
-            }));
-
-            deserializers.insert("surface_color_texture",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                                     let mut members: Members = json.members();
-                                     let mapped_texture: Box<Box<MappedTexture<F, Point3<F>, Vector3<F>>>>
-                                         = try!(parser.deserialize_constructor::<Box<MappedTexture<F, Point3<F>, Vector3<F>>>>(
-                                                try!(members.next().ok_or_else(|| ParserError::InvalidStructure {
-                                                    description: "Missing a `MappedTexture` as the first argument.".to_owned(),
-                                                    json: json.clone(),
-                                                })
-                                            )));
-
-                                     let result: Box<Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>>
-                                         = Box::new(surface_color_texture(*mapped_texture));
-
-                                     Ok(result)
-                                 }));
+            add_deserializer! {
+                "surface_color_texture",
+                [mapped_texture: Box<MappedTexture<F, Point3<F>, Vector3<F>>>]
+                -> Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>> {
+                    surface_color_texture(mapped_texture)
+                }
+            }
 
             // Environments
 

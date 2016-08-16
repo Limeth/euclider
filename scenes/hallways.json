@@ -2,7 +2,7 @@
   "Universe3": {
     "entities": [
       {
-        "Entity3Impl::new": [
+        "Entity3Impl::new_with_surface": [
           {
             "HalfSpace3::cuboid": [
               {
@@ -76,7 +76,7 @@
         ]
       },
       {
-        "Entity3Impl::new": [
+        "Entity3Impl::new_with_surface": [
           {
             "ComposableShape::of": [
               [
@@ -199,7 +199,7 @@
         ]
       },
       {
-        "Entity3Impl::new": [
+        "Entity3Impl::new_with_surface": [
           {
             "HalfSpace3::cuboid": [
               {
@@ -273,7 +273,7 @@
         ]
       },
       {
-        "Entity3Impl::new": [
+        "Entity3Impl::new_with_surface": [
           {
             "ComposableShape::of": [
               [
@@ -396,7 +396,7 @@
         ]
       },
       {
-        "Entity3Impl::new": [
+        "Entity3Impl::new_with_surface": [
           {
             "HalfSpace3::new_with_point": [
               {

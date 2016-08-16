@@ -45,12 +45,25 @@ impl<F: CustomFloat> Entity3Impl<F> {
     pub fn new(shape: Box<Shape3<F>>,
                material: Box<Material3<F>>,
                surface: Option<Box<Surface3<F>>>)
-               -> Entity3Impl<F> {
+               -> Self {
         Entity3Impl {
             shape: shape,
             material: material,
             surface: surface,
         }
+    }
+
+    pub fn new_with_surface(shape: Box<Shape3<F>>,
+               material: Box<Material3<F>>,
+               surface: Box<Surface3<F>>)
+               -> Self {
+        Self::new(shape, material, Some(surface))
+    }
+
+    pub fn new_without_surface(shape: Box<Shape3<F>>,
+               material: Box<Material3<F>>)
+               -> Self {
+        Self::new(shape, material, None)
     }
 }
 

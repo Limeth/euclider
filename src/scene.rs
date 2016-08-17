@@ -7,7 +7,6 @@ use universe::Universe;
 use universe::d3::Universe3;
 use json;
 use json::JsonValue;
-use json::object::Object;
 use universe::entity::*;
 use universe::entity::material::*;
 use universe::entity::shape::*;
@@ -552,7 +551,7 @@ pub enum ParserError {
         key: String,
     },
     SyntaxError {
-        key: String,
+        description: String,
         error: json::Error,
     },
     InvalidStructure {
@@ -1024,23 +1023,6 @@ impl Parser {
 
             // Environments
 
-            deserializers.insert("Environment",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                let object: &Object = if let JsonValue::Object(ref object) = *json {
-                    object
-                } else {
-                    return Err(ParserError::InvalidStructure {
-                        description: "The JSON value must be an object.".to_owned(),
-                        json: json.clone(),
-                    });
-                };
-
-                let result: Box<Box<Environment<F>>> =
-                    try!(parser.deserialize_constructor::<Box<Environment<F>>>(json));
-
-                Ok(result)
-            }));
-
             add_deserializer! {
                 "Universe3",
                 [entities: Vec<Box<Entity<F, Point3<F>, Vector3<F>>>>]
@@ -1104,14 +1086,14 @@ impl Parser {
         }
     }
 
-    pub fn parse<T: Any>(&self, key: &str, json: &str) -> Result<Box<T>, ParserError> {
+    pub fn parse<T: Any>(&self, json: &str) -> Result<Box<T>, ParserError> {
         let value = json::parse(json);
 
         match value {
-            Ok(value) => self.deserialize::<T>(key, &value, &value),
+            Ok(value) => self.deserialize_constructor::<T>(&value),
             Err(err) => {
                 Err(ParserError::SyntaxError {
-                    key: key.to_owned(),
+                    description: "Invalid JSON file. Please, check the syntax.".to_string(),
                     error: err,
                 })
             }

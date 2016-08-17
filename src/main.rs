@@ -65,7 +65,7 @@ fn run<F: CustomFloat>() {
     let mut json = String::new();
     reader.read_to_string(&mut json).expect("Unable to read the scene file.");
     let environment: Box<Box<Environment<F>>> = scene::Parser::default::<F>()
-        .parse::<Box<Environment<F>>>("Environment", &json)
+        .parse::<Box<Environment<F>>>(&json)
         .expect("Unable to parse the Environment.");
 
     let simulation = Simulation::builder()

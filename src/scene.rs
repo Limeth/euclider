@@ -1041,58 +1041,19 @@ impl Parser {
                 Ok(result)
             }));
 
-            deserializers.insert("Universe3",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                                     let object: &Object = if let JsonValue::Object(ref object) = *json {
-                                         object
-                                     } else {
-                                         return Err(ParserError::InvalidStructure {
-                                             description: "The JSON value must be an object.".to_owned(),
-                                             json: json.clone(),
-                                         });
-                                     };
+            add_deserializer! {
+                "Universe3",
+                [entities: Vec<Box<Entity<F, Point3<F>, Vector3<F>>>>]
+                [background: Box<MappedTexture<F, Point3<F>, Vector3<F>>>]
+                -> Box<Environment<F>> {
+                    let mut universe = Universe3::<F>::default();
 
-                                     let mut universe = Universe3::<F>::default();
+                    universe.set_entities(entities);
+                    universe.set_background(background);
 
-                                     {
-                                         let mut entities = universe.entities_mut();
-
-                                         let json_entities = if let Some(&JsonValue::Array(ref json_entities))
-                                             = object.get("entities") {
-                                             json_entities
-                                         } else {
-                                             return Err(ParserError::InvalidStructure {
-                                                 description: "The `entities` must be an array.".to_owned(),
-                                                 json: json.clone(),
-                                             });
-                                         };
-
-                                         for json_entity in json_entities {
-                                             let entity = try!(parser.deserialize_constructor::<Box<Entity<F, Point3<F>, Vector3<F>>>>(
-                                                     json_entity
-                                                 ));
-
-                                             entities.push(*entity);
-                                         }
-                                     }
-
-                                     {
-                                         let background = try!(parser.deserialize_constructor::<Box<MappedTexture<F, Point3<F>, Vector3<F>>>>(
-                                                 try!(object.get("background")
-                                                      .ok_or_else(|| ParserError::InvalidStructure {
-                                                          description: "The `background` field is missing.".to_owned(),
-                                                          json: json.clone(),
-                                                      }))
-                                             ));
-
-                                         universe.set_background(*background);
-                                     }
-
-                                     let result: Box<Box<Environment<F>>> =
-                                         Box::new(Box::new(universe));
-
-                                     Ok(result)
-                                 }));
+                    Box::new(universe)
+                }
+            }
         }
 
         parser

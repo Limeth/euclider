@@ -368,31 +368,101 @@ macro_rules! deserializer {
     // the next two rules implement the angle bracket counter
 
     // chomp a single <
-    (@parse ($($left:tt)*) (< $($rest:tt)*) [ $($item_type:tt)* ] $($remaining:tt)*) => {
-        deserializer!(@parse ($($left)* <) ($($rest)*) [ $($item_type)* < ] $($remaining)*)
+    (
+        @parse
+        ($($left:tt)*)
+        (< $($rest:tt)*)
+        [ $($item_type:tt)* ]
+
+        $($remaining:tt)*
+    ) => {
+        deserializer! {
+            @parse
+            ($($left)* <)
+            ($($rest)*)
+            [ $($item_type)* < ]
+
+            $($remaining)*
+        }
     };
 
     // chomp a single >
-    (@parse (< $($left:tt)*) (> $($rest:tt)*) [ $($item_type:tt)* ] $($remaining:tt)*) => {
-        deserializer!(@parse ($($left)*) ($($rest)*) [ $($item_type)* > ] $($remaining)*)
+    (
+        @parse
+        (< $($left:tt)*)
+        (> $($rest:tt)*)
+        [ $($item_type:tt)* ]
+
+        $($remaining:tt)*
+    ) => {
+        deserializer! {
+            @parse
+            ($($left)*)
+            ($($rest)*)
+            [ $($item_type)* > ]
+
+            $($remaining)*
+        }
     };
 
     // annoyingly, << and >> count as single tokens
     // to solve this problem, I split them and push the two individual angle brackets back onto the stream of tokens to be parsed
 
     // split << into < <
-    (@parse ($($left:tt)*) (<< $($rest:tt)*) [ $($item_type:tt)* ] $($remaining:tt)*) => {
-        deserializer!(@parse ($($left)*) (< < $($rest)*) [ $($item_type)* ] $($remaining)*)
+    (
+        @parse
+        ($($left:tt)*)
+        (<< $($rest:tt)*)
+        [ $($item_type:tt)* ]
+
+        $($remaining:tt)*
+    ) => {
+        deserializer! {
+            @parse
+            ($($left)*)
+            (< < $($rest)*)
+            [ $($item_type)* ]
+
+            $($remaining)*
+        }
     };
 
     // split >> into > >
-    (@parse ($($left:tt)*) (>> $($rest:tt)*) [ $($item_type:tt)* ] $($remaining:tt)*) => {
-        deserializer!(@parse ($($left)*) (> > $($rest)*) [ $($item_type)* ] $($remaining)*)
+    (
+        @parse
+        ($($left:tt)*)
+        (>> $($rest:tt)*)
+        [ $($item_type:tt)* ]
+
+        $($remaining:tt)*
+    ) => {
+        deserializer! {
+            @parse
+            ($($left)*)
+            (> > $($rest)*)
+            [ $($item_type)* ]
+
+            $($remaining)*
+        }
     };
 
     // chomp any non-angle-bracket token
-    (@parse ($($left:tt)*) ($first:tt $($rest:tt)*) [ $($item_type:tt)* ] $($remaining:tt)*) => {
-        deserializer!(@parse ($($left)*) ($($rest)*) [ $($item_type)* $first ] $($remaining)*)
+    (
+        @parse
+        ($($left:tt)*)
+        ($first:tt $($rest:tt)*)
+        [ $($item_type:tt)* ]
+
+        $($remaining:tt)*
+    ) => {
+        deserializer! {
+            @parse
+            ($($left)*)
+            ($($rest)*)
+            [ $($item_type)* $first ]
+
+            $($remaining)*
+        }
     };
 
     (
@@ -403,9 +473,9 @@ macro_rules! deserializer {
     ) => {
         deserializer! {
             @parse
-            (<)           // counter for angle brackets
-            ($($item_type)+)   // tokens remaining to be chomped
-            []            // already-chomped tokens
+            (<)                 // counter for angle brackets
+            ($($item_type)+)    // tokens remaining to be chomped
+            []                  // already-chomped tokens
 
             // Arguments I want accessible with the parsed result
             parent_json: $parent_json,

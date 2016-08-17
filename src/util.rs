@@ -681,3 +681,113 @@ impl JsonFloat for f64 {
         val.as_f64()
     }
 }
+
+macro_rules! count_brackets {
+    // Thanks to durka42 for this parsing algorithm for generics, much appreciated!
+    // done parsing: just the outer < and > from Vec are left over
+    (
+        counter:   (<)                      // counter for angle brackets
+        remaining: (>)                      // tokens remaining to be chomped
+        processed: [ $($item_type:tt)+ ]    // already-chomped tokens
+
+        callback: [ $callback:ident ]
+        arguments_preceding: { $($arguments_preceding:tt)* }
+        arguments_following: { $($arguments_following:tt)* }
+    ) => {
+        $callback! {
+            $($arguments_preceding)*
+            [ $($item_type)+ ]
+            $($arguments_following)*
+        }
+    };
+
+    // the next two rules implement the angle bracket counter
+
+    // chomp a single <
+    (
+        counter:   ($($left:tt)*)
+        remaining: (< $($rest:tt)*)
+        processed: [ $($item_type:tt)* ]
+
+        $($callback:tt)*
+    ) => {
+        count_brackets! {
+            counter:   ($($left)* <)
+            remaining: ($($rest)*)
+            processed: [ $($item_type)* < ]
+
+            $($callback)*
+        }
+    };
+
+    // chomp a single >
+    (
+        counter:   (< $($left:tt)*)
+        remaining: (> $($rest:tt)*)
+        processed: [ $($item_type:tt)* ]
+
+        $($callback:tt)*
+    ) => {
+        count_brackets! {
+            counter:   ($($left)*)
+            remaining: ($($rest)*)
+            processed: [ $($item_type)* > ]
+
+            $($callback)*
+        }
+    };
+
+    // annoyingly, << and >> count as single tokens
+    // to solve this problem, I split them and push the two individual angle brackets back onto the stream of tokens to be parsed
+
+    // split << into < <
+    (
+        counter:   ($($left:tt)*)
+        remaining: (<< $($rest:tt)*)
+        processed: [ $($item_type:tt)* ]
+
+        $($callback:tt)*
+    ) => {
+        count_brackets! {
+            counter:   ($($left)*)
+            remaining: (< < $($rest)*)
+            processed: [ $($item_type)* ]
+
+            $($callback)*
+        }
+    };
+
+    // split >> into > >
+    (
+        counter:   ($($left:tt)*)
+        remaining: (>> $($rest:tt)*)
+        processed: [ $($item_type:tt)* ]
+
+        $($callback:tt)*
+    ) => {
+        count_brackets! {
+            counter:   ($($left)*)
+            remaining: (> > $($rest)*)
+            processed: [ $($item_type)* ]
+
+            $($callback)*
+        }
+    };
+
+    // chomp any non-angle-bracket token
+    (
+        counter:   ($($left:tt)*)
+        remaining: ($first:tt $($rest:tt)*)
+        processed: [ $($item_type:tt)* ]
+
+        $($callback:tt)*
+    ) => {
+        count_brackets! {
+            counter:   ($($left)*)
+            remaining: ($($rest)*)
+            processed: [ $($item_type)* $first ]
+
+            $($callback)*
+        }
+    };
+}

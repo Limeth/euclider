@@ -357,133 +357,13 @@ macro_rules! deserializer {
         result
     }};
 
-    // Thanks to durka42 for this parsing algorithm for generics, much appreciated!
-    // done parsing: just the outer < and > from Vec are left over
-    (
-        @parse
-        counter:   (<)                      // counter for angle brackets
-        remaining: (>)                      // tokens remaining to be chomped
-        processed: [ $($item_type:tt)+ ]    // already-chomped tokens
-
-        callback: [ $callback:ident ]
-        arguments_preceding: { $($arguments_preceding:tt)* }
-        arguments_following: { $($arguments_following:tt)* }
-    ) => {
-        $callback! {
-            $($arguments_preceding)*
-            [ $($item_type)+ ]
-            $($arguments_following)*
-        }
-    };
-
-    // the next two rules implement the angle bracket counter
-
-    // chomp a single <
-    (
-        @parse
-        counter:   ($($left:tt)*)
-        remaining: (< $($rest:tt)*)
-        processed: [ $($item_type:tt)* ]
-
-        $($callback:tt)*
-    ) => {
-        deserializer! {
-            @parse
-            counter:   ($($left)* <)
-            remaining: ($($rest)*)
-            processed: [ $($item_type)* < ]
-
-            $($callback)*
-        }
-    };
-
-    // chomp a single >
-    (
-        @parse
-        counter:   (< $($left:tt)*)
-        remaining: (> $($rest:tt)*)
-        processed: [ $($item_type:tt)* ]
-
-        $($callback:tt)*
-    ) => {
-        deserializer! {
-            @parse
-            counter:   ($($left)*)
-            remaining: ($($rest)*)
-            processed: [ $($item_type)* > ]
-
-            $($callback)*
-        }
-    };
-
-    // annoyingly, << and >> count as single tokens
-    // to solve this problem, I split them and push the two individual angle brackets back onto the stream of tokens to be parsed
-
-    // split << into < <
-    (
-        @parse
-        counter:   ($($left:tt)*)
-        remaining: (<< $($rest:tt)*)
-        processed: [ $($item_type:tt)* ]
-
-        $($callback:tt)*
-    ) => {
-        deserializer! {
-            @parse
-            counter:   ($($left)*)
-            remaining: (< < $($rest)*)
-            processed: [ $($item_type)* ]
-
-            $($callback)*
-        }
-    };
-
-    // split >> into > >
-    (
-        @parse
-        counter:   ($($left:tt)*)
-        remaining: (>> $($rest:tt)*)
-        processed: [ $($item_type:tt)* ]
-
-        $($callback:tt)*
-    ) => {
-        deserializer! {
-            @parse
-            counter:   ($($left)*)
-            remaining: (> > $($rest)*)
-            processed: [ $($item_type)* ]
-
-            $($callback)*
-        }
-    };
-
-    // chomp any non-angle-bracket token
-    (
-        @parse
-        counter:   ($($left:tt)*)
-        remaining: ($first:tt $($rest:tt)*)
-        processed: [ $($item_type:tt)* ]
-
-        $($callback:tt)*
-    ) => {
-        deserializer! {
-            @parse
-            counter:   ($($left)*)
-            remaining: ($($rest)*)
-            processed: [ $($item_type)* $first ]
-
-            $($callback)*
-        }
-    };
-
     (
         @deserialize [ Vec< $($item_type:tt)+ ]
         parent_json: $parent_json:expr,
         parser: $parser:expr,
         json: $json:expr
     ) => {
-        deserializer! {
-            @parse
+        count_brackets! {
             counter:   (<)                 // counter for angle brackets
             remaining: ($($item_type)+)    // tokens remaining to be chomped
             processed: []                  // already-chomped tokens

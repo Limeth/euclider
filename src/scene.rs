@@ -548,15 +548,12 @@ pub type Deserializer<T> = Fn(&JsonValue, &JsonValue, &Parser) -> Result<T, Pars
 #[derive(Debug)]
 pub enum ParserError {
     NoDeserializer {
+        description: String,
         key: String,
     },
     SyntaxError {
         description: String,
         error: json::Error,
-    },
-    InvalidStructure {
-        description: String,
-        json: JsonValue,
     },
     MissingType {
         type_str: String,
@@ -1047,7 +1044,13 @@ impl Parser {
         if option.is_some() {
             Ok(option.unwrap().as_ref())
         } else {
-            Err(ParserError::NoDeserializer { key: key.to_owned() })
+            Err(ParserError::NoDeserializer {
+                description: format! {
+                    "No deserializer registered for key `{}`.",
+                    key
+                },
+                key: key.to_string(),
+            })
         }
     }
 
@@ -1077,11 +1080,12 @@ impl Parser {
             let (constructor_key, constructor_value) = entries[0];
             self.deserialize::<T>(constructor_key, constructor_value, json)
         } else {
-            Err(ParserError::InvalidStructure {
-                description: "A constructor must be an object containing a single key pointing to \
-                              either an object or an array."
-                    .to_owned(),
-                json: json.clone(),
+            Err(ParserError::InvalidConstructor {
+                description: concat! {
+                    "A constructor must be an object containing a single key pointing to",
+                    " either an object or an array."
+                }.to_string(),
+                parent_json: json.clone(),
             })
         }
     }

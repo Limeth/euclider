@@ -334,16 +334,8 @@ macro_rules! deserializer {
         }
     }};
 
-    // Thanks to durka42 for this parsing algorithm for generics, much appreciated!
-    // done parsing: just the outer < and > from Vec are left over
     (
-        @parse
-        (<)                     // counter for angle brackets
-        (>)                     // tokens remaining to be chomped
-        [ $($item_type:tt)+ ]   // already-chomped tokens
-
-        // TODO: Dispatch a specified macro with the result as an argument
-        // Here they are -- my arguments! (destructured `$($remaining:tt)*`)
+        @deserialize Vec [ $($item_type:tt)+ ]
         parent_json: $parent_json:expr,
         parser: $parser:expr,
         json: $json:expr
@@ -365,43 +357,62 @@ macro_rules! deserializer {
         result
     }};
 
+    // Thanks to durka42 for this parsing algorithm for generics, much appreciated!
+    // done parsing: just the outer < and > from Vec are left over
+    (
+        @parse
+        counter:   (<)                      // counter for angle brackets
+        remaining: (>)                      // tokens remaining to be chomped
+        processed: [ $($item_type:tt)+ ]    // already-chomped tokens
+
+        callback: [ $callback:ident ]
+        arguments_preceding: { $($arguments_preceding:tt)* }
+        arguments_following: { $($arguments_following:tt)* }
+    ) => {
+        $callback! {
+            $($arguments_preceding)*
+            [ $($item_type)+ ]
+            $($arguments_following)*
+        }
+    };
+
     // the next two rules implement the angle bracket counter
 
     // chomp a single <
     (
         @parse
-        ($($left:tt)*)
-        (< $($rest:tt)*)
-        [ $($item_type:tt)* ]
+        counter:   ($($left:tt)*)
+        remaining: (< $($rest:tt)*)
+        processed: [ $($item_type:tt)* ]
 
-        $($remaining:tt)*
+        $($callback:tt)*
     ) => {
         deserializer! {
             @parse
-            ($($left)* <)
-            ($($rest)*)
-            [ $($item_type)* < ]
+            counter:   ($($left)* <)
+            remaining: ($($rest)*)
+            processed: [ $($item_type)* < ]
 
-            $($remaining)*
+            $($callback)*
         }
     };
 
     // chomp a single >
     (
         @parse
-        (< $($left:tt)*)
-        (> $($rest:tt)*)
-        [ $($item_type:tt)* ]
+        counter:   (< $($left:tt)*)
+        remaining: (> $($rest:tt)*)
+        processed: [ $($item_type:tt)* ]
 
-        $($remaining:tt)*
+        $($callback:tt)*
     ) => {
         deserializer! {
             @parse
-            ($($left)*)
-            ($($rest)*)
-            [ $($item_type)* > ]
+            counter:   ($($left)*)
+            remaining: ($($rest)*)
+            processed: [ $($item_type)* > ]
 
-            $($remaining)*
+            $($callback)*
         }
     };
 
@@ -411,57 +422,57 @@ macro_rules! deserializer {
     // split << into < <
     (
         @parse
-        ($($left:tt)*)
-        (<< $($rest:tt)*)
-        [ $($item_type:tt)* ]
+        counter:   ($($left:tt)*)
+        remaining: (<< $($rest:tt)*)
+        processed: [ $($item_type:tt)* ]
 
-        $($remaining:tt)*
+        $($callback:tt)*
     ) => {
         deserializer! {
             @parse
-            ($($left)*)
-            (< < $($rest)*)
-            [ $($item_type)* ]
+            counter:   ($($left)*)
+            remaining: (< < $($rest)*)
+            processed: [ $($item_type)* ]
 
-            $($remaining)*
+            $($callback)*
         }
     };
 
     // split >> into > >
     (
         @parse
-        ($($left:tt)*)
-        (>> $($rest:tt)*)
-        [ $($item_type:tt)* ]
+        counter:   ($($left:tt)*)
+        remaining: (>> $($rest:tt)*)
+        processed: [ $($item_type:tt)* ]
 
-        $($remaining:tt)*
+        $($callback:tt)*
     ) => {
         deserializer! {
             @parse
-            ($($left)*)
-            (> > $($rest)*)
-            [ $($item_type)* ]
+            counter:   ($($left)*)
+            remaining: (> > $($rest)*)
+            processed: [ $($item_type)* ]
 
-            $($remaining)*
+            $($callback)*
         }
     };
 
     // chomp any non-angle-bracket token
     (
         @parse
-        ($($left:tt)*)
-        ($first:tt $($rest:tt)*)
-        [ $($item_type:tt)* ]
+        counter:   ($($left:tt)*)
+        remaining: ($first:tt $($rest:tt)*)
+        processed: [ $($item_type:tt)* ]
 
-        $($remaining:tt)*
+        $($callback:tt)*
     ) => {
         deserializer! {
             @parse
-            ($($left)*)
-            ($($rest)*)
-            [ $($item_type)* $first ]
+            counter:   ($($left)*)
+            remaining: ($($rest)*)
+            processed: [ $($item_type)* $first ]
 
-            $($remaining)*
+            $($callback)*
         }
     };
 
@@ -473,14 +484,20 @@ macro_rules! deserializer {
     ) => {
         deserializer! {
             @parse
-            (<)                 // counter for angle brackets
-            ($($item_type)+)    // tokens remaining to be chomped
-            []                  // already-chomped tokens
+            counter:   (<)                 // counter for angle brackets
+            remaining: ($($item_type)+)    // tokens remaining to be chomped
+            processed: []                  // already-chomped tokens
 
+            callback: [ deserializer ]
             // Arguments I want accessible with the parsed result
-            parent_json: $parent_json,
-            parser: $parser,
-            json: $json
+            arguments_preceding: {
+                @deserialize Vec
+            }
+            arguments_following: {
+                parent_json: $parent_json,
+                parser: $parser,
+                json: $json
+            }
         }
     };
 

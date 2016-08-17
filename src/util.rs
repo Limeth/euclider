@@ -682,7 +682,7 @@ impl JsonFloat for f64 {
     }
 }
 
-macro_rules! count_brackets {
+macro_rules! remove_surrounding_brackets {
     // Thanks to durka42 for this parsing algorithm for generics, much appreciated!
     // done parsing: just the outer < and > from Vec are left over
     (
@@ -711,7 +711,7 @@ macro_rules! count_brackets {
 
         $($callback:tt)*
     ) => {
-        count_brackets! {
+        remove_surrounding_brackets! {
             counter:   ($($left)* <)
             remaining: ($($rest)*)
             processed: [ $($item_type)* < ]
@@ -728,7 +728,7 @@ macro_rules! count_brackets {
 
         $($callback:tt)*
     ) => {
-        count_brackets! {
+        remove_surrounding_brackets! {
             counter:   ($($left)*)
             remaining: ($($rest)*)
             processed: [ $($item_type)* > ]
@@ -748,7 +748,7 @@ macro_rules! count_brackets {
 
         $($callback:tt)*
     ) => {
-        count_brackets! {
+        remove_surrounding_brackets! {
             counter:   ($($left)*)
             remaining: (< < $($rest)*)
             processed: [ $($item_type)* ]
@@ -765,7 +765,7 @@ macro_rules! count_brackets {
 
         $($callback:tt)*
     ) => {
-        count_brackets! {
+        remove_surrounding_brackets! {
             counter:   ($($left)*)
             remaining: (> > $($rest)*)
             processed: [ $($item_type)* ]
@@ -782,7 +782,7 @@ macro_rules! count_brackets {
 
         $($callback:tt)*
     ) => {
-        count_brackets! {
+        remove_surrounding_brackets! {
             counter:   ($($left)*)
             remaining: ($($rest)*)
             processed: [ $($item_type)* $first ]
@@ -797,7 +797,7 @@ macro_rules! count_brackets {
 
         $($callback:tt)*
     ) => {
-        count_brackets! {
+        remove_surrounding_brackets! {
             counter:   (<)
             remaining: ($($trim)+)
             processed: []

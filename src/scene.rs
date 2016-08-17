@@ -363,7 +363,7 @@ macro_rules! deserializer {
         parser: $parser:expr,
         json: $json:expr
     ) => {
-        count_brackets! {
+        remove_surrounding_brackets! {
             trim: [ $($item_type)+ ]    // The token tree from which to remove surrounding brackets
             callback: [ deserializer ]  // The macro that is called upon completion
             arguments_preceding: {      // Arguments preceding the result

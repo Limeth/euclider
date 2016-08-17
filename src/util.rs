@@ -790,4 +790,19 @@ macro_rules! count_brackets {
             $($callback)*
         }
     };
+
+    // Entry matcher. Note, that the result will be wrapped in `[]` brackets.
+    (
+        trim: [ < $($trim:tt)+ ]  // The token tree from which to remove surrounding brackets.
+
+        $($callback:tt)*
+    ) => {
+        count_brackets! {
+            counter:   (<)
+            remaining: ($($trim)+)
+            processed: []
+
+            $($callback)*
+        }
+    };
 }

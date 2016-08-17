@@ -358,22 +358,18 @@ macro_rules! deserializer {
     }};
 
     (
-        @deserialize [ Vec< $($item_type:tt)+ ]
+        @deserialize [ Vec $($item_type:tt)+ ]
         parent_json: $parent_json:expr,
         parser: $parser:expr,
         json: $json:expr
     ) => {
         count_brackets! {
-            counter:   (<)                 // counter for angle brackets
-            remaining: ($($item_type)+)    // tokens remaining to be chomped
-            processed: []                  // already-chomped tokens
-
-            callback: [ deserializer ]
-            // Arguments I want accessible with the parsed result
-            arguments_preceding: {
+            trim: [ $($item_type)+ ]    // The token tree from which to remove surrounding brackets
+            callback: [ deserializer ]  // The macro that is called upon completion
+            arguments_preceding: {      // Arguments preceding the result
                 @deserialize Vec
             }
-            arguments_following: {
+            arguments_following: {      // Arguments following the result
                 parent_json: $parent_json,
                 parser: $parser,
                 json: $json

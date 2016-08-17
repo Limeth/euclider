@@ -29,16 +29,22 @@
                   "ComponentTransformation": {
                     "expressions": [
                       {
-                        "expression": "x * 4",
-                        "inverse_expression": "x / 4"
+                        "ComponentTransformationExpr": {
+                          "expression": "x * 4",
+                          "inverse_expression": "x / 4"
+                        }
                       },
                       {
-                        "expression": "y",
-                        "inverse_expression": "y"
+                        "ComponentTransformationExpr": {
+                          "expression": "y",
+                          "inverse_expression": "y"
+                        }
                       },
                       {
-                        "expression": "z",
-                        "inverse_expression": "z"
+                        "ComponentTransformationExpr": {
+                          "expression": "z",
+                          "inverse_expression": "z"
+                        }
                       }
                     ]
                   }
@@ -226,16 +232,22 @@
                   "ComponentTransformation": {
                     "expressions": [
                       {
-                        "expression": "x / 4",
-                        "inverse_expression": "x * 4"
+                        "ComponentTransformationExpr": {
+                          "expression": "x / 4",
+                          "inverse_expression": "x * 4"
+                        }
                       },
                       {
-                        "expression": "y",
-                        "inverse_expression": "y"
+                        "ComponentTransformationExpr": {
+                          "expression": "y",
+                          "inverse_expression": "y"
+                        }
                       },
                       {
-                        "expression": "z",
-                        "inverse_expression": "z"
+                        "ComponentTransformationExpr": {
+                          "expression": "z",
+                          "inverse_expression": "z"
+                        }
                       }
                     ]
                   }

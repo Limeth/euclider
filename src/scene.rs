@@ -799,80 +799,45 @@ impl Parser {
                 }
             }
 
-            // TODO
-            deserializers.insert("ComponentTransformation",
-                                 Box::new(|parent_json: &JsonValue, json: &JsonValue, parser: &Parser| {
-                                     let object: &Object = if let JsonValue::Object(ref object) = *json {
-                                         object
-                                     } else {
-                                         return Err(ParserError::InvalidStructure {
-                                             description: "The JSON value must be an object.".to_owned(),
-                                             json: json.clone(),
-                                         });
-                                     };
+            add_deserializer! {
+                "ComponentTransformationExpr",
+                [expression: &str] [inverse_expression: &str]
+                -> ComponentTransformationExpr {
+                    let expression = try!(
+                        Expr::from_str(expression)
+                        .map_err(|_| ParserError::CustomError {
+                            description: format!(
+                                "Invalid component transformation expression `{}`.",
+                                expression
+                            ),
+                        })
+                    );
+                    let inverse_expression = try!(
+                        Expr::from_str(inverse_expression)
+                        .map_err(|_| ParserError::CustomError {
+                            description: format!(
+                                "Invalid component transformation expression `{}`.",
+                                inverse_expression
+                            ),
+                        })
+                    );
 
-                                     let array = try!(object.get("expressions").ok_or_else(|| ParserError::InvalidStructure {
-                                         description: "Could not find `expressions`.".to_owned(),
-                                         json: json.clone(),
-                                     }));
-                                     let array: &Vec<JsonValue> = if let JsonValue::Array(ref object) = *array {
-                                         object
-                                     } else {
-                                         return Err(ParserError::InvalidStructure {
-                                             description: "The `expressions` field must be an array.".to_owned(),
-                                             json: json.clone(),
-                                         });
-                                     };
+                    ComponentTransformationExpr {
+                        expression: expression,
+                        inverse_expression: inverse_expression,
+                    }
+                }
+            }
 
-                                     let mut expressions: Vec<ComponentTransformationExpr> = Vec::new();
-
-                                     for json in array {
-                                         let object: &Object = if let JsonValue::Object(ref object) = *json {
-                                             object
-                                         } else {
-                                             return Err(ParserError::InvalidStructure {
-                                                 description: "The JSON value must be an object.".to_owned(),
-                                                 json: json.clone(),
-                                             });
-                                         };
-
-                                         let expression = try!(try!(object.get("expression").ok_or_else(|| ParserError::InvalidStructure {
-                                                          description: "The `expression` field is missing.".to_owned(),
-                                                          json: json.clone(),
-                                                      })).as_str().ok_or_else(|| ParserError::InvalidStructure {
-                                                          description: "Expected a string as the function.".to_owned(),
-                                                          json: json.clone(),
-                                                      }));
-                                         let expression = try!(Expr::from_str(expression).or_else(|err| Err(ParserError::InvalidStructure {
-                                             description: "Invalid component transformation expression.".to_owned(),
-                                             json: json.clone(),
-                                         })));
-
-                                         let inverse_expression = try!(try!(object.get("inverse_expression").ok_or_else(|| ParserError::InvalidStructure {
-                                                          description: "The `inverse_expression` field is missing.".to_owned(),
-                                                          json: json.clone(),
-                                                      })).as_str().ok_or_else(|| ParserError::InvalidStructure {
-                                                          description: "Expected a string as the inverse function.".to_owned(),
-                                                          json: json.clone(),
-                                                      }));
-                                         let inverse_expression = try!(Expr::from_str(inverse_expression).or_else(|err| Err(ParserError::InvalidStructure {
-                                             description: "Invalid component transformation inverse expression.".to_owned(),
-                                             json: json.clone(),
-                                         })));
-
-                                         expressions.push(ComponentTransformationExpr {
-                                             expression: expression,
-                                             inverse_expression: inverse_expression,
-                                         });
-                                     }
-
-                                     let result: Box<Box<LinearTransformation<F, Point3<F>, Vector3<F>>>> =
-                                         Box::new(Box::new(ComponentTransformation {
-                                             expressions: expressions,
-                                         }));
-
-                                     Ok(result)
-                                 }));
+            add_deserializer! {
+                "ComponentTransformation",
+                [expressions: Vec<ComponentTransformationExpr>]
+                -> Box<LinearTransformation<F, Point3<F>, Vector3<F>>> {
+                    Box::new(ComponentTransformation {
+                        expressions: expressions,
+                    })
+                }
+            }
 
             add_deserializer! {
                 "LinearSpace",

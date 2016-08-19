@@ -15,6 +15,9 @@ include = [
     "UNLICENSE",
 ]
 
+[features]
+low_precision = []
+
 [dependencies]
 clippy = "0.*"
 glium = "0.*"

@@ -41,7 +41,12 @@ use clap::App;
 use clap::Arg;
 
 fn main() {
-    run::<f64>();
+    if cfg!(feature = "low_precision") {
+        println!("Running in low floating-point number precision mode.");
+        run::<f32>();
+    } else {
+        run::<f64>();
+    }
 }
 
 fn run<F: CustomFloat>() {

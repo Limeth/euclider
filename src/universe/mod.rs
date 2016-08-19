@@ -286,6 +286,7 @@ pub trait Environment<F: CustomFloat>: Sync {
     fn render(&self,
               dimensions: (u32, u32),
               time: &Duration,
+              threads: u32,
               context: &SimulationContext)
               -> RawImage2d<u8> {
         let (width, height) = dimensions;
@@ -294,7 +295,7 @@ pub trait Environment<F: CustomFloat>: Sync {
         let buffer_height = height / context.resolution;
         let max_depth = self.max_depth();
         let mut data: Vec<u8> = vec!(0; (buffer_width * buffer_height) as usize * COLOR_DIM);
-        let mut pool = Pool::new(4);
+        let mut pool = Pool::new(threads);
 
         pool.scoped(|scope| {
             for (index, chunk) in &mut data.chunks_mut(COLOR_DIM).enumerate() {

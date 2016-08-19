@@ -33,3 +33,4 @@ parse-generics-shim = "0.*"
 mopa = { git = "https://github.com/Limeth/mopa.git" }
 clap = "2.*"
 meval = "0.*"
+num_cpus = "1.*"

@@ -17,6 +17,7 @@ extern crate palette;
 extern crate glium;
 extern crate num;
 extern crate json;
+extern crate num_cpus;
 extern crate meval;
 #[macro_use]
 extern crate mopa;
@@ -75,6 +76,7 @@ fn run<F: CustomFloat>() {
 
     let simulation = Simulation::builder()
         .environment(*environment)
+        .threads(num_cpus::get() as u32)
         .build();
 
     simulation.start();

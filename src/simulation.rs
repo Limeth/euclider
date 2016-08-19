@@ -23,6 +23,7 @@ use util::RemoveIf;
 use util::CustomFloat;
 
 pub struct Simulation<F: CustomFloat> {
+    threads: u32,
     environment: Box<Environment<F>>,
     facade: Option<GlutinFacade>,
     start_instant: Option<Instant>,
@@ -33,6 +34,7 @@ pub struct Simulation<F: CustomFloat> {
 
 pub struct SimulationBuilder<F: CustomFloat> {
     environment: Option<Box<Environment<F>>>,
+    threads: Option<u32>,
     float_precision: PhantomData<F>,
 }
 
@@ -71,7 +73,7 @@ impl<F: CustomFloat> Simulation<F> {
         let now = Instant::now();
         let time = now - self.start_instant.unwrap();
 
-        let image = self.environment.render(dimensions, &time, &self.context);
+        let image = self.environment.render(dimensions, &time, self.threads, &self.context);
 
         let texture = Texture2d::new(readable_facade, image).unwrap();
         let image_surface = texture.as_surface();
@@ -110,20 +112,27 @@ impl<F: CustomFloat> Simulation<F> {
     pub fn builder() -> SimulationBuilder<F> {
         SimulationBuilder {
             environment: None,
+            threads: None,
             float_precision: PhantomData,
         }
     }
 }
 
 impl<F: CustomFloat> SimulationBuilder<F> {
-    pub fn environment(mut self, environment: Box<Environment<F>>) -> SimulationBuilder<F> {
+    pub fn environment(mut self, environment: Box<Environment<F>>) -> Self {
         self.environment = Some(environment);
+        self
+    }
+
+    pub fn threads(mut self, threads: u32) -> Self {
+        self.threads = Some(threads);
         self
     }
 
     pub fn build(self) -> Simulation<F> {
         Simulation {
-            environment: self.environment.unwrap(),
+            threads: self.threads.expect("Specify the number of threads before building the simulation."),
+            environment: self.environment.expect("Specify the environment before bulding the simulation."),
             facade: None,
             start_instant: None,
             last_updated_instant: None,

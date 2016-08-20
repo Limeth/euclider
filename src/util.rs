@@ -597,7 +597,7 @@ impl<F: CustomFloat> VectorAsPoint for Vector3<F> {
     }
 }
 
-impl<F: CustomFloat> AngleBetween<F> for Vector3<F> {
+impl<F: CustomFloat, V: Dot<F> + Norm<F>> AngleBetween<F> for V {
     fn angle_between(&self, other: &Self) -> F {
         F::acos(na::dot(self, other) / (self.norm() * other.norm()))
     }

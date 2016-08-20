@@ -82,18 +82,18 @@ pub struct Intersection<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F,
     pub location: P,
     pub direction: V,
     pub normal: V,
-    pub distance_squared: F,
+    pub distance: F,
     pub float_precision: PhantomData<F>,
     pub vector_dimensions: PhantomData<V>,
 }
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Intersection<F, P, V> {
-    pub fn new(location: P, direction: V, normal: V, distance_squared: F) -> Intersection<F, P, V> {
+    pub fn new(location: P, direction: V, normal: V, distance: F) -> Intersection<F, P, V> {
         Intersection {
             location: location,
             direction: direction,
             normal: normal,
-            distance_squared: distance_squared,
+            distance: distance,
             float_precision: PhantomData,
             vector_dimensions: PhantomData,
         }
@@ -217,7 +217,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Iterator for U
                     let closer_index: &mut usize;
                     let further_shape: &Shape<F, P, V>;
 
-                    if unwrapped_a.distance_squared < unwrapped_b.distance_squared {
+                    if unwrapped_a.distance < unwrapped_b.distance {
                         closer = unwrapped_a;
                         closer_index = &mut self.data.index_a;
                         further_shape = self.data.shape_b.as_ref().as_ref();
@@ -295,7 +295,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
                     let closer_index: &mut usize;
                     let further_shape: &Shape<F, P, V>;
 
-                    if unwrapped_a.distance_squared < unwrapped_b.distance_squared {
+                    if unwrapped_a.distance < unwrapped_b.distance {
                         closer = unwrapped_a;
                         closer_index = &mut self.data.index_a;
                         further_shape = self.data.shape_b.as_ref().as_ref();
@@ -368,7 +368,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Iterator for C
                     let unwrapped_a = intersection_a.unwrap();
                     let unwrapped_b = intersection_b.unwrap();
 
-                    if unwrapped_a.distance_squared < unwrapped_b.distance_squared {
+                    if unwrapped_a.distance < unwrapped_b.distance {
                         self.data.index_a += 1;
 
                         if !self.data.shape_b.is_point_inside(&unwrapped_a.location) {
@@ -444,7 +444,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
                     let closer_index: &mut usize;
                     let further_shape: &Shape<F, P, V>;
 
-                    if unwrapped_a.distance_squared < unwrapped_b.distance_squared {
+                    if unwrapped_a.distance < unwrapped_b.distance {
                         closer = unwrapped_a;
                         closer_index = &mut self.data.index_a;
                         further_shape = self.data.shape_b.as_ref().as_ref();
@@ -747,7 +747,7 @@ shape!(Plane<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>);
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Plane<F, P, V> {
     pub fn new(normal: V, constant: F) -> Plane<F, P, V> {
-        if na::distance_squared(&na::origin(), normal.as_point()) <= <F as Zero>::zero() {
+        if normal.norm_squared() <= <F as Zero>::zero() {
             panic!("Cannot have a normal with length of 0.");
         }
 
@@ -868,5 +868,88 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V>
         let result: F = na::dot(&self.plane.normal, point.as_vector()) + self.plane.constant;
 
         self.signum == result.signum()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use universe::entity::material::Vacuum;
+    use na::Point3;
+    use na::Vector3;
+    use na::ApproxEq;
+    use super::*;
+
+    #[test]
+    fn intersect_sphere_linear() {
+        let mut marcher = Sphere::intersect_linear(
+            &Point3::new(0.0, 0.0, 0.0),
+            &Vector3::new(1.0, 0.0, 0.0),
+            &Vacuum::new(),
+            &Sphere::new(
+                Point3::new(2.0, 0.0, 0.0),
+                1.0
+            ),
+            &|_, _| { unimplemented!() }
+        );
+
+        let first = marcher.next().unwrap();
+        let second = marcher.next().unwrap();
+
+        assert_eq!(first.location, Point3::new(1.0, 0.0, 0.0));
+        assert_eq!(first.direction, Vector3::new(1.0, 0.0, 0.0));
+        assert_eq!(first.normal, Vector3::new(-1.0, 0.0, 0.0));
+        assert!(first.distance.approx_eq_ulps(&1.0, 2));
+        assert_eq!(second.location, Point3::new(3.0, 0.0, 0.0));
+        assert_eq!(second.direction, Vector3::new(1.0, 0.0, 0.0));
+        assert_eq!(second.normal, Vector3::new(1.0, 0.0, 0.0));
+        assert!(second.distance.approx_eq_ulps(&3.0, 2));
+        assert!(marcher.next().is_none());
+    }
+
+    #[test]
+    fn intersect_plane_linear() {
+        let mut marcher = Plane::intersect_linear(
+            &Point3::new(0.0, 0.0, 0.0),
+            &Vector3::new(1.0, 0.0, 0.0),
+            &Vacuum::new(),
+            &Plane::new_with_point(
+                Vector3::new(-1.0, 0.0, 0.0),
+                &Point3::new(1.0, 0.0, 0.0)
+            ),
+            &|_, _| { unimplemented!() }
+        );
+
+        let first = marcher.next().unwrap();
+
+        assert_eq!(first.location, Point3::new(1.0, 0.0, 0.0));
+        assert_eq!(first.direction, Vector3::new(1.0, 0.0, 0.0));
+        assert_eq!(first.normal, Vector3::new(-1.0, 0.0, 0.0));
+        assert!(first.distance.approx_eq_ulps(&1.0, 2));
+        assert!(marcher.next().is_none());
+    }
+
+    #[test]
+    fn intersect_halfspace_linear() {
+        let mut marcher = HalfSpace::intersect_linear(
+            &Point3::new(0.0, 0.0, 0.0),
+            &Vector3::new(1.0, 0.0, 0.0),
+            &Vacuum::new(),
+            &HalfSpace::new_with_point(
+                Plane::new_with_point(
+                    Vector3::new(-1.0, 0.0, 0.0),
+                    &Point3::new(1.0, 0.0, 0.0)
+                ),
+                &Point3::new(2.0, 0.0, 0.0)
+            ),
+            &|_, _| { unimplemented!() }
+        );
+
+        let first = marcher.next().unwrap();
+
+        assert_eq!(first.location, Point3::new(1.0, 0.0, 0.0));
+        assert_eq!(first.direction, Vector3::new(1.0, 0.0, 0.0));
+        assert_eq!(first.normal, Vector3::new(-1.0, 0.0, 0.0));
+        assert!(first.distance.approx_eq_ulps(&1.0, 2));
+        assert!(marcher.next().is_none());
     }
 }

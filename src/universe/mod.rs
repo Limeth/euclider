@@ -89,7 +89,7 @@ pub trait Universe<F: CustomFloat>
                          -> Option<TraceResult<'a, F, Self::P, Self::V>> {
         let material = belongs_to.material();
         let mut closest: Option<TraceResult<'a, F, Self::P, Self::V>> = None;
-        let mut closest_distance_squared: Option<F> = None;
+        let mut closest_distance: Option<F> = None;
 
         for other in self.entities() {
             let other_traceable = other.as_traceable();
@@ -120,8 +120,8 @@ pub trait Universe<F: CustomFloat>
                     exiting = false;
                 }
 
-                if closest_distance_squared.is_none() ||
-                   closest_distance_squared.unwrap() > intersection.distance_squared {
+                if closest_distance.is_none() ||
+                   closest_distance.unwrap() > intersection.distance {
                     let context = TracingContext {
                         time: *time,
                         origin_traceable: belongs_to,
@@ -133,7 +133,7 @@ pub trait Universe<F: CustomFloat>
                         exiting: exiting,
                     };
                     closest = Some((other_traceable, context));
-                    closest_distance_squared = Some(intersection.distance_squared);
+                    closest_distance = Some(intersection.distance);
                 }
 
                 break;

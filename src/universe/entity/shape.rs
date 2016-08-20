@@ -23,6 +23,7 @@ use num::Zero;
 use num::NumCast;
 use mopa;
 use na;
+use na::Cross;
 
 /// Ties a `Material` the ray is passing through and a `Shape` the ray is intersecting to a
 /// `GeneralIntersector`
@@ -768,7 +769,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Plane<F, P, V>
     pub fn new_with_vectors(vector_a: &V,
                             vector_b: &V,
                             point: &P)
-                            -> Plane<F, P, V> {
+                            -> Plane<F, P, V> where V: Cross<CrossProductType=V> {
         // A*x + B*y + C*z + D = 0
         let normal = na::cross(vector_a, vector_b);
 

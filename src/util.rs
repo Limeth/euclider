@@ -58,10 +58,17 @@ use na::IterableMut;
 use na::Dot;
 use na::Norm;
 use na::Mean;
-use na::Cross;
 use na::Translate;
+use na::Point2;
+use na::Vector2;
 use na::Point3;
 use na::Vector3;
+use na::Point4;
+use na::Vector4;
+use na::Point5;
+use na::Vector5;
+use na::Point6;
+use na::Vector6;
 use core::iter::FromIterator;
 use core::marker::Reflect;
 use core::ops::DerefMut;
@@ -550,7 +557,7 @@ pub trait CustomVector<F: CustomFloat, P: CustomPoint<F, Self>>:
 // Mul<Rotation3<F>>
 // MulAssign<Rotation3<F>>
     Translate<P> +
-    Cross<CrossProductType=Self> +
+// Cross<CrossProductType=Self> +
     VectorAsPoint<Point=P> +
     Reflect +
     Copy +
@@ -576,26 +583,34 @@ pub trait AngleBetween<F: CustomFloat> {
     fn angle_between(&self, other: &Self) -> F;
 }
 
-impl<F: CustomFloat> CustomPoint<F, Vector3<F>> for Point3<F> {}
-impl<F: CustomFloat> CustomVector<F, Point3<F>> for Vector3<F> {}
+macro_rules! dimension {
+    ($point:ident, $vector:ident) => {
+        impl<F: CustomFloat> CustomPoint<F, $vector<F>> for $point<F> {}
+        impl<F: CustomFloat> CustomVector<F, $point<F>> for $vector<F> {}
 
-impl<F: CustomFloat> VectorAsPoint for Vector3<F> {
-    type Point = Point3<F>;
+        impl<F: CustomFloat> VectorAsPoint for $vector<F> {
+            type Point = $point<F>;
 
-    fn to_point(self) -> Self::Point {
-        na::origin::<Self::Point>() + self
-    }
+            fn to_point(self) -> Self::Point {
+                na::origin::<Self::Point>() + self
+            }
 
-    fn as_point(&self) -> &Self::Point {
-        unsafe { mem::transmute(self) }
-    }
+            fn as_point(&self) -> &Self::Point {
+                unsafe { mem::transmute(self) }
+            }
 
-    fn set_coords(&mut self, coords: Self::Point) {
-        self.x = coords.x;
-        self.y = coords.y;
-        self.z = coords.z;
+            fn set_coords(&mut self, coords: Self::Point) {
+                *self.as_mut() = *coords.as_ref();
+            }
+        }
     }
 }
+
+dimension!(Point2, Vector2);
+dimension!(Point3, Vector3);
+dimension!(Point4, Vector4);
+dimension!(Point5, Vector5);
+dimension!(Point6, Vector6);
 
 impl<F: CustomFloat, V: Dot<F> + Norm<F>> AngleBetween<F> for V {
     fn angle_between(&self, other: &Self) -> F {

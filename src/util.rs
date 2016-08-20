@@ -806,3 +806,145 @@ macro_rules! remove_surrounding_brackets {
         }
     };
 }
+
+#[allow(float_cmp)]
+#[cfg(test)]
+mod tests {
+    use std::collections::HashSet;
+    use na::Vector3;
+    use na::Point3;
+    use na::BaseFloat;
+    use palette::Rgba;
+    use na::ApproxEq;
+    use super::*;
+
+    #[test]
+    fn remove_if() {
+        let mut original: HashSet<u8> = HashSet::new();
+        
+        original.insert(0);
+        original.insert(1);
+        original.insert(2);
+        original.insert(3);
+
+        let result = original.remove_if(|val| val % 2 == 0);
+
+        let mut retained: HashSet<u8> = HashSet::new();
+
+        retained.insert(1);
+        retained.insert(3);
+
+        let mut removed: HashSet<u8> = HashSet::new();
+
+        removed.insert(0);
+        removed.insert(2);
+
+        assert_eq!(original, retained);
+        assert_eq!(result, removed);
+    }
+
+    #[test]
+    fn combine_palette_color_test() {
+        let a = combine_palette_color(Rgba::new(1.0, 0.5, 0.0, 1.0),
+                                      Rgba::new(0.0, 1.0, 0.5, 0.5),
+                                      1.0 / 3.0);
+        let b = Rgba::new(1.0 / 3.0, 0.5 / 3.0 + 2.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0 + 1.0 / 3.0);
+
+        assert!(a.color.red.approx_eq_ulps(&b.color.red, 2));
+        assert!(a.color.green.approx_eq_ulps(&b.color.green, 2));
+        assert!(a.color.blue.approx_eq_ulps(&b.color.blue, 2));
+        assert!(a.alpha.approx_eq_ulps(&b.alpha, 2));
+    }
+
+    #[test]
+    fn remainder_test() {
+        assert_eq!(remainder(-3, 3), 0);
+        assert_eq!(remainder(-2, 3), 1);
+        assert_eq!(remainder(-1, 3), 2);
+        assert_eq!(remainder(0, 3), 0);
+        assert_eq!(remainder(1, 3), 1);
+        assert_eq!(remainder(2, 3), 2);
+        assert_eq!(remainder(3, 3), 0);
+    }
+
+    #[test]
+    fn iter_lazy() {
+        let vec: VecLazy<f32> = vec! {
+            Box::new(|| Some(42.0)),
+            Box::new(|| None),
+            Box::new(|| Some(84.0))
+        };
+        let mut iter = IterLazy::new(vec);
+
+        assert_eq!(iter.next(), Some(42.0));
+        assert_eq!(iter.next(), None);
+        assert_eq!(iter.next(), Some(84.0));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn vector_as_point() {
+        assert_eq! {
+            Vector3::new(21.0, 42.0, 84.0).to_point(),
+            Point3::new(21.0, 42.0, 84.0)
+        }
+        assert_eq! {
+            Vector3::new(21.0, 42.0, 84.0).as_point(),
+            &Point3::new(21.0, 42.0, 84.0)
+        }
+
+        let mut vector = Vector3::new(0.0, 0.0, 0.0);
+        
+        vector.set_coords(Point3::new(21.0, 42.0, 84.0));
+
+        assert_eq! {
+            vector,
+            Vector3::new(21.0, 42.0, 84.0)
+        }
+    }
+
+    #[test]
+    fn angle_between() {
+        assert_eq! {
+            Vector3::new(1.0, 0.0, 0.0).angle_between(
+                &Vector3::new(0.0, 1.0, 0.0)
+            ), <f32 as BaseFloat>::frac_pi_2()
+        }
+        assert_eq! {
+            Vector3::new(1.0, 0.0, 0.0).angle_between(
+                &Vector3::new(1.0, 1.0, 0.0)
+            ), <f32 as BaseFloat>::frac_pi_4()
+        }
+        assert_eq! {
+            Vector3::new(1.0, 0.0, 0.0).angle_between(
+                &Vector3::new(-1.0, 1.0, 0.0)
+            ), <f32 as BaseFloat>::frac_pi_4() * 3.0
+        }
+        assert_eq! {
+            Vector3::new(1.0, 0.0, 0.0).angle_between(
+                &Vector3::new(-1.0, 0.0, 0.0)
+            ), <f32 as BaseFloat>::pi()
+        }
+    }
+
+    #[test]
+    fn remove_surrounding_brackets() {
+        macro_rules! return_result {
+            (
+                Pre [ $($result:tt)+ ] Post
+            ) => {
+                stringify!($($result)+)
+            }
+        }
+
+        assert_eq! {
+            remove_surrounding_brackets! {
+                trim: [ <Hello<World>> ]
+                callback: [ return_result ]
+                arguments_preceding: { Pre }
+                arguments_following: { Post }
+            },
+            "Hello < World >"
+        }
+    }
+}

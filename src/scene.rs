@@ -1085,3 +1085,327 @@ impl Parser {
         }
     }
 }
+
+#[allow(float_cmp)]
+#[cfg(test)]
+mod tests {
+    use std::any::Any;
+    use json::JsonValue;
+    use util::JsonFloat;
+    use util::CustomFloat;
+    use super::*;
+
+    #[allow(unused_variables)]
+    fn parse_float_internal<F: CustomFloat>() -> F {
+        let mut parser = Parser::empty();
+
+        parser.deserializers.insert("item", Box::new(deserializer! {
+            [component: F] -> F {
+                component
+            }
+        }));
+
+        *parser.parse::<F>(r##"{"item": [ 42 ]}"##).unwrap()
+    }
+
+    #[test]
+    fn parse_float() {
+        assert_eq!(parse_float_internal::<f32>(), 42_f32);
+        assert_eq!(parse_float_internal::<f64>(), 42_f64);
+    }
+
+    #[allow(unused_variables)]
+    #[test]
+    fn parse_str() {
+        let mut parser = Parser::empty();
+
+        parser.deserializers.insert("item", Box::new(deserializer! {
+            [component: &str] -> String {
+                component.to_string()
+            }
+        }));
+
+        assert_eq! {
+            &*parser.parse::<String>(r##"{"item": [ "42" ]}"##).unwrap(),
+            "42"
+        }
+    }
+
+    #[allow(unused_variables)]
+    #[test]
+    fn parse_string() {
+        let mut parser = Parser::empty();
+
+        parser.deserializers.insert("item", Box::new(deserializer! {
+            [component: String] -> String {
+                component
+            }
+        }));
+
+        assert_eq! {
+            *parser.parse::<String>(r##"{"item": [ "42" ]}"##).unwrap(),
+            "42".to_string()
+        }
+    }
+
+    #[allow(unused_variables)]
+    #[test]
+    fn parse_f32() {
+        let mut parser = Parser::empty();
+
+        parser.deserializers.insert("item", Box::new(deserializer! {
+            [component: f32] -> f32 {
+                component
+            }
+        }));
+
+        assert_eq! {
+            *parser.parse::<f32>(r##"{"item": [ 42 ]}"##).unwrap(),
+            42_f32
+        }
+    }
+
+    #[allow(unused_variables)]
+    #[test]
+    fn parse_f64() {
+        let mut parser = Parser::empty();
+
+        parser.deserializers.insert("item", Box::new(deserializer! {
+            [component: f64] -> f64 {
+                component
+            }
+        }));
+
+        assert_eq! {
+            *parser.parse::<f64>(r##"{"item": [ 42 ]}"##).unwrap(),
+            42_f64
+        }
+    }
+
+    #[allow(unused_variables)]
+    #[test]
+    fn parse_u32() {
+        let mut parser = Parser::empty();
+
+        parser.deserializers.insert("item", Box::new(deserializer! {
+            [component: u32] -> u32 {
+                component
+            }
+        }));
+
+        assert_eq! {
+            *parser.parse::<u32>(r##"{"item": [ 42 ]}"##).unwrap(),
+            42_u32
+        }
+    }
+
+    #[allow(unused_variables)]
+    #[test]
+    fn parse_u64() {
+        let mut parser = Parser::empty();
+
+        parser.deserializers.insert("item", Box::new(deserializer! {
+            [component: u64] -> u64 {
+                component
+            }
+        }));
+
+        assert_eq! {
+            *parser.parse::<u64>(r##"{"item": [ 42 ]}"##).unwrap(),
+            42_u64
+        }
+    }
+
+    #[allow(unused_variables)]
+    #[test]
+    fn parse_u16() {
+        let mut parser = Parser::empty();
+
+        parser.deserializers.insert("item", Box::new(deserializer! {
+            [component: u16] -> u16 {
+                component
+            }
+        }));
+
+        assert_eq! {
+            *parser.parse::<u16>(r##"{"item": [ 42 ]}"##).unwrap(),
+            42_u16
+        }
+    }
+
+    #[allow(unused_variables)]
+    #[test]
+    fn parse_u8() {
+        let mut parser = Parser::empty();
+
+        parser.deserializers.insert("item", Box::new(deserializer! {
+            [component: u8] -> u8 {
+                component
+            }
+        }));
+
+        assert_eq! {
+            *parser.parse::<u8>(r##"{"item": [ 42 ]}"##).unwrap(),
+            42_u8
+        }
+    }
+
+    #[allow(unused_variables)]
+    #[test]
+    fn parse_usize() {
+        let mut parser = Parser::empty();
+
+        parser.deserializers.insert("item", Box::new(deserializer! {
+            [component: usize] -> usize {
+                component
+            }
+        }));
+
+        assert_eq! {
+            *parser.parse::<usize>(r##"{"item": [ 42 ]}"##).unwrap(),
+            42_usize
+        }
+    }
+
+    #[allow(unused_variables)]
+    #[test]
+    fn parse_i32() {
+        let mut parser = Parser::empty();
+
+        parser.deserializers.insert("item", Box::new(deserializer! {
+            [component: i32] -> i32 {
+                component
+            }
+        }));
+
+        assert_eq! {
+            *parser.parse::<i32>(r##"{"item": [ 42 ]}"##).unwrap(),
+            42_i32
+        }
+    }
+
+    #[allow(unused_variables)]
+    #[test]
+    fn parse_i64() {
+        let mut parser = Parser::empty();
+
+        parser.deserializers.insert("item", Box::new(deserializer! {
+            [component: i64] -> i64 {
+                component
+            }
+        }));
+
+        assert_eq! {
+            *parser.parse::<i64>(r##"{"item": [ 42 ]}"##).unwrap(),
+            42_i64
+        }
+    }
+
+    #[allow(unused_variables)]
+    #[test]
+    fn parse_i16() {
+        let mut parser = Parser::empty();
+
+        parser.deserializers.insert("item", Box::new(deserializer! {
+            [component: i16] -> i16 {
+                component
+            }
+        }));
+
+        assert_eq! {
+            *parser.parse::<i16>(r##"{"item": [ 42 ]}"##).unwrap(),
+            42_i16
+        }
+    }
+
+    #[allow(unused_variables)]
+    #[test]
+    fn parse_i8() {
+        let mut parser = Parser::empty();
+
+        parser.deserializers.insert("item", Box::new(deserializer! {
+            [component: i8] -> i8 {
+                component
+            }
+        }));
+
+        assert_eq! {
+            *parser.parse::<i8>(r##"{"item": [ 42 ]}"##).unwrap(),
+            42_i8
+        }
+    }
+
+    #[allow(unused_variables)]
+    #[test]
+    fn parse_isize() {
+        let mut parser = Parser::empty();
+
+        parser.deserializers.insert("item", Box::new(deserializer! {
+            [component: isize] -> isize {
+                component
+            }
+        }));
+
+        assert_eq! {
+            *parser.parse::<isize>(r##"{"item": [ 42 ]}"##).unwrap(),
+            42_isize
+        }
+    }
+
+    #[allow(unused_variables)]
+    #[test]
+    fn parse_bool() {
+        let mut parser = Parser::empty();
+
+        parser.deserializers.insert("item", Box::new(deserializer! {
+            [component: bool] -> bool {
+                component
+            }
+        }));
+
+        assert_eq! {
+            *parser.parse::<bool>(r##"{"item": [ true ]}"##).unwrap(),
+            true
+        }
+    }
+
+    #[allow(unused_variables)]
+    #[test]
+    fn parse_vec() {
+        let mut parser = Parser::empty();
+
+        parser.deserializers.insert("item", Box::new(deserializer! {
+            [component: Vec<f32>] -> Vec<f32> {
+                component
+            }
+        }));
+
+        assert_eq! {
+            *parser.parse::<Vec<f32>>(r##"{"item": [ [ 42, 84 ] ]}"##).unwrap(),
+            vec!(42_f32, 84_f32)
+        }
+    }
+
+    #[allow(unused_variables)]
+    #[test]
+    fn parse_constructor() {
+        let mut parser = Parser::empty();
+
+        parser.deserializers.insert("item", Box::new(deserializer! {
+            [component: Box<f32>] -> f32 {
+                *component
+            }
+        }));
+
+        parser.deserializers.insert("inner_item", Box::new(deserializer! {
+            [component: f32] -> Box<f32> {
+                Box::new(component)
+            }
+        }));
+
+        assert_eq! {
+            *parser.parse::<f32>(r##"{"item": [ { "inner_item": [ 42 ] } ]}"##).unwrap(),
+            42_f32
+        }
+    }
+}

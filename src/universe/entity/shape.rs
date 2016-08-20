@@ -875,19 +875,19 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V>
 #[cfg(test)]
 mod tests {
     use universe::entity::material::Vacuum;
-    use na::Point3;
-    use na::Vector3;
+    use na::Point2;
+    use na::Vector2;
     use na::ApproxEq;
     use super::*;
 
     #[test]
     fn intersect_sphere_linear() {
         let mut marcher = Sphere::intersect_linear(
-            &Point3::new(0.0, 0.0, 0.0),
-            &Vector3::new(1.0, 0.0, 0.0),
+            &Point2::new(0.0, 0.0),
+            &Vector2::new(1.0, 0.0),
             &Vacuum::new(),
             &Sphere::new(
-                Point3::new(2.0, 0.0, 0.0),
+                Point2::new(2.0, 0.0),
                 1.0
             ),
             &|_, _| { unimplemented!() }
@@ -896,13 +896,13 @@ mod tests {
         let first = marcher.next().unwrap();
         let second = marcher.next().unwrap();
 
-        assert_eq!(first.location, Point3::new(1.0, 0.0, 0.0));
-        assert_eq!(first.direction, Vector3::new(1.0, 0.0, 0.0));
-        assert_eq!(first.normal, Vector3::new(-1.0, 0.0, 0.0));
+        assert_eq!(first.location, Point2::new(1.0, 0.0));
+        assert_eq!(first.direction, Vector2::new(1.0, 0.0));
+        assert_eq!(first.normal, Vector2::new(-1.0, 0.0));
         assert!(first.distance.approx_eq_ulps(&1.0, 2));
-        assert_eq!(second.location, Point3::new(3.0, 0.0, 0.0));
-        assert_eq!(second.direction, Vector3::new(1.0, 0.0, 0.0));
-        assert_eq!(second.normal, Vector3::new(1.0, 0.0, 0.0));
+        assert_eq!(second.location, Point2::new(3.0, 0.0));
+        assert_eq!(second.direction, Vector2::new(1.0, 0.0));
+        assert_eq!(second.normal, Vector2::new(1.0, 0.0));
         assert!(second.distance.approx_eq_ulps(&3.0, 2));
         assert!(marcher.next().is_none());
     }
@@ -910,21 +910,21 @@ mod tests {
     #[test]
     fn intersect_plane_linear() {
         let mut marcher = Plane::intersect_linear(
-            &Point3::new(0.0, 0.0, 0.0),
-            &Vector3::new(1.0, 0.0, 0.0),
+            &Point2::new(0.0, 0.0),
+            &Vector2::new(1.0, 0.0),
             &Vacuum::new(),
             &Plane::new_with_point(
-                Vector3::new(-1.0, 0.0, 0.0),
-                &Point3::new(1.0, 0.0, 0.0)
+                Vector2::new(-1.0, 0.0),
+                &Point2::new(1.0, 0.0)
             ),
             &|_, _| { unimplemented!() }
         );
 
         let first = marcher.next().unwrap();
 
-        assert_eq!(first.location, Point3::new(1.0, 0.0, 0.0));
-        assert_eq!(first.direction, Vector3::new(1.0, 0.0, 0.0));
-        assert_eq!(first.normal, Vector3::new(-1.0, 0.0, 0.0));
+        assert_eq!(first.location, Point2::new(1.0, 0.0));
+        assert_eq!(first.direction, Vector2::new(1.0, 0.0));
+        assert_eq!(first.normal, Vector2::new(-1.0, 0.0));
         assert!(first.distance.approx_eq_ulps(&1.0, 2));
         assert!(marcher.next().is_none());
     }
@@ -932,24 +932,24 @@ mod tests {
     #[test]
     fn intersect_halfspace_linear() {
         let mut marcher = HalfSpace::intersect_linear(
-            &Point3::new(0.0, 0.0, 0.0),
-            &Vector3::new(1.0, 0.0, 0.0),
+            &Point2::new(0.0, 0.0),
+            &Vector2::new(1.0, 0.0),
             &Vacuum::new(),
             &HalfSpace::new_with_point(
                 Plane::new_with_point(
-                    Vector3::new(-1.0, 0.0, 0.0),
-                    &Point3::new(1.0, 0.0, 0.0)
+                    Vector2::new(-1.0, 0.0),
+                    &Point2::new(1.0, 0.0)
                 ),
-                &Point3::new(2.0, 0.0, 0.0)
+                &Point2::new(2.0, 0.0)
             ),
             &|_, _| { unimplemented!() }
         );
 
         let first = marcher.next().unwrap();
 
-        assert_eq!(first.location, Point3::new(1.0, 0.0, 0.0));
-        assert_eq!(first.direction, Vector3::new(1.0, 0.0, 0.0));
-        assert_eq!(first.normal, Vector3::new(-1.0, 0.0, 0.0));
+        assert_eq!(first.location, Point2::new(1.0, 0.0));
+        assert_eq!(first.direction, Vector2::new(1.0, 0.0));
+        assert_eq!(first.normal, Vector2::new(-1.0, 0.0));
         assert!(first.distance.approx_eq_ulps(&1.0, 2));
         assert!(marcher.next().is_none());
     }

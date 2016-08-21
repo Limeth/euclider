@@ -1,0 +1,103 @@
+{
+  "Universe4": {
+    "entities": [
+      {
+        "Entity4Impl::new_with_surface": [
+          {
+            "Sphere4::new": [
+              {
+                "Point4::new": [
+                  14,
+                  5,
+                  -1
+                ]
+              },
+              3
+            ]
+          },
+          {
+            "Vacuum::new": []
+          },
+          {
+            "ComposableSurface": {
+              "reflection_ratio": {
+                "reflection_ratio_uniform": [
+                  0.5
+                ]
+              },
+              "reflection_direction": {
+                "reflection_direction_specular": []
+              },
+              "threshold_direction": {
+                "threshold_direction_identity": []
+              },
+              "surface_color": {
+                "surface_color_blend": [
+                  {
+                    "surface_color_illumination_global": [
+                      {
+                        "Rgba::new": [
+                          1,
+                          1,
+                          1,
+                          0
+                        ]
+                      },
+                      {
+                        "Rgba::new": [
+                          0,
+                          0,
+                          0,
+                          0.5
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "surface_color_uniform": [
+                      {
+                        "Rgba::new": [
+                          0,
+                          0,
+                          1,
+                          0.25
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "blend_function_darken": []
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }    
+    ],
+    "background": {
+      "MappedTextureImpl4::new": [
+        {
+          "uv_derank": [
+            {
+              "uv_sphere": [
+                {
+                  "Point4::new": [
+                    0,
+                    0,
+                    0
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "texture_image": [
+            "./resources/universe_dim.jpg"
+          ]
+        }
+      ]
+    }
+  }
+}

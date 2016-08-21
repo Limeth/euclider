@@ -1,6 +1,7 @@
 #[macro_use]
 pub mod entity;
 pub mod d3;
+pub mod d4;
 
 use std::time::Duration;
 use std::borrow::Cow;

@@ -5,6 +5,7 @@ use util::CustomFloat;
 use universe::Environment;
 use universe::Universe;
 use universe::d3::Universe3;
+use universe::d4::Universe4;
 use json;
 use json::JsonValue;
 use universe::entity::*;
@@ -14,8 +15,13 @@ use universe::entity::surface::*;
 use universe::d3::entity::Entity3Impl;
 use universe::d3::entity::surface::*;
 use universe::d3::entity::shape::*;
+use universe::d4::entity::Entity4Impl;
+use universe::d4::entity::surface::*;
+use universe::d4::entity::shape::*;
 use na::Point3;
 use na::Vector3;
+use na::Point4;
+use na::Vector4;
 use util::JsonFloat;
 use image;
 use meval::Expr;
@@ -1007,6 +1013,20 @@ impl Parser {
                 [background: Box<MappedTexture<F, Point3<F>, Vector3<F>>>]
                 -> Box<Environment<F>> {
                     let mut universe = Universe3::<F>::default();
+
+                    universe.set_entities(entities);
+                    universe.set_background(background);
+
+                    Box::new(universe)
+                }
+            }
+
+            add_deserializer! {
+                "Universe4", "Universe4::new";
+                [entities: Vec<Box<Entity<F, Point4<F>, Vector4<F>>>>]
+                [background: Box<MappedTexture<F, Point4<F>, Vector4<F>>>]
+                -> Box<Environment<F>> {
+                    let mut universe = Universe4::<F>::default();
 
                     universe.set_entities(entities);
                     universe.set_background(background);

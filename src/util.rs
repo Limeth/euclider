@@ -583,6 +583,18 @@ pub trait AngleBetween<F: CustomFloat> {
     fn angle_between(&self, other: &Self) -> F;
 }
 
+pub trait RankUp {
+    type Type;
+
+    fn rankup(&self) -> Self::Type;
+}
+
+pub trait Derank {
+    type Type;
+
+    fn derank(&self) -> Self::Type;
+}
+
 macro_rules! dimension {
     ($point:ident, $vector:ident) => {
         impl<F: CustomFloat> CustomPoint<F, $vector<F>> for $point<F> {}
@@ -611,6 +623,24 @@ dimension!(Point3, Vector3);
 dimension!(Point4, Vector4);
 dimension!(Point5, Vector5);
 dimension!(Point6, Vector6);
+
+impl<F: CustomFloat> Derank for Point4<F> {
+    type Type = Point3<F>;
+
+    fn derank(&self) -> Self::Type {
+        let slice = self.as_ref();
+        Point3::new(slice[0], slice[1], slice[2]);
+    }
+}
+
+impl<F: CustomFloat> RankUp for Point3<F> {
+    type Type = Point4<F>;
+
+    fn rankup(&self) -> Self::Type {
+        let slice = self.as_ref();
+        Point4::new(slice[0], slice[1], slice[2], <F as Zero>::zero());
+    }
+}
 
 impl<F: CustomFloat, V: Dot<F> + Norm<F>> AngleBetween<F> for V {
     fn angle_between(&self, other: &Self) -> F {

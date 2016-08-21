@@ -145,7 +145,7 @@ impl<F: CustomFloat> Camera<F, Point4<F>, Vector4<F>> for Camera4Impl<F> {
         self.max_depth
     }
 
-    fn update(&mut self, delta_time: &Duration, context: &SimulationContext, universe: &Universe<F, P=Point3<F>, V=Vector3<F>>) {
+    fn update(&mut self, delta_time: &Duration, context: &SimulationContext, universe: &Universe<F, P=Point4<F>, V=Vector4<F>>) {
         self.update_rotation(context);
 
         let pressed_keys: &HashSet<(u8, Option<VirtualKeyCode>)> = context.pressed_keys();

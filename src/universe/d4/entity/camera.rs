@@ -92,11 +92,21 @@ impl<F: CustomFloat> Camera4Impl<F> {
     }
 
     fn rotate_x(&mut self, angle: F) {
-        Camera4Impl::rotate_x_static(&mut self.forward.derank(), &mut self.up.derank(), angle);
+        let (mut up, mut forward) = (self.forward.derank(), self.up.derank());
+
+        Camera4Impl::rotate_x_static(&mut forward, &mut up, angle);
+
+        self.up = up.rankup();
+        self.forward = forward.rankup();
     }
 
     fn rotate_y(&mut self, angle: F) {
-        Camera4Impl::rotate_y_static(&mut self.forward.derank(), &mut self.up.derank(), angle, true);
+        let (mut up, mut forward) = (self.forward.derank(), self.up.derank());
+
+        Camera4Impl::rotate_y_static(&mut forward, &mut up, angle, true);
+
+        self.up = up.rankup();
+        self.forward = forward.rankup();
     }
 
     fn get_left(&self) -> Vector3<F> {

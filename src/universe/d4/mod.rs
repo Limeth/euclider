@@ -8,7 +8,7 @@ use na::Vector4;
 use universe::entity::Camera;
 use universe::entity::surface::MappedTexture;
 use universe::entity::surface::MappedTextureTransparent;
-use universe::d4::entity::camera::Camera4Impl;
+use universe::d4::entity::camera::FreeCamera4;
 use universe::d4::entity::Camera4;
 use universe::d4::entity::Entity4;
 use universe::entity::material::*;
@@ -52,7 +52,7 @@ impl<F: CustomFloat> Universe4<F> {
                     Box::new(ComposableShape::<F, Point4<F>, Vector4<F>>::intersect_linear));
 
         Universe4 {
-            camera: Arc::new(RwLock::new(Box::new(Camera4Impl::new()))),
+            camera: Arc::new(RwLock::new(Box::new(FreeCamera4::new()))),
             entities: Vec::new(),
             intersections: intersectors,
             background: Box::new(MappedTextureTransparent::new()),

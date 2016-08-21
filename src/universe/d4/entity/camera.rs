@@ -21,7 +21,7 @@ use util::Derank;
 use util::RankUp;
 
 #[derive(Clone, Copy, PartialEq)]
-pub struct Camera4Impl<F: CustomFloat> {
+pub struct FreeCamera4<F: CustomFloat> {
     location: Point4<F>,
     forward: Vector4<F>,
     up: Vector4<F>,
@@ -31,11 +31,11 @@ pub struct Camera4Impl<F: CustomFloat> {
     max_depth: u32,
 }
 
-unsafe impl<F: CustomFloat> Sync for Camera4Impl<F> {}
+unsafe impl<F: CustomFloat> Sync for FreeCamera4<F> {}
 
-impl<F: CustomFloat> Camera4Impl<F> {
-    pub fn new() -> Camera4Impl<F> {
-        Camera4Impl {
+impl<F: CustomFloat> FreeCamera4<F> {
+    pub fn new() -> FreeCamera4<F> {
+        FreeCamera4 {
             location: na::origin(),
             forward: Vector4::new(<F as One>::one(), <F as Zero>::zero(),
                                   <F as Zero>::zero(), <F as Zero>::zero()),
@@ -94,7 +94,7 @@ impl<F: CustomFloat> Camera4Impl<F> {
     fn rotate_x(&mut self, angle: F) {
         let (mut up, mut forward) = (self.forward.derank(), self.up.derank());
 
-        Camera4Impl::rotate_x_static(&mut forward, &mut up, angle);
+        FreeCamera4::rotate_x_static(&mut forward, &mut up, angle);
 
         self.up = up.rankup();
         self.forward = forward.rankup();
@@ -103,7 +103,7 @@ impl<F: CustomFloat> Camera4Impl<F> {
     fn rotate_y(&mut self, angle: F) {
         let (mut up, mut forward) = (self.forward.derank(), self.up.derank());
 
-        Camera4Impl::rotate_y_static(&mut forward, &mut up, angle, true);
+        FreeCamera4::rotate_y_static(&mut forward, &mut up, angle, true);
 
         self.up = up.rankup();
         self.forward = forward.rankup();
@@ -118,7 +118,7 @@ impl<F: CustomFloat> Camera4Impl<F> {
     }
 }
 
-impl<F: CustomFloat> Camera<F, Point4<F>, Vector4<F>> for Camera4Impl<F> {
+impl<F: CustomFloat> Camera<F, Point4<F>, Vector4<F>> for FreeCamera4<F> {
     #[allow(unused_variables)]
     fn get_ray_point(&self,
                      screen_x: i32,
@@ -207,7 +207,7 @@ impl<F: CustomFloat> Camera<F, Point4<F>, Vector4<F>> for Camera4Impl<F> {
     }
 }
 
-impl<F: CustomFloat> Entity<F, Point4<F>, Vector4<F>> for Camera4Impl<F> {
+impl<F: CustomFloat> Entity<F, Point4<F>, Vector4<F>> for FreeCamera4<F> {
     fn as_traceable_mut(&mut self) -> Option<&mut Traceable<F, Point4<F>, Vector4<F>>> {
         None
     }
@@ -217,7 +217,7 @@ impl<F: CustomFloat> Entity<F, Point4<F>, Vector4<F>> for Camera4Impl<F> {
     }
 }
 
-impl<F: CustomFloat> Locatable<F, Point4<F>, Vector4<F>> for Camera4Impl<F> {
+impl<F: CustomFloat> Locatable<F, Point4<F>, Vector4<F>> for FreeCamera4<F> {
     fn location_mut(&mut self) -> &mut Point4<F> {
         &mut self.location
     }
@@ -231,7 +231,7 @@ impl<F: CustomFloat> Locatable<F, Point4<F>, Vector4<F>> for Camera4Impl<F> {
     }
 }
 
-impl<F: CustomFloat> Rotatable<F, Point4<F>, Vector4<F>> for Camera4Impl<F> {
+impl<F: CustomFloat> Rotatable<F, Point4<F>, Vector4<F>> for FreeCamera4<F> {
     fn rotation_mut(&mut self) -> &mut Vector4<F> {
         &mut self.forward
     }

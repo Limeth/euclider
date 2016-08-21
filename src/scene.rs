@@ -17,7 +17,6 @@ use universe::d3::entity::surface::*;
 use universe::d3::entity::shape::*;
 use universe::d4::entity::Entity4Impl;
 use universe::d4::entity::surface::*;
-use universe::d4::entity::shape::*;
 use na::Point3;
 use na::Vector3;
 use na::Point4;

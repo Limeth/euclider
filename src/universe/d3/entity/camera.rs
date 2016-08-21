@@ -18,7 +18,7 @@ use util::CustomFloat;
 use util::AngleBetween;
 
 #[derive(Clone, Copy, PartialEq)]
-pub struct Camera3Impl<F: CustomFloat> {
+pub struct PitchYawCamera3<F: CustomFloat> {
     location: Point3<F>,
     forward: Vector3<F>,
     up: Vector3<F>,
@@ -28,11 +28,11 @@ pub struct Camera3Impl<F: CustomFloat> {
     max_depth: u32,
 }
 
-unsafe impl<F: CustomFloat> Sync for Camera3Impl<F> {}
+unsafe impl<F: CustomFloat> Sync for PitchYawCamera3<F> {}
 
-impl<F: CustomFloat> Camera3Impl<F> {
-    pub fn new() -> Camera3Impl<F> {
-        Camera3Impl {
+impl<F: CustomFloat> PitchYawCamera3<F> {
+    pub fn new() -> PitchYawCamera3<F> {
+        PitchYawCamera3 {
             location: na::origin(),
             forward: Vector3::new(<F as One>::one(), <F as Zero>::zero(), <F as Zero>::zero()),
             up: AXIS_Z(),
@@ -88,11 +88,11 @@ impl<F: CustomFloat> Camera3Impl<F> {
     }
 
     fn rotate_x(&mut self, angle: F) {
-        Camera3Impl::rotate_x_static(&mut self.forward, &mut self.up, angle);
+        PitchYawCamera3::rotate_x_static(&mut self.forward, &mut self.up, angle);
     }
 
     fn rotate_y(&mut self, angle: F) {
-        Camera3Impl::rotate_y_static(&mut self.forward, &mut self.up, angle, true);
+        PitchYawCamera3::rotate_y_static(&mut self.forward, &mut self.up, angle, true);
     }
 
     fn get_left(&self) -> Vector3<F> {
@@ -104,7 +104,7 @@ impl<F: CustomFloat> Camera3Impl<F> {
     }
 }
 
-impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for Camera3Impl<F> {
+impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for PitchYawCamera3<F> {
     #[allow(unused_variables)]
     fn get_ray_point(&self,
                      screen_x: i32,
@@ -193,7 +193,7 @@ impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for Camera3Impl<F> {
     }
 }
 
-impl<F: CustomFloat> Entity<F, Point3<F>, Vector3<F>> for Camera3Impl<F> {
+impl<F: CustomFloat> Entity<F, Point3<F>, Vector3<F>> for PitchYawCamera3<F> {
     fn as_traceable_mut(&mut self) -> Option<&mut Traceable<F, Point3<F>, Vector3<F>>> {
         None
     }
@@ -203,7 +203,7 @@ impl<F: CustomFloat> Entity<F, Point3<F>, Vector3<F>> for Camera3Impl<F> {
     }
 }
 
-impl<F: CustomFloat> Locatable<F, Point3<F>, Vector3<F>> for Camera3Impl<F> {
+impl<F: CustomFloat> Locatable<F, Point3<F>, Vector3<F>> for PitchYawCamera3<F> {
     fn location_mut(&mut self) -> &mut Point3<F> {
         &mut self.location
     }
@@ -217,7 +217,7 @@ impl<F: CustomFloat> Locatable<F, Point3<F>, Vector3<F>> for Camera3Impl<F> {
     }
 }
 
-impl<F: CustomFloat> Rotatable<F, Point3<F>, Vector3<F>> for Camera3Impl<F> {
+impl<F: CustomFloat> Rotatable<F, Point3<F>, Vector3<F>> for PitchYawCamera3<F> {
     fn rotation_mut(&mut self) -> &mut Vector3<F> {
         &mut self.forward
     }

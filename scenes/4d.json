@@ -7,34 +7,35 @@
             "Sphere4::new": [
               {
                 "Point4::new": [
-                  14,
-                  5,
-                  -1
+                  15,
+                  0,
+                  0,
+                  0
                 ]
               },
               3
             ]
           },
           {
-            "Vacuum::new": []
+            "Vacuum4::new": []
           },
           {
-            "ComposableSurface": {
+            "ComposableSurface4": {
               "reflection_ratio": {
-                "reflection_ratio_uniform": [
+                "reflection_ratio_uniform_4": [
                   0.5
                 ]
               },
               "reflection_direction": {
-                "reflection_direction_specular": []
+                "reflection_direction_specular_4": []
               },
               "threshold_direction": {
-                "threshold_direction_identity": []
+                "threshold_direction_identity_4": []
               },
               "surface_color": {
-                "surface_color_blend": [
+                "surface_color_blend_4": [
                   {
-                    "surface_color_illumination_global": [
+                    "surface_color_illumination_global_4": [
                       {
                         "Rgba::new": [
                           1,
@@ -54,7 +55,7 @@
                     ]
                   },
                   {
-                    "surface_color_uniform": [
+                    "surface_color_uniform_4": [
                       {
                         "Rgba::new": [
                           0,
@@ -73,16 +74,19 @@
             }
           }
         ]
-      }    
+      },
+      {
+        "Void4::new_with_vacuum": []
+      }
     ],
     "background": {
       "MappedTextureImpl4::new": [
         {
-          "uv_derank": [
+          "uv_derank_4": [
             {
-              "uv_sphere": [
+              "uv_sphere_3": [
                 {
-                  "Point4::new": [
+                  "Point3::new": [
                     0,
                     0,
                     0
@@ -94,7 +98,7 @@
         },
         {
           "texture_image": [
-            "./resources/universe_dim.jpg"
+            "./resources/pixelcg_uv.jpg"
           ]
         }
       ]

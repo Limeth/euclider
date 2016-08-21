@@ -629,7 +629,16 @@ impl<F: CustomFloat> Derank for Point4<F> {
 
     fn derank(&self) -> Self::Type {
         let slice = self.as_ref();
-        Point3::new(slice[0], slice[1], slice[2]);
+        Point3::new(slice[0], slice[1], slice[2])
+    }
+}
+
+impl<F: CustomFloat> Derank for Vector4<F> {
+    type Type = Vector3<F>;
+
+    fn derank(&self) -> Self::Type {
+        let slice = self.as_ref();
+        Vector3::new(slice[0], slice[1], slice[2])
     }
 }
 
@@ -638,7 +647,16 @@ impl<F: CustomFloat> RankUp for Point3<F> {
 
     fn rankup(&self) -> Self::Type {
         let slice = self.as_ref();
-        Point4::new(slice[0], slice[1], slice[2], <F as Zero>::zero());
+        Point4::new(slice[0], slice[1], slice[2], <F as Zero>::zero())
+    }
+}
+
+impl<F: CustomFloat> RankUp for Vector3<F> {
+    type Type = Vector4<F>;
+
+    fn rankup(&self) -> Self::Type {
+        let slice = self.as_ref();
+        Vector4::new(slice[0], slice[1], slice[2], <F as Zero>::zero())
     }
 }
 

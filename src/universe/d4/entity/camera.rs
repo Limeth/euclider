@@ -10,6 +10,7 @@ use universe::entity::Rotatable;
 use universe::entity::Traceable;
 use universe::entity::Camera;
 use universe::d4::entity::*;
+use universe::d3::entity as d3_entity;
 use num::traits::NumCast;
 use num::Zero;
 use num::One;
@@ -21,9 +22,9 @@ use util::RankUp;
 
 #[derive(Clone, Copy, PartialEq)]
 pub struct Camera4Impl<F: CustomFloat> {
-    location: Point3<F>,
-    forward: Vector3<F>,
-    up: Vector3<F>,
+    location: Point4<F>,
+    forward: Vector4<F>,
+    up: Vector4<F>,
     mouse_sensitivity: F,
     speed: F,
     fov: u8,
@@ -36,7 +37,8 @@ impl<F: CustomFloat> Camera4Impl<F> {
     pub fn new() -> Camera4Impl<F> {
         Camera4Impl {
             location: na::origin(),
-            forward: Vector3::new(<F as One>::one(), <F as Zero>::zero(), <F as Zero>::zero()),
+            forward: Vector4::new(<F as One>::one(), <F as Zero>::zero(),
+                                  <F as Zero>::zero(), <F as Zero>::zero()),
             up: AXIS_Z(),
             mouse_sensitivity: Cast::from(0.01),
             speed: Cast::from(10.0),
@@ -62,7 +64,7 @@ impl<F: CustomFloat> Camera4Impl<F> {
     }
 
     fn rotate_x_static(forward: &mut Vector3<F>, up: &mut Vector3<F>, angle: F) {
-        let quaternion = UnitQuaternion::new(AXIS_Z() * angle);
+        let quaternion = UnitQuaternion::new(d3_entity::AXIS_Z() * angle);
         *forward = quaternion.rotate(forward).normalize();
         *up = quaternion.rotate(up).normalize();
     }
@@ -71,14 +73,14 @@ impl<F: CustomFloat> Camera4Impl<F> {
         let axis_h = na::cross(forward, up).normalize();
 
         if snap {
-            let result_angle = forward.angle_between(&AXIS_Z());
+            let result_angle = forward.angle_between(&d3_entity::AXIS_Z());
 
             if result_angle < angle {
-                *forward = AXIS_Z();
+                *forward = d3_entity::AXIS_Z();
                 *up = na::cross(&axis_h, forward).normalize();
                 return;
             } else if <F as BaseFloat>::pi() - result_angle < -angle {
-                *forward = -AXIS_Z();
+                *forward = -d3_entity::AXIS_Z();
                 *up = na::cross(&axis_h, forward).normalize();
                 return;
             }
@@ -90,19 +92,19 @@ impl<F: CustomFloat> Camera4Impl<F> {
     }
 
     fn rotate_x(&mut self, angle: F) {
-        Camera4Impl::rotate_x_static(&mut self.forward, &mut self.up, angle);
+        Camera4Impl::rotate_x_static(&mut self.forward.derank(), &mut self.up.derank(), angle);
     }
 
     fn rotate_y(&mut self, angle: F) {
-        Camera4Impl::rotate_y_static(&mut self.forward, &mut self.up, angle, true);
+        Camera4Impl::rotate_y_static(&mut self.forward.derank(), &mut self.up.derank(), angle, true);
     }
 
     fn get_left(&self) -> Vector3<F> {
-        na::cross(&self.up, &self.forward).normalize()
+        na::cross(&self.up.derank(), &self.forward.derank()).normalize()
     }
 
     fn get_right(&self) -> Vector3<F> {
-        na::cross(&self.forward, &self.up).normalize()
+        na::cross(&self.forward.derank(), &self.up.derank()).normalize()
     }
 }
 
@@ -136,7 +138,7 @@ impl<F: CustomFloat> Camera<F, Point4<F>, Vector4<F>> for Camera4Impl<F> {
             (screen_width * screen_width + screen_height * screen_height).sqrt() /
             (<F as NumCast>::from(2.0).unwrap() * (fov_rad / Cast::from(2.0)).tan());
         let screen_center_point_3d = self.location + self.forward * distance_from_screen_center;
-        let screen_point_3d = screen_center_point_3d + (self.up * rel_y) + (right * rel_x);
+        let screen_point_3d = screen_center_point_3d + (self.up * rel_y) + (right.rankup() * rel_x);
 
         (screen_point_3d - self.location).normalize()
     }
@@ -162,12 +164,12 @@ impl<F: CustomFloat> Camera<F, Point4<F>, Vector4<F>> for Camera4Impl<F> {
         for &(_, keycode) in pressed_keys {
             if let Some(keycode) = keycode {
                 direction += match keycode {
-                    VirtualKeyCode::W => self.forward,
-                    VirtualKeyCode::S => -self.forward,
+                    VirtualKeyCode::W => self.forward.derank(),
+                    VirtualKeyCode::S => -self.forward.derank(),
                     VirtualKeyCode::A => self.get_left(),
                     VirtualKeyCode::D => self.get_right(),
-                    VirtualKeyCode::LControl => -AXIS_Z(),
-                    VirtualKeyCode::LShift => AXIS_Z(),
+                    VirtualKeyCode::LControl => -d3_entity::AXIS_Z(),
+                    VirtualKeyCode::LShift => d3_entity::AXIS_Z(),
                     _ => continue,
                 };
             }
@@ -178,15 +180,15 @@ impl<F: CustomFloat> Camera<F, Point4<F>, Vector4<F>> for Camera4Impl<F> {
                     = universe.trace_path_unknown(delta_time,
                                                   &distance,
                                                   &self.location,
-                                                  &direction) {
-                let rotation_scale = direction.angle_between(&new_direction);
+                                                  &direction.rankup()) {
+                let rotation_scale = direction.angle_between(&new_direction.derank());
 
                 if rotation_scale == <F as Zero>::zero() {
                     // TODO: Not tested, might need a lot of tuning.
-                    let rotation_axis = na::cross(&direction, &new_direction);
+                    let rotation_axis = na::cross(&direction, &new_direction.derank());
                     let difference = UnitQuaternion::new(rotation_axis * rotation_scale);
-                    self.forward = difference.rotate(&self.forward);
-                    self.up = difference.rotate(&self.up);
+                    self.forward = difference.rotate(&self.forward.derank()).rankup();
+                    self.up = difference.rotate(&self.up.derank()).rankup();
                 }
 
                 self.location = new_location;

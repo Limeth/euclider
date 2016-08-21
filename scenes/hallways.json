@@ -22,11 +22,11 @@
             ]
           },
           {
-            "LinearSpace": {
+            "LinearSpace3": {
               "legend": "xyz",
               "transformations": [
                 {
-                  "ComponentTransformation": {
+                  "ComponentTransformation3": {
                     "expressions": [
                       {
                         "ComponentTransformationExpr": {
@@ -53,20 +53,20 @@
             }
           },
           {
-            "ComposableSurface": {
+            "ComposableSurface3": {
               "reflection_ratio": {
-                "reflection_ratio_uniform": [
+                "reflection_ratio_uniform_3": [
                   0
                 ]
               },
               "reflection_direction": {
-                "reflection_direction_specular": []
+                "reflection_direction_specular_3": []
               },
               "threshold_direction": {
-                "threshold_direction_identity": []
+                "threshold_direction_identity_3": []
               },
               "surface_color": {
-                "surface_color_uniform": [
+                "surface_color_uniform_3": [
                   {
                     "Rgba::new": [
                       0,
@@ -84,7 +84,7 @@
       {
         "Entity3Impl::new_with_surface": [
           {
-            "ComposableShape::of": [
+            "ComposableShape3::of": [
               [
                 {
                   "HalfSpace3::cuboid": [
@@ -131,25 +131,25 @@
             ]
           },
           {
-            "Vacuum": []
+            "Vacuum3": []
           },
           {
-            "ComposableSurface": {
+            "ComposableSurface3": {
               "reflection_ratio": {
-                "reflection_ratio_uniform": [
+                "reflection_ratio_uniform_3": [
                   0
                 ]
               },
               "reflection_direction": {
-                "reflection_direction_specular": []
+                "reflection_direction_specular_3": []
               },
               "threshold_direction": {
-                "threshold_direction_identity": []
+                "threshold_direction_identity_3": []
               },
               "surface_color": {
-                "surface_color_blend": [
+                "surface_color_blend_3": [
                   {
-                    "surface_color_illumination_global": [
+                    "surface_color_illumination_global_3": [
                       {
                         "Rgba::new": [
                           1,
@@ -169,7 +169,7 @@
                     ]
                   },
                   {
-                    "surface_color_illumination_directional": [
+                    "surface_color_illumination_directional_3": [
                       {
                         "Vector3::new": [
                           0,
@@ -225,11 +225,11 @@
             ]
           },
           {
-            "LinearSpace": {
+            "LinearSpace3": {
               "legend": "xyz",
               "transformations": [
                 {
-                  "ComponentTransformation": {
+                  "ComponentTransformation3": {
                     "expressions": [
                       {
                         "ComponentTransformationExpr": {
@@ -256,20 +256,20 @@
             }
           },
           {
-            "ComposableSurface": {
+            "ComposableSurface3": {
               "reflection_ratio": {
-                "reflection_ratio_uniform": [
+                "reflection_ratio_uniform_3": [
                   0
                 ]
               },
               "reflection_direction": {
-                "reflection_direction_specular": []
+                "reflection_direction_specular_3": []
               },
               "threshold_direction": {
-                "threshold_direction_identity": []
+                "threshold_direction_identity_3": []
               },
               "surface_color": {
-                "surface_color_uniform": [
+                "surface_color_uniform_3": [
                   {
                     "Rgba::new": [
                       0,
@@ -287,7 +287,7 @@
       {
         "Entity3Impl::new_with_surface": [
           {
-            "ComposableShape::of": [
+            "ComposableShape3::of": [
               [
                 {
                   "HalfSpace3::cuboid": [
@@ -334,25 +334,25 @@
             ]
           },
           {
-            "Vacuum": []
+            "Vacuum3": []
           },
           {
-            "ComposableSurface": {
+            "ComposableSurface3": {
               "reflection_ratio": {
-                "reflection_ratio_uniform": [
+                "reflection_ratio_uniform_3": [
                   0
                 ]
               },
               "reflection_direction": {
-                "reflection_direction_specular": []
+                "reflection_direction_specular_3": []
               },
               "threshold_direction": {
-                "threshold_direction_identity": []
+                "threshold_direction_identity_3": []
               },
               "surface_color": {
-                "surface_color_blend": [
+                "surface_color_blend_3": [
                   {
-                    "surface_color_illumination_global": [
+                    "surface_color_illumination_global_3": [
                       {
                         "Rgba::new": [
                           1,
@@ -372,7 +372,7 @@
                     ]
                   },
                   {
-                    "surface_color_illumination_directional": [
+                    "surface_color_illumination_directional_3": [
                       {
                         "Vector3::new": [
                           0,
@@ -439,25 +439,25 @@
             ]
           },
           {
-            "Vacuum::new": []
+            "Vacuum3": []
           },
           {
-            "ComposableSurface": {
+            "ComposableSurface3": {
               "reflection_ratio": {
-                "reflection_ratio_uniform": [
+                "reflection_ratio_uniform_3": [
                   0
                 ]
               },
               "reflection_direction": {
-                "reflection_direction_specular": []
+                "reflection_direction_specular_3": []
               },
               "threshold_direction": {
-                "threshold_direction_identity": []
+                "threshold_direction_identity_3": []
               },
               "surface_color": {
-                "surface_color_blend": [
+                "surface_color_blend_3": [
                   {
-                    "surface_color_illumination_global": [
+                    "surface_color_illumination_global_3": [
                       {
                         "Rgba::new": [
                           1,
@@ -477,7 +477,7 @@
                     ]
                   },
                   {
-                    "surface_color_illumination_directional": [
+                    "surface_color_illumination_directional_3": [
                       {
                         "Vector3::new": [
                           0,
@@ -513,13 +513,13 @@
         ]
       },
       {
-        "Void::new_with_vacuum": []
+        "Void3::new_with_vacuum": []
       }
     ],
     "background": {
       "MappedTextureImpl3::new": [
         {
-          "uv_sphere": [
+          "uv_sphere_3": [
             {
               "Point3::new": [
                 0,

@@ -1280,6 +1280,14 @@ impl Parser {
                 }
             }
 
+            // TODO: Add optional parameters via `Option<$($item_type:tt)+>`
+            add_deserializer! {
+                "FreeCamera3", "FreeCamera3::new";
+                -> Box<Camera3<F>> {
+                    Box::new(FreeCamera3::new())
+                }
+            }
+
             add_deserializer! {
                 "Universe4", "Universe4::new";
                 [camera: Box<Camera4<F>>]

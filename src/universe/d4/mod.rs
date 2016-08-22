@@ -8,7 +8,6 @@ use na::Vector4;
 use universe::entity::Camera;
 use universe::entity::surface::MappedTexture;
 use universe::entity::surface::MappedTextureTransparent;
-use universe::d4::entity::camera::FreeCamera4;
 use universe::d4::entity::Camera4;
 use universe::d4::entity::Entity4;
 use universe::entity::material::*;
@@ -25,7 +24,7 @@ pub struct Universe4<F: CustomFloat> {
 }
 
 impl<F: CustomFloat> Universe4<F> {
-    pub fn default() -> Universe4<F> {
+    pub fn construct(camera: Box<Camera4<F>>) -> Self {
         let mut intersectors: GeneralIntersectors<F, Point4<F>, Vector4<F>> = HashMap::new();
 
         intersectors.insert((Vacuum::id_static(), VoidShape::id_static()),
@@ -52,7 +51,7 @@ impl<F: CustomFloat> Universe4<F> {
                     Box::new(ComposableShape::<F, Point4<F>, Vector4<F>>::intersect_linear));
 
         Universe4 {
-            camera: Arc::new(RwLock::new(Box::new(FreeCamera4::new()))),
+            camera: Arc::new(RwLock::new(camera)),
             entities: Vec::new(),
             intersections: intersectors,
             background: Box::new(MappedTextureTransparent::new()),

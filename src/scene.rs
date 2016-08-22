@@ -13,10 +13,14 @@ use universe::entity::material::*;
 use universe::entity::shape::*;
 use universe::entity::surface::*;
 use universe::d3::entity::Entity3Impl;
+use universe::d3::entity::Camera3;
 use universe::d3::entity::surface::*;
 use universe::d3::entity::shape::*;
+use universe::d3::entity::camera::*;
 use universe::d4::entity::Entity4Impl;
+use universe::d4::entity::Camera4;
 use universe::d4::entity::surface::*;
+use universe::d4::entity::camera::*;
 use na::Point3;
 use na::Vector3;
 use na::Point4;
@@ -1255,10 +1259,11 @@ impl Parser {
 
             add_deserializer! {
                 "Universe3", "Universe3::new";
+                [camera: Box<Camera3<F>>]
                 [entities: Vec<Box<Entity<F, Point3<F>, Vector3<F>>>>]
                 [background: Box<MappedTexture<F, Point3<F>, Vector3<F>>>]
                 -> Box<Environment<F>> {
-                    let mut universe = Universe3::<F>::default();
+                    let mut universe = Universe3::<F>::construct(camera);
 
                     universe.set_entities(entities);
                     universe.set_background(background);
@@ -1267,17 +1272,34 @@ impl Parser {
                 }
             }
 
+            // TODO: Add optional parameters via `Option<$($item_type:tt)+>`
+            add_deserializer! {
+                "PitchYawCamera3", "PitchYawCamera3::new";
+                -> Box<Camera3<F>> {
+                    Box::new(PitchYawCamera3::new())
+                }
+            }
+
             add_deserializer! {
                 "Universe4", "Universe4::new";
+                [camera: Box<Camera4<F>>]
                 [entities: Vec<Box<Entity<F, Point4<F>, Vector4<F>>>>]
                 [background: Box<MappedTexture<F, Point4<F>, Vector4<F>>>]
                 -> Box<Environment<F>> {
-                    let mut universe = Universe4::<F>::default();
+                    let mut universe = Universe4::<F>::construct(camera);
 
                     universe.set_entities(entities);
                     universe.set_background(background);
 
                     Box::new(universe)
+                }
+            }
+
+            // TODO: Add optional parameters via `Option<$($item_type:tt)+>`
+            add_deserializer! {
+                "FreeCamera4", "FreeCamera4::new";
+                -> Box<Camera4<F>> {
+                    Box::new(FreeCamera4::new())
                 }
             }
         }

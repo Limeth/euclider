@@ -1,5 +1,8 @@
 {
   "Universe3": {
+    "camera": {
+      "PitchYawCamera3": []
+    },
     "entities": [
       {
         "Entity3Impl::new_with_surface": [

@@ -305,6 +305,14 @@ pub fn remainder<T: Add<Output = T> + Rem<Output = T> + PartialOrd<T> + Zero + C
     }
 }
 
+pub fn find_orthonormal_4<F: CustomFloat>(a: &Vector4<F>, b: &Vector4<F>, c: &Vector4<F>)
+        -> Vector4<F> {
+    det_copy!(Vector4::x(), Vector4::y(), Vector4::z(), Vector4::w(),
+              a.x,          a.y,          a.z,          a.w,
+              b.x,          b.y,          b.z,          b.w,
+              c.x,          c.y,          c.z,          c.w         )
+}
+
 pub type VecLazy<'a, T> = Vec<Box<Fn() -> Option<T> + 'a>>;
 
 pub struct IterLazy<'a, T> {

@@ -33,7 +33,7 @@ impl<F: CustomFloat> Camera3Data<F> {
         Camera3Data {
             location: na::origin(),
             forward: Vector3::new(<F as One>::one(), <F as Zero>::zero(), <F as Zero>::zero()),
-            up: AXIS_Z(),
+            up: Vector3::z(),
             mouse_sensitivity: Cast::from(0.01),
             speed: Cast::from(10.0),
             fov: 90,
@@ -81,7 +81,7 @@ impl<F: CustomFloat> PitchYawCamera3<F> {
     }
 
     fn rotate_yaw_static(forward: &mut Vector3<F>, up: &mut Vector3<F>, angle: F) {
-        let quaternion = UnitQuaternion::new(AXIS_Z() * angle);
+        let quaternion = UnitQuaternion::new(Vector3::z() * angle);
         *forward = quaternion.rotate(forward).normalize();
         *up = quaternion.rotate(up).normalize();
     }
@@ -90,14 +90,14 @@ impl<F: CustomFloat> PitchYawCamera3<F> {
         let axis_h = na::cross(forward, up).normalize();
 
         if snap {
-            let result_angle = forward.angle_between(&AXIS_Z());
+            let result_angle = forward.angle_between(&Vector3::z());
 
             if result_angle < angle {
-                *forward = AXIS_Z();
+                *forward = Vector3::z();
                 *up = na::cross(&axis_h, forward).normalize();
                 return;
             } else if <F as BaseFloat>::pi() - result_angle < -angle {
-                *forward = -AXIS_Z();
+                *forward = -Vector3::z();
                 *up = na::cross(&axis_h, forward).normalize();
                 return;
             }
@@ -177,8 +177,8 @@ impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for PitchYawCamera3<F> {
                     VirtualKeyCode::S => -self.data.forward,
                     VirtualKeyCode::A => self.data.get_left(),
                     VirtualKeyCode::D => self.data.get_right(),
-                    VirtualKeyCode::LControl => -AXIS_Z(),
-                    VirtualKeyCode::LShift => AXIS_Z(),
+                    VirtualKeyCode::LControl => -Vector3::z(),
+                    VirtualKeyCode::LShift => Vector3::z(),
                     _ => continue,
                 };
             }

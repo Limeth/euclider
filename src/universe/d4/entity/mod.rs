@@ -17,16 +17,6 @@ use self::material::Material4;
 use self::shape::Shape4;
 use self::surface::Surface4;
 
-#[allow(non_snake_case)]
-pub fn AXIS_Z<F: CustomFloat>() -> Vector4<F> {
-    Vector4 {
-        x: <F as Zero>::zero(),
-        y: <F as Zero>::zero(),
-        z: <F as One>::one(),
-        w: <F as Zero>::zero(),
-    }
-}
-
 pub type Entity4<F> = Entity<F, Point4<F>, Vector4<F>>;
 pub type Camera4<F> = Camera<F, Point4<F>, Vector4<F>>;
 pub type Traceable4<F> = Traceable<F, Point4<F>, Vector4<F>>;

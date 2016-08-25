@@ -17,15 +17,6 @@ use self::material::Material3;
 use self::shape::Shape3;
 use self::surface::Surface3;
 
-#[allow(non_snake_case)]
-pub fn AXIS_Z<F: CustomFloat>() -> Vector3<F> {
-    Vector3 {
-        x: <F as Zero>::zero(),
-        y: <F as Zero>::zero(),
-        z: <F as One>::one(),
-    }
-}
-
 pub type Entity3<F> = Entity<F, Point3<F>, Vector3<F>>;
 pub type Camera3<F> = Camera<F, Point3<F>, Vector3<F>>;
 pub type Traceable3<F> = Traceable<F, Point3<F>, Vector3<F>>;

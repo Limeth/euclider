@@ -24,6 +24,7 @@ use util::RankUp;
 pub struct FreeCamera4<F: CustomFloat> {
     location: Point4<F>,
     forward: Vector4<F>,
+    left: Vector4<F>,
     up: Vector4<F>,
     mouse_sensitivity: F,
     speed: F,
@@ -39,7 +40,8 @@ impl<F: CustomFloat> FreeCamera4<F> {
             location: na::origin(),
             forward: Vector4::new(<F as One>::one(), <F as Zero>::zero(),
                                   <F as Zero>::zero(), <F as Zero>::zero()),
-            up: AXIS_Z(),
+            left: Vector4::y(),
+            up: Vector4::z(),
             mouse_sensitivity: Cast::from(0.01),
             speed: Cast::from(10.0),
             fov: 90,
@@ -64,7 +66,7 @@ impl<F: CustomFloat> FreeCamera4<F> {
     }
 
     fn rotate_x_static(forward: &mut Vector3<F>, up: &mut Vector3<F>, angle: F) {
-        let quaternion = UnitQuaternion::new(d3_entity::AXIS_Z() * angle);
+        let quaternion = UnitQuaternion::new(Vector3::z() * angle);
         *forward = quaternion.rotate(forward).normalize();
         *up = quaternion.rotate(up).normalize();
     }
@@ -73,14 +75,14 @@ impl<F: CustomFloat> FreeCamera4<F> {
         let axis_h = na::cross(forward, up).normalize();
 
         if snap {
-            let result_angle = forward.angle_between(&d3_entity::AXIS_Z());
+            let result_angle = forward.angle_between(&Vector3::z());
 
             if result_angle < angle {
-                *forward = d3_entity::AXIS_Z();
+                *forward = Vector3::z();
                 *up = na::cross(&axis_h, forward).normalize();
                 return;
             } else if <F as BaseFloat>::pi() - result_angle < -angle {
-                *forward = -d3_entity::AXIS_Z();
+                *forward = -Vector3::z();
                 *up = na::cross(&axis_h, forward).normalize();
                 return;
             }
@@ -178,8 +180,8 @@ impl<F: CustomFloat> Camera<F, Point4<F>, Vector4<F>> for FreeCamera4<F> {
                     VirtualKeyCode::S => -self.forward.derank(),
                     VirtualKeyCode::A => self.get_left(),
                     VirtualKeyCode::D => self.get_right(),
-                    VirtualKeyCode::LControl => -d3_entity::AXIS_Z(),
-                    VirtualKeyCode::LShift => d3_entity::AXIS_Z(),
+                    VirtualKeyCode::LControl => -Vector3::z(),
+                    VirtualKeyCode::LShift => Vector3::z(),
                     _ => continue,
                 };
             }

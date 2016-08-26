@@ -738,28 +738,28 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V>
 }
 
 #[derive(Debug)]
-pub struct Plane<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
+pub struct Hyperplane<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
     pub normal: V,
     pub constant: F,
     marker: PhantomData<P>,
 }
 
-shape!(Plane<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>);
+shape!(Hyperplane<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>);
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Plane<F, P, V> {
-    pub fn new(normal: V, constant: F) -> Plane<F, P, V> {
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Hyperplane<F, P, V> {
+    pub fn new(normal: V, constant: F) -> Hyperplane<F, P, V> {
         if normal.norm_squared() <= <F as Zero>::zero() {
             panic!("Cannot have a normal with length of 0.");
         }
 
-        Plane {
+        Hyperplane {
             normal: normal,
             constant: constant,
             marker: PhantomData,
         }
     }
 
-    pub fn new_with_point(normal: V, point: &P) -> Plane<F, P, V> {
+    pub fn new_with_point(normal: V, point: &P) -> Hyperplane<F, P, V> {
         // D = -(A*x + B*y + C*z)
         let constant = -na::dot(&normal, point.as_vector());
 
@@ -769,7 +769,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Plane<F, P, V>
     pub fn new_with_vectors(vector_a: &V,
                             vector_b: &V,
                             point: &P)
-                            -> Plane<F, P, V> where V: Cross<CrossProductType=V> {
+                            -> Hyperplane<F, P, V> where V: Cross<CrossProductType=V> {
         // A*x + B*y + C*z + D = 0
         let normal = na::cross(vector_a, vector_b);
 
@@ -783,7 +783,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Plane<F, P, V>
                                shape: &Shape<F, P, V>,
                                intersect: Intersector<F, P, V>)
                                -> Box<IntersectionMarcher<F, P, V>> {
-        let plane: &Plane<F, P, V> = shape.as_any().downcast_ref::<Plane<F, P, V>>().unwrap();
+        let plane: &Hyperplane<F, P, V> = shape.as_any().downcast_ref::<Hyperplane<F, P, V>>().unwrap();
 
         // A*x + B*y + C*z + D = 0
 
@@ -806,7 +806,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Plane<F, P, V>
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V> for Plane<F, P, V> {
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V> for Hyperplane<F, P, V> {
     #[allow(unused_variables)]
     fn is_point_inside(&self, point: &P) -> bool {
         false
@@ -815,14 +815,14 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V>
 
 #[derive(Debug)]
 pub struct HalfSpace<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
-    pub plane: Plane<F, P, V>,
+    pub plane: Hyperplane<F, P, V>,
     pub signum: F,
 }
 
 shape!(HalfSpace<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>);
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> HalfSpace<F, P, V> {
-    pub fn new(plane: Plane<F, P, V>, mut signum: F) -> HalfSpace<F, P, V> {
+    pub fn new(plane: Hyperplane<F, P, V>, mut signum: F) -> HalfSpace<F, P, V> {
         signum /= signum.abs();
 
         HalfSpace {
@@ -831,7 +831,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> HalfSpace<F, P
         }
     }
 
-    pub fn new_with_point(plane: Plane<F, P, V>, point_inside: &P) -> HalfSpace<F, P, V> {
+    pub fn new_with_point(plane: Hyperplane<F, P, V>, point_inside: &P) -> HalfSpace<F, P, V> {
         let identifier: F = na::dot(&plane.normal, point_inside.as_vector()) + plane.constant;
 
         Self::new(plane, identifier)
@@ -844,7 +844,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> HalfSpace<F, P
                                intersect: Intersector<F, P, V>)
                                -> Box<IntersectionMarcher<F, P, V>> {
         let halfspace: &HalfSpace<F, P,V> = shape.as_any().downcast_ref::<HalfSpace<F, P, V>>().unwrap();
-        let intersection = Plane::<F, P, V>::intersect_linear(location,
+        let intersection = Hyperplane::<F, P, V>::intersect_linear(location,
                                                             direction,
                                                             vacuum,
                                                             &halfspace.plane,
@@ -909,11 +909,11 @@ mod tests {
 
     #[test]
     fn intersect_plane_linear() {
-        let mut marcher = Plane::intersect_linear(
+        let mut marcher = Hyperplane::intersect_linear(
             &Point2::new(0.0, 0.0),
             &Vector2::new(1.0, 0.0),
             &Vacuum::new(),
-            &Plane::new_with_point(
+            &Hyperplane::new_with_point(
                 Vector2::new(-1.0, 0.0),
                 &Point2::new(1.0, 0.0)
             ),
@@ -936,7 +936,7 @@ mod tests {
             &Vector2::new(1.0, 0.0),
             &Vacuum::new(),
             &HalfSpace::new_with_point(
-                Plane::new_with_point(
+                Hyperplane::new_with_point(
                     Vector2::new(-1.0, 0.0),
                     &Point2::new(1.0, 0.0)
                 ),

@@ -21,7 +21,7 @@ low_precision = []
 [dependencies]
 clippy = "0.*"
 glium = "0.*"
-nalgebra = "0.*"
+nalgebra = "0.8.*"  # TODO: Update for to the newest version
 image = "0.*"
 scoped_threadpool = "0.*"
 noise = "0.*"
@@ -35,3 +35,4 @@ clap = "2.*"
 meval = "0.*"
 num_cpus = "1.*"
 float-cmp = "0.*"
+det = "0.*"

@@ -8,7 +8,6 @@ use na::Vector3;
 use universe::entity::Camera;
 use universe::entity::surface::MappedTexture;
 use universe::entity::surface::MappedTextureTransparent;
-use universe::d3::entity::camera::Camera3Impl;
 use universe::d3::entity::Camera3;
 use universe::d3::entity::Entity3;
 use universe::entity::material::*;
@@ -25,15 +24,15 @@ pub struct Universe3<F: CustomFloat> {
 }
 
 impl<F: CustomFloat> Universe3<F> {
-    pub fn default() -> Universe3<F> {
+    pub fn construct(camera: Box<Camera3<F>>) -> Self {
         let mut intersectors: GeneralIntersectors<F, Point3<F>, Vector3<F>> = HashMap::new();
 
         intersectors.insert((Vacuum::id_static(), VoidShape::id_static()),
                             Box::new(intersect_void));
         intersectors.insert((Vacuum::id_static(), Sphere::<F, Point3<F>, Vector3<F>>::id_static()),
                             Box::new(Sphere::<F, Point3<F>, Vector3<F>>::intersect_linear));
-        intersectors.insert((Vacuum::id_static(), Plane::<F, Point3<F>, Vector3<F>>::id_static()),
-                            Box::new(Plane::<F, Point3<F>, Vector3<F>>::intersect_linear));
+        intersectors.insert((Vacuum::id_static(), Hyperplane::<F, Point3<F>, Vector3<F>>::id_static()),
+                            Box::new(Hyperplane::<F, Point3<F>, Vector3<F>>::intersect_linear));
         intersectors.insert((Vacuum::id_static(), HalfSpace::<F, Point3<F>, Vector3<F>>::id_static()),
                             Box::new(HalfSpace::<F, Point3<F>, Vector3<F>>::intersect_linear));
         intersectors.insert((Vacuum::id_static(),
@@ -43,8 +42,8 @@ impl<F: CustomFloat> Universe3<F> {
                             Box::new(intersect_void));
         intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), Sphere::<F, Point3<F>, Vector3<F>>::id_static()),
                             Box::new(Sphere::<F, Point3<F>, Vector3<F>>::intersect_linear));
-        intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), Plane::<F, Point3<F>, Vector3<F>>::id_static()),
-                            Box::new(Plane::<F, Point3<F>, Vector3<F>>::intersect_linear));
+        intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), Hyperplane::<F, Point3<F>, Vector3<F>>::id_static()),
+                            Box::new(Hyperplane::<F, Point3<F>, Vector3<F>>::intersect_linear));
         intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), HalfSpace::<F, Point3<F>, Vector3<F>>::id_static()),
                             Box::new(HalfSpace::<F, Point3<F>, Vector3<F>>::intersect_linear));
         intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(),
@@ -52,7 +51,7 @@ impl<F: CustomFloat> Universe3<F> {
                     Box::new(ComposableShape::<F, Point3<F>, Vector3<F>>::intersect_linear));
 
         Universe3 {
-            camera: Arc::new(RwLock::new(Box::new(Camera3Impl::new()))),
+            camera: Arc::new(RwLock::new(camera)),
             entities: Vec::new(),
             intersections: intersectors,
             background: Box::new(MappedTextureTransparent::new()),

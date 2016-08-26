@@ -25,6 +25,8 @@ extern crate mopa;
 extern crate parse_generics_shim;
 #[macro_use]
 extern crate clap;
+#[macro_use]
+extern crate det;
 
 #[macro_use]
 pub mod util;

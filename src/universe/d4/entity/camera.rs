@@ -10,7 +10,6 @@ use universe::entity::Rotatable;
 use universe::entity::Traceable;
 use universe::entity::Camera;
 use universe::d4::entity::*;
-use universe::d3::entity as d3_entity;
 use num::traits::NumCast;
 use num::Zero;
 use num::One;
@@ -18,8 +17,7 @@ use simulation::SimulationContext;
 use util;
 use util::CustomFloat;
 use util::AngleBetween;
-use util::Derank;
-use util::RankUp;
+use boolinator::Boolinator;
 
 #[derive(Clone, Copy, PartialEq)]
 pub struct FreeCamera4<F: CustomFloat> {
@@ -50,17 +48,16 @@ impl<F: CustomFloat> FreeCamera4<F> {
         }
     }
 
-    fn update_rotation(&mut self, context: &SimulationContext) {
-        let delta_mouse_float: Vector2<F> =
-            Vector2::new(<F as NumCast>::from(context.delta_mouse.x).unwrap(),
-                         <F as NumCast>::from(context.delta_mouse.y).unwrap());
+    fn update_rotation(&mut self, delta_millis: F, context: &SimulationContext) {
+        let pressed_keys: &HashSet<VirtualKeyCode> = context.pressed_keys();
+        let mut angle: F = <F as Zero>::zero();
 
-        if na::distance_squared(&na::origin(), delta_mouse_float.as_point()) <=
-           <F as Zero>::zero() {
-            return;
-        }
+        pressed_keys.contains(&VirtualKeyCode::C).as_option()
+            .map(|()| angle += <F as One>::one());
+        pressed_keys.contains(&VirtualKeyCode::M).as_option()
+            .map(|()| angle -= <F as One>::one());
 
-        let direction = delta_mouse_float * self.mouse_sensitivity;
+        angle *= delta_millis * Cast::from(2.0);
     }
 
     /// Calculates the direction in the fourth axis.
@@ -112,11 +109,12 @@ impl<F: CustomFloat> Camera<F, Point4<F>, Vector4<F>> for FreeCamera4<F> {
     }
 
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext, universe: &Universe<F, P=Point4<F>, V=Vector4<F>>) {
-        self.update_rotation(context);
-
-        let pressed_keys: &HashSet<(u8, Option<VirtualKeyCode>)> = context.pressed_keys();
         let delta_millis = <F as NumCast>::from((*delta_time * 1000u32).as_secs()).unwrap() /
                            Cast::from(1000.0);
+
+        self.update_rotation(delta_millis, context);
+
+        let pressed_keys: &HashSet<VirtualKeyCode> = context.pressed_keys();
         let mut distance = self.speed * delta_millis;
 
         if distance == <F as Zero>::zero() {
@@ -125,21 +123,22 @@ impl<F: CustomFloat> Camera<F, Point4<F>, Vector4<F>> for FreeCamera4<F> {
 
         let mut direction: Vector4<F> = na::zero();
 
-        for &(_, keycode) in pressed_keys {
-            if let Some(keycode) = keycode {
-                direction += match keycode {
-                    VirtualKeyCode::W => self.forward,
-                    VirtualKeyCode::S => -self.forward,
-                    VirtualKeyCode::A => self.left,
-                    VirtualKeyCode::D => -self.left,
-                    VirtualKeyCode::LShift => self.up,
-                    VirtualKeyCode::LControl => -self.up,
-                    VirtualKeyCode::Q => self.to_ana(),
-                    VirtualKeyCode::E => -self.to_ana(),
-                    _ => continue,
-                };
-            }
-        }
+        pressed_keys.contains(&VirtualKeyCode::W).as_option()
+            .map(|()| direction += self.forward);
+        pressed_keys.contains(&VirtualKeyCode::S).as_option()
+            .map(|()| direction -= self.forward);
+        pressed_keys.contains(&VirtualKeyCode::A).as_option()
+            .map(|()| direction += self.left);
+        pressed_keys.contains(&VirtualKeyCode::D).as_option()
+            .map(|()| direction -= self.left);
+        pressed_keys.contains(&VirtualKeyCode::LShift).as_option()
+            .map(|()| direction += self.up);
+        pressed_keys.contains(&VirtualKeyCode::LControl).as_option()
+            .map(|()| direction -= self.up);
+        pressed_keys.contains(&VirtualKeyCode::Q).as_option()
+            .map(|()| direction += self.to_ana());
+        pressed_keys.contains(&VirtualKeyCode::E).as_option()
+            .map(|()| direction -= self.to_ana());
 
         if direction.norm_squared() != <F as Zero>::zero() {
             let length = direction.norm();
@@ -154,7 +153,6 @@ impl<F: CustomFloat> Camera<F, Point4<F>, Vector4<F>> for FreeCamera4<F> {
                                                   &direction) {
                 let rotation_scale = direction.angle_between(&new_direction);
 
-                println!("{}", rotation_scale);
                 if !ApproxEq::approx_eq_ulps(&rotation_scale,
                                              &<F as Zero>::zero(),
                                              4_u32 * ApproxEq::<F>::approx_ulps(None as Option<F>)) {

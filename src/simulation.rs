@@ -19,7 +19,6 @@ use glium::BlitTarget;
 use glium::texture::Texture2d;
 use glium::uniforms::MagnifySamplerFilter;
 use universe::Environment;
-use util::RemoveIf;
 use util::CustomFloat;
 
 pub struct Simulation<F: CustomFloat> {
@@ -144,7 +143,7 @@ impl<F: CustomFloat> SimulationBuilder<F> {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SimulationContext {
-    pub pressed_keys: HashSet<(u8, Option<VirtualKeyCode>)>,
+    pub pressed_keys: HashSet<VirtualKeyCode>,
     pub pressed_mouse_buttons: HashSet<MouseButton>,
     pub mouse: Point2<i32>,
     pub delta_mouse: Vector2<i32>,
@@ -162,7 +161,7 @@ impl SimulationContext {
         }
     }
 
-    pub fn pressed_keys(&self) -> &HashSet<(u8, Option<VirtualKeyCode>)> {
+    pub fn pressed_keys(&self) -> &HashSet<VirtualKeyCode> {
         &self.pressed_keys
     }
 
@@ -183,18 +182,15 @@ impl SimulationContext {
         self.reset_delta_mouse();
         for event in facade.poll_events() {
             match event {
-                Event::KeyboardInput(state, character, virtual_code) => {
+                Event::KeyboardInput(state, character, Some(virtual_code)) => {
                     match state {
                         ElementState::Pressed => {
-                            self.pressed_keys.insert((character, virtual_code));
+                            self.pressed_keys.insert(virtual_code);
                         }
                         ElementState::Released => {
-                            self.pressed_keys
-                                .remove_if(|tuple: &(u8, Option<VirtualKeyCode>)| {
-                                    tuple.0 == character
-                                });
-                            let is_escape = |virtual_code| virtual_code == VirtualKeyCode::Escape;
-                            if virtual_code.map_or(false, is_escape) {
+                            self.pressed_keys.remove(&virtual_code);
+
+                            if virtual_code == VirtualKeyCode::Escape {
                                 return Err(event);
                             }
                         }

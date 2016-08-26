@@ -19,6 +19,7 @@ extern crate num;
 extern crate json;
 extern crate num_cpus;
 extern crate meval;
+extern crate boolinator;
 #[macro_use]
 extern crate mopa;
 #[macro_use]

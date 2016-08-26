@@ -3,8 +3,6 @@ pub mod material;
 pub mod shape;
 pub mod surface;
 
-use num::Zero;
-use num::One;
 use na::Point4;
 use na::Vector4;
 use util::CustomFloat;

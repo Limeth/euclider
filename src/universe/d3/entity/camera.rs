@@ -16,6 +16,7 @@ use num::One;
 use simulation::SimulationContext;
 use util::CustomFloat;
 use util::AngleBetween;
+use boolinator::Boolinator;
 
 #[derive(Clone, Copy, PartialEq)]
 pub struct Camera3Data<F: CustomFloat> {
@@ -159,7 +160,7 @@ impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for PitchYawCamera3<F> {
     fn update(&mut self, delta_time: &Duration, context: &SimulationContext, universe: &Universe<F, P=Point3<F>, V=Vector3<F>>) {
         self.update_rotation(context);
 
-        let pressed_keys: &HashSet<(u8, Option<VirtualKeyCode>)> = context.pressed_keys();
+        let pressed_keys: &HashSet<VirtualKeyCode> = context.pressed_keys();
         let delta_millis = <F as NumCast>::from((*delta_time * 1000u32).as_secs()).unwrap() /
                            Cast::from(1000.0);
         let mut distance = self.data.speed * delta_millis;
@@ -170,19 +171,18 @@ impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for PitchYawCamera3<F> {
 
         let mut direction: Vector3<F> = na::zero();
 
-        for &(_, keycode) in pressed_keys {
-            if let Some(keycode) = keycode {
-                direction += match keycode {
-                    VirtualKeyCode::W => self.data.forward,
-                    VirtualKeyCode::S => -self.data.forward,
-                    VirtualKeyCode::A => self.data.get_left(),
-                    VirtualKeyCode::D => self.data.get_right(),
-                    VirtualKeyCode::LControl => -Vector3::z(),
-                    VirtualKeyCode::LShift => Vector3::z(),
-                    _ => continue,
-                };
-            }
-        }
+        pressed_keys.contains(&VirtualKeyCode::W).as_option()
+            .map(|()| direction += self.data.forward);
+        pressed_keys.contains(&VirtualKeyCode::S).as_option()
+            .map(|()| direction -= self.data.forward);
+        pressed_keys.contains(&VirtualKeyCode::A).as_option()
+            .map(|()| direction += self.data.get_left());
+        pressed_keys.contains(&VirtualKeyCode::D).as_option()
+            .map(|()| direction -= self.data.get_left());
+        pressed_keys.contains(&VirtualKeyCode::LShift).as_option()
+            .map(|()| direction += Vector3::z());
+        pressed_keys.contains(&VirtualKeyCode::LControl).as_option()
+            .map(|()| direction -= Vector3::z());
 
         if direction.norm_squared() != <F as Zero>::zero() {
             let length = direction.norm();
@@ -269,20 +269,13 @@ impl<F: CustomFloat> FreeCamera3<F> {
         let delta_mouse_float: Vector2<F> =
             Vector2::new(<F as NumCast>::from(context.delta_mouse.x).unwrap(),
                          <F as NumCast>::from(context.delta_mouse.y).unwrap());
-        let pressed_keys: &HashSet<(u8, Option<VirtualKeyCode>)> = context.pressed_keys();
+        let pressed_keys: &HashSet<VirtualKeyCode> = context.pressed_keys();
         let direction = delta_mouse_float * self.data.mouse_sensitivity;
         let mut roll = <F as Zero>::zero();
-
-        for &(_, keycode) in pressed_keys {
-            if let Some(keycode) = keycode {
-                roll += match keycode {
-                    VirtualKeyCode::Q => -<F as One>::one(),
-                    VirtualKeyCode::E => <F as One>::one(),
-                    _ => continue,
-                };
-            }
-        }
-
+        pressed_keys.contains(&VirtualKeyCode::Q).as_option()
+            .map(|()| roll -= <F as One>::one());
+        pressed_keys.contains(&VirtualKeyCode::E).as_option()
+            .map(|()| roll += <F as One>::one());
         roll *= delta_millis * Cast::from(2.0);
 
         if direction.x != <F as Zero>::zero() {
@@ -366,7 +359,7 @@ impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for FreeCamera3<F> {
 
         self.update_rotation(delta_millis, context);
 
-        let pressed_keys: &HashSet<(u8, Option<VirtualKeyCode>)> = context.pressed_keys();
+        let pressed_keys: &HashSet<VirtualKeyCode> = context.pressed_keys();
         let mut distance = self.data.speed * delta_millis;
 
         if distance == <F as Zero>::zero() {
@@ -375,19 +368,18 @@ impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for FreeCamera3<F> {
 
         let mut direction: Vector3<F> = na::zero();
 
-        for &(_, keycode) in pressed_keys {
-            if let Some(keycode) = keycode {
-                direction += match keycode {
-                    VirtualKeyCode::W => self.data.forward,
-                    VirtualKeyCode::S => -self.data.forward,
-                    VirtualKeyCode::A => self.data.get_left(),
-                    VirtualKeyCode::D => self.data.get_right(),
-                    VirtualKeyCode::LControl => -self.data.up,
-                    VirtualKeyCode::LShift => self.data.up,
-                    _ => continue,
-                };
-            }
-        }
+        pressed_keys.contains(&VirtualKeyCode::W).as_option()
+            .map(|()| direction += self.data.forward);
+        pressed_keys.contains(&VirtualKeyCode::S).as_option()
+            .map(|()| direction -= self.data.forward);
+        pressed_keys.contains(&VirtualKeyCode::A).as_option()
+            .map(|()| direction += self.data.get_left());
+        pressed_keys.contains(&VirtualKeyCode::D).as_option()
+            .map(|()| direction -= self.data.get_left());
+        pressed_keys.contains(&VirtualKeyCode::LShift).as_option()
+            .map(|()| direction += self.data.up);
+        pressed_keys.contains(&VirtualKeyCode::LControl).as_option()
+            .map(|()| direction -= self.data.up);
 
         if direction.norm_squared() != <F as Zero>::zero() {
             let length = direction.norm();

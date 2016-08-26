@@ -415,7 +415,7 @@
           {
             "HalfSpace3::new_with_point": [
               {
-                "Plane3::new_with_point": [
+                "Hyperplane3::new_with_point": [
                   {
                     "Vector3::new": [
                       0,

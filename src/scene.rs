@@ -791,42 +791,42 @@ impl Parser {
             }
 
             add_deserializer! {
-                "Plane3", "Plane3::new";
+                "Hyperplane3", "Hyperplane3::new";
                 [normal: Vector3<F>] [constant: F]
                 -> Box<Shape<F, Point3<F>, Vector3<F>>> {
-                    Box::new(Plane::new(normal, constant))
+                    Box::new(Hyperplane::new(normal, constant))
                 }
             }
 
             add_deserializer! {
-                "Plane4", "Plane4::new";
+                "Hyperplane4", "Hyperplane4::new";
                 [normal: Vector4<F>] [constant: F]
                 -> Box<Shape<F, Point4<F>, Vector4<F>>> {
-                    Box::new(Plane::new(normal, constant))
+                    Box::new(Hyperplane::new(normal, constant))
                 }
             }
 
             add_deserializer! {
-                "Plane3::new_with_point";
+                "Hyperplane3::new_with_point";
                 [normal: Vector3<F>] [point: Point3<F>]
                 -> Box<Shape<F, Point3<F>, Vector3<F>>> {
-                    Box::new(Plane::new_with_point(normal, &point))
+                    Box::new(Hyperplane::new_with_point(normal, &point))
                 }
             }
 
             add_deserializer! {
-                "Plane4::new_with_point";
+                "Hyperplane4::new_with_point";
                 [normal: Vector4<F>] [point: Point4<F>]
                 -> Box<Shape<F, Point4<F>, Vector4<F>>> {
-                    Box::new(Plane::new_with_point(normal, &point))
+                    Box::new(Hyperplane::new_with_point(normal, &point))
                 }
             }
 
             add_deserializer! {
-                "Plane3::new_with_vectors";
+                "Hyperplane3::new_with_vectors";
                 [first: Vector3<F>] [second: Vector3<F>] [point: Point3<F>]
                 -> Box<Shape<F, Point3<F>, Vector3<F>>> {
-                    Box::new(Plane::new_with_vectors(&first, &second, &point))
+                    Box::new(Hyperplane::new_with_vectors(&first, &second, &point))
                 }
             }
 
@@ -834,10 +834,10 @@ impl Parser {
                 "HalfSpace3", "HalfSpace3::new";
                 [plane: Box<Shape<F, Point3<F>, Vector3<F>>>]
                 [sign: F] -> Box<Shape<F, Point3<F>, Vector3<F>>> {
-                    let plane: Plane<F, Point3<F>, Vector3<F>>
+                    let plane: Hyperplane<F, Point3<F>, Vector3<F>>
                         = *try!(<Shape<F, Point3<F>, Vector3<F>>>::downcast(plane)
                             .or_else(|err| Err(ParserError::CustomError {
-                                description: "Invalid type, expected a `Plane3`.".to_string(),
+                                description: "Invalid type, expected a `Hyperplane3`.".to_string(),
                             })));
                     Box::new(HalfSpace::new(plane, sign))
                 }
@@ -847,10 +847,10 @@ impl Parser {
                 "HalfSpace4", "HalfSpace4::new";
                 [plane: Box<Shape<F, Point4<F>, Vector4<F>>>]
                 [sign: F] -> Box<Shape<F, Point4<F>, Vector4<F>>> {
-                    let plane: Plane<F, Point4<F>, Vector4<F>>
+                    let plane: Hyperplane<F, Point4<F>, Vector4<F>>
                         = *try!(<Shape<F, Point4<F>, Vector4<F>>>::downcast(plane)
                             .or_else(|err| Err(ParserError::CustomError {
-                                description: "Invalid type, expected a `Plane4`.".to_string(),
+                                description: "Invalid type, expected a `Hyperplane4`.".to_string(),
                             })));
                     Box::new(HalfSpace::new(plane, sign))
                 }
@@ -860,10 +860,10 @@ impl Parser {
                 "HalfSpace3::new_with_point";
                 [plane: Box<Shape<F, Point3<F>, Vector3<F>>>]
                 [point: Point3<F>] -> Box<Shape<F, Point3<F>, Vector3<F>>> {
-                    let plane: Plane<F, Point3<F>, Vector3<F>>
+                    let plane: Hyperplane<F, Point3<F>, Vector3<F>>
                         = *try!(<Shape<F, Point3<F>, Vector3<F>>>::downcast(plane)
                             .or_else(|err| Err(ParserError::CustomError {
-                                description: "Invalid type, expected a `Plane3`.".to_string(),
+                                description: "Invalid type, expected a `Hyperplane3`.".to_string(),
                             })));
                     Box::new(HalfSpace::new_with_point(plane, &point))
                 }
@@ -873,10 +873,10 @@ impl Parser {
                 "HalfSpace4::new_with_point";
                 [plane: Box<Shape<F, Point4<F>, Vector4<F>>>]
                 [point: Point4<F>] -> Box<Shape<F, Point4<F>, Vector4<F>>> {
-                    let plane: Plane<F, Point4<F>, Vector4<F>>
+                    let plane: Hyperplane<F, Point4<F>, Vector4<F>>
                         = *try!(<Shape<F, Point4<F>, Vector4<F>>>::downcast(plane)
                             .or_else(|err| Err(ParserError::CustomError {
-                                description: "Invalid type, expected a `Plane4`.".to_string(),
+                                description: "Invalid type, expected a `Hyperplane4`.".to_string(),
                             })));
                     Box::new(HalfSpace::new_with_point(plane, &point))
                 }

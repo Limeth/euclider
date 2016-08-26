@@ -31,8 +31,8 @@ impl<F: CustomFloat> Universe3<F> {
                             Box::new(intersect_void));
         intersectors.insert((Vacuum::id_static(), Sphere::<F, Point3<F>, Vector3<F>>::id_static()),
                             Box::new(Sphere::<F, Point3<F>, Vector3<F>>::intersect_linear));
-        intersectors.insert((Vacuum::id_static(), Plane::<F, Point3<F>, Vector3<F>>::id_static()),
-                            Box::new(Plane::<F, Point3<F>, Vector3<F>>::intersect_linear));
+        intersectors.insert((Vacuum::id_static(), Hyperplane::<F, Point3<F>, Vector3<F>>::id_static()),
+                            Box::new(Hyperplane::<F, Point3<F>, Vector3<F>>::intersect_linear));
         intersectors.insert((Vacuum::id_static(), HalfSpace::<F, Point3<F>, Vector3<F>>::id_static()),
                             Box::new(HalfSpace::<F, Point3<F>, Vector3<F>>::intersect_linear));
         intersectors.insert((Vacuum::id_static(),
@@ -42,8 +42,8 @@ impl<F: CustomFloat> Universe3<F> {
                             Box::new(intersect_void));
         intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), Sphere::<F, Point3<F>, Vector3<F>>::id_static()),
                             Box::new(Sphere::<F, Point3<F>, Vector3<F>>::intersect_linear));
-        intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), Plane::<F, Point3<F>, Vector3<F>>::id_static()),
-                            Box::new(Plane::<F, Point3<F>, Vector3<F>>::intersect_linear));
+        intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), Hyperplane::<F, Point3<F>, Vector3<F>>::id_static()),
+                            Box::new(Hyperplane::<F, Point3<F>, Vector3<F>>::intersect_linear));
         intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), HalfSpace::<F, Point3<F>, Vector3<F>>::id_static()),
                             Box::new(HalfSpace::<F, Point3<F>, Vector3<F>>::intersect_linear));
         intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(),

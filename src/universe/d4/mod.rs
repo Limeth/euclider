@@ -31,8 +31,8 @@ impl<F: CustomFloat> Universe4<F> {
                             Box::new(intersect_void));
         intersectors.insert((Vacuum::id_static(), Sphere::<F, Point4<F>, Vector4<F>>::id_static()),
                             Box::new(Sphere::<F, Point4<F>, Vector4<F>>::intersect_linear));
-        intersectors.insert((Vacuum::id_static(), Plane::<F, Point4<F>, Vector4<F>>::id_static()),
-                            Box::new(Plane::<F, Point4<F>, Vector4<F>>::intersect_linear));
+        intersectors.insert((Vacuum::id_static(), Hyperplane::<F, Point4<F>, Vector4<F>>::id_static()),
+                            Box::new(Hyperplane::<F, Point4<F>, Vector4<F>>::intersect_linear));
         intersectors.insert((Vacuum::id_static(), HalfSpace::<F, Point4<F>, Vector4<F>>::id_static()),
                             Box::new(HalfSpace::<F, Point4<F>, Vector4<F>>::intersect_linear));
         intersectors.insert((Vacuum::id_static(),
@@ -42,8 +42,8 @@ impl<F: CustomFloat> Universe4<F> {
                             Box::new(intersect_void));
         intersectors.insert((LinearSpace::<F, Point4<F>, Vector4<F>>::id_static(), Sphere::<F, Point4<F>, Vector4<F>>::id_static()),
                             Box::new(Sphere::<F, Point4<F>, Vector4<F>>::intersect_linear));
-        intersectors.insert((LinearSpace::<F, Point4<F>, Vector4<F>>::id_static(), Plane::<F, Point4<F>, Vector4<F>>::id_static()),
-                            Box::new(Plane::<F, Point4<F>, Vector4<F>>::intersect_linear));
+        intersectors.insert((LinearSpace::<F, Point4<F>, Vector4<F>>::id_static(), Hyperplane::<F, Point4<F>, Vector4<F>>::id_static()),
+                            Box::new(Hyperplane::<F, Point4<F>, Vector4<F>>::intersect_linear));
         intersectors.insert((LinearSpace::<F, Point4<F>, Vector4<F>>::id_static(), HalfSpace::<F, Point4<F>, Vector4<F>>::id_static()),
                             Box::new(HalfSpace::<F, Point4<F>, Vector4<F>>::intersect_linear));
         intersectors.insert((LinearSpace::<F, Point4<F>, Vector4<F>>::id_static(),

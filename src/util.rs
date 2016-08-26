@@ -670,11 +670,18 @@ impl<F: CustomFloat> RankUp for Vector3<F> {
 
 impl<F: CustomFloat, V: Dot<F> + Norm<F>> AngleBetween<F> for V {
     fn angle_between(&self, other: &Self) -> F {
-        F::acos(na::dot(self, other) / (self.norm() * other.norm()))
+        let result = F::acos(na::dot(self, other) / (self.norm() * other.norm()));
+
+        if result.is_nan() {
+            <F as Zero>::zero()
+        } else {
+            result
+        }
     }
 }
 
 pub trait CustomFloat:
+    ApproxEq<Self> +
     BaseFloat +
     Consts +
     NumCast +

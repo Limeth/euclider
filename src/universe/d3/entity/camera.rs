@@ -162,7 +162,7 @@ impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for PitchYawCamera3<F> {
         let pressed_keys: &HashSet<(u8, Option<VirtualKeyCode>)> = context.pressed_keys();
         let delta_millis = <F as NumCast>::from((*delta_time * 1000u32).as_secs()).unwrap() /
                            Cast::from(1000.0);
-        let distance = self.data.speed * delta_millis;
+        let mut distance = self.data.speed * delta_millis;
 
         if distance == <F as Zero>::zero() {
             return;
@@ -185,6 +185,11 @@ impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for PitchYawCamera3<F> {
         }
 
         if direction.norm_squared() != <F as Zero>::zero() {
+            let length = direction.norm();
+            distance *= length;
+
+            direction.normalize_mut();
+
             if let Some((new_location, new_direction))
                     = universe.trace_path_unknown(delta_time,
                                                   &distance,
@@ -192,7 +197,9 @@ impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for PitchYawCamera3<F> {
                                                   &direction) {
                 let rotation_scale = direction.angle_between(&new_direction);
 
-                if rotation_scale == <F as Zero>::zero() {
+                if !ApproxEq::approx_eq_ulps(&rotation_scale,
+                                             &<F as Zero>::zero(),
+                                             <F as ApproxEq<F>>::approx_ulps(None)) {
                     // TODO: Not tested, might need a lot of tuning.
                     let rotation_axis = na::cross(&direction, &new_direction);
                     let difference = UnitQuaternion::new(rotation_axis * rotation_scale);
@@ -360,7 +367,7 @@ impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for FreeCamera3<F> {
         self.update_rotation(delta_millis, context);
 
         let pressed_keys: &HashSet<(u8, Option<VirtualKeyCode>)> = context.pressed_keys();
-        let distance = self.data.speed * delta_millis;
+        let mut distance = self.data.speed * delta_millis;
 
         if distance == <F as Zero>::zero() {
             return;
@@ -383,6 +390,11 @@ impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for FreeCamera3<F> {
         }
 
         if direction.norm_squared() != <F as Zero>::zero() {
+            let length = direction.norm();
+            distance *= length;
+
+            direction.normalize_mut();
+
             if let Some((new_location, new_direction))
                     = universe.trace_path_unknown(delta_time,
                                                   &distance,
@@ -390,7 +402,9 @@ impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for FreeCamera3<F> {
                                                   &direction) {
                 let rotation_scale = direction.angle_between(&new_direction);
 
-                if rotation_scale == <F as Zero>::zero() {
+                if !ApproxEq::approx_eq_ulps(&rotation_scale,
+                                             &<F as Zero>::zero(),
+                                             <F as ApproxEq<F>>::approx_ulps(None)) {
                     // TODO: Not tested, might need a lot of tuning.
                     let rotation_axis = na::cross(&direction, &new_direction);
                     let difference = UnitQuaternion::new(rotation_axis * rotation_scale);

@@ -15,6 +15,7 @@ use num::traits::NumCast;
 use num::Zero;
 use num::One;
 use simulation::SimulationContext;
+use util;
 use util::CustomFloat;
 use util::AngleBetween;
 use util::Derank;
@@ -60,63 +61,14 @@ impl<F: CustomFloat> FreeCamera4<F> {
         }
 
         let direction = delta_mouse_float * self.mouse_sensitivity;
-
-        self.rotate_x(-direction.x);
-        self.rotate_y(-direction.y);
     }
 
-    fn rotate_x_static(forward: &mut Vector3<F>, up: &mut Vector3<F>, angle: F) {
-        let quaternion = UnitQuaternion::new(Vector3::z() * angle);
-        *forward = quaternion.rotate(forward).normalize();
-        *up = quaternion.rotate(up).normalize();
-    }
-
-    fn rotate_y_static(forward: &mut Vector3<F>, up: &mut Vector3<F>, angle: F, snap: bool) {
-        let axis_h = na::cross(forward, up).normalize();
-
-        if snap {
-            let result_angle = forward.angle_between(&Vector3::z());
-
-            if result_angle < angle {
-                *forward = Vector3::z();
-                *up = na::cross(&axis_h, forward).normalize();
-                return;
-            } else if <F as BaseFloat>::pi() - result_angle < -angle {
-                *forward = -Vector3::z();
-                *up = na::cross(&axis_h, forward).normalize();
-                return;
-            }
-        }
-
-        let quaternion = UnitQuaternion::new(axis_h * angle);
-        *forward = quaternion.rotate(forward).normalize();
-        *up = na::cross(&axis_h, forward).normalize();
-    }
-
-    fn rotate_x(&mut self, angle: F) {
-        let (mut up, mut forward) = (self.forward.derank(), self.up.derank());
-
-        FreeCamera4::rotate_x_static(&mut forward, &mut up, angle);
-
-        self.up = up.rankup();
-        self.forward = forward.rankup();
-    }
-
-    fn rotate_y(&mut self, angle: F) {
-        let (mut up, mut forward) = (self.forward.derank(), self.up.derank());
-
-        FreeCamera4::rotate_y_static(&mut forward, &mut up, angle, true);
-
-        self.up = up.rankup();
-        self.forward = forward.rankup();
-    }
-
-    fn get_left(&self) -> Vector3<F> {
-        na::cross(&self.up.derank(), &self.forward.derank()).normalize()
-    }
-
-    fn get_right(&self) -> Vector3<F> {
-        na::cross(&self.forward.derank(), &self.up.derank()).normalize()
+    /// Calculates the direction in the fourth axis.
+    /// `Ana` stands for _north_ in this axis, `kata` is used for _south_.
+    /// The method name `to_ana` stands for positive motion along this axis,
+    /// similarly to how _up_ stands for the positive motion along the Z axis.
+    fn to_ana(&self) -> Vector4<F> {
+        util::find_orthonormal_4(&self.forward, &self.left, &self.up)
     }
 }
 
@@ -143,16 +95,16 @@ impl<F: CustomFloat> Camera<F, Point4<F>, Vector4<F>> for FreeCamera4<F> {
                        <F as NumCast>::from(1 - screen_height % 2).unwrap() / Cast::from(2.0);
         let screen_width: F = <F as NumCast>::from(screen_width).unwrap();
         let screen_height: F = <F as NumCast>::from(screen_height).unwrap();
-        let right = self.get_right();
+        let right = -self.left;
         let fov_rad: F = <F as BaseFloat>::pi() * <F as NumCast>::from(self.fov).unwrap() /
                          Cast::from(180.0);
         let distance_from_screen_center: F =
             (screen_width * screen_width + screen_height * screen_height).sqrt() /
             (<F as NumCast>::from(2.0).unwrap() * (fov_rad / Cast::from(2.0)).tan());
-        let screen_center_point_3d = self.location + self.forward * distance_from_screen_center;
-        let screen_point_3d = screen_center_point_3d + (self.up * rel_y) + (right.rankup() * rel_x);
+        let screen_center_point_4d = self.location + self.forward * distance_from_screen_center;
+        let screen_point_4d = screen_center_point_4d + (self.up * rel_y) + (right * rel_x);
 
-        (screen_point_3d - self.location).normalize()
+        (screen_point_4d - self.location).normalize()
     }
 
     fn max_depth(&self) -> u32 {
@@ -165,42 +117,51 @@ impl<F: CustomFloat> Camera<F, Point4<F>, Vector4<F>> for FreeCamera4<F> {
         let pressed_keys: &HashSet<(u8, Option<VirtualKeyCode>)> = context.pressed_keys();
         let delta_millis = <F as NumCast>::from((*delta_time * 1000u32).as_secs()).unwrap() /
                            Cast::from(1000.0);
-        let distance = self.speed * delta_millis;
+        let mut distance = self.speed * delta_millis;
 
         if distance == <F as Zero>::zero() {
             return;
         }
 
-        let mut direction: Vector3<F> = na::zero();
+        let mut direction: Vector4<F> = na::zero();
 
         for &(_, keycode) in pressed_keys {
             if let Some(keycode) = keycode {
                 direction += match keycode {
-                    VirtualKeyCode::W => self.forward.derank(),
-                    VirtualKeyCode::S => -self.forward.derank(),
-                    VirtualKeyCode::A => self.get_left(),
-                    VirtualKeyCode::D => self.get_right(),
-                    VirtualKeyCode::LControl => -Vector3::z(),
-                    VirtualKeyCode::LShift => Vector3::z(),
+                    VirtualKeyCode::W => self.forward,
+                    VirtualKeyCode::S => -self.forward,
+                    VirtualKeyCode::A => self.left,
+                    VirtualKeyCode::D => -self.left,
+                    VirtualKeyCode::LShift => self.up,
+                    VirtualKeyCode::LControl => -self.up,
+                    VirtualKeyCode::Q => self.to_ana(),
+                    VirtualKeyCode::E => -self.to_ana(),
                     _ => continue,
                 };
             }
         }
 
         if direction.norm_squared() != <F as Zero>::zero() {
+            let length = direction.norm();
+            distance *= length;
+
+            direction.normalize_mut();
+
             if let Some((new_location, new_direction))
                     = universe.trace_path_unknown(delta_time,
                                                   &distance,
                                                   &self.location,
-                                                  &direction.rankup()) {
-                let rotation_scale = direction.angle_between(&new_direction.derank());
+                                                  &direction) {
+                let rotation_scale = direction.angle_between(&new_direction);
 
-                if rotation_scale == <F as Zero>::zero() {
-                    // TODO: Not tested, might need a lot of tuning.
-                    let rotation_axis = na::cross(&direction, &new_direction.derank());
-                    let difference = UnitQuaternion::new(rotation_axis * rotation_scale);
-                    self.forward = difference.rotate(&self.forward.derank()).rankup();
-                    self.up = difference.rotate(&self.up.derank()).rankup();
+                println!("{}", rotation_scale);
+                if !ApproxEq::approx_eq_ulps(&rotation_scale,
+                                             &<F as Zero>::zero(),
+                                             4_u32 * ApproxEq::<F>::approx_ulps(None as Option<F>)) {
+                    // TODO: Calculate the rotation that was applied to the vector
+                    // and apply it to all the vectors that define the direction
+                    // of the camera
+                    unimplemented!();
                 }
 
                 self.location = new_location;

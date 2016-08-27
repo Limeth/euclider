@@ -190,7 +190,7 @@ pub trait Universe<F: CustomFloat>
         let result = self.trace_closest(time, belongs_to, location, direction, &|other| {
             other.surface().is_some()
         });
-        
+
         if result.is_some() {
             let (closest, general_context) = result.unwrap();
 
@@ -214,7 +214,12 @@ pub trait Universe<F: CustomFloat>
             }
         }
 
-        belongs_to.material().trace_path(location, direction, distance)
+        let material = belongs_to.material();
+        let (new_location, mut new_direction) = material.trace_path(location, direction, distance);
+
+        material.exit(&new_location, &mut new_direction);
+
+        (new_location, new_direction)
     }
 
     fn material_at(&self, location: &Self::P) -> Option<&Traceable<F, Self::P, Self::V>> {

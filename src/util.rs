@@ -313,6 +313,21 @@ pub fn find_orthonormal_4<F: CustomFloat>(a: &Vector4<F>, b: &Vector4<F>, c: &Ve
               c.x,          c.y,          c.z,          c.w         )
 }
 
+pub fn reorthonormalize_4<F: CustomFloat>(a: &mut Vector4<F>, b: &mut Vector4<F>,
+                                          c: &mut Vector4<F>, d: &Vector4<F>) {
+    *a = find_orthonormal_4(&*c, &*b, &*d);
+
+    a.normalize_mut();
+
+    *b = find_orthonormal_4(&*a, &*c, &*d);
+
+    b.normalize_mut();
+
+    *c = find_orthonormal_4(&*a, &*d, &*b);
+
+    c.normalize_mut();
+}
+
 pub type VecLazy<'a, T> = Vec<Box<Fn() -> Option<T> + 'a>>;
 
 pub struct IterLazy<'a, T> {

@@ -57,7 +57,56 @@ impl<F: CustomFloat> FreeCamera4<F> {
         pressed_keys.contains(&VirtualKeyCode::M).as_option()
             .map(|()| angle -= <F as One>::one());
 
-        angle *= delta_millis * Cast::from(2.0);
+        if angle != <F as Zero>::zero() {
+            angle *= delta_millis * Cast::from(2.0);
+            let axis_array = [pressed_keys.contains(&VirtualKeyCode::I),  // X
+                              pressed_keys.contains(&VirtualKeyCode::O),  // Y
+                              pressed_keys.contains(&VirtualKeyCode::K),  // Z
+                              pressed_keys.contains(&VirtualKeyCode::L)]; // W
+            let axes_count = axis_array.iter().filter(|x| **x).count();
+
+            if axes_count == 2 {
+                let mut rotation_matrix = Matrix4::<F>::new_identity(4);
+
+                for (index, value) in rotation_matrix.iter_mut().enumerate() {
+                    let row = index / 4;
+                    let column = index % 4;
+
+                    if axis_array[row] && axis_array[column] {
+                        *value = if row == column {
+                            angle.cos()
+                        } else if row < column {
+                            -angle.sin()
+                        } else {
+                            angle.sin()
+                        }
+                    }
+                }
+
+                let to_ana = self.to_ana();
+                let normalize_matrix = Matrix4::new(
+                    self.forward.x, self.left.x, self.up.x, to_ana.x,
+                    self.forward.y, self.left.y, self.up.y, to_ana.y,
+                    self.forward.z, self.left.z, self.up.z, to_ana.z,
+                    self.forward.w, self.left.w, self.up.w, to_ana.w
+                );
+                let transpose_normalize_matrix = normalize_matrix.transpose();
+
+                {
+                    let mut vectors_to_rotate = [&mut self.forward, &mut self.left, &mut self.up];
+
+                    for vector_to_rotate in (&mut vectors_to_rotate).into_iter() {
+                        **vector_to_rotate = normalize_matrix * (rotation_matrix
+                                                                 * (transpose_normalize_matrix * **vector_to_rotate));
+                    }
+                }
+
+                let to_ana = self.to_ana();
+
+                util::reorthonormalize_4(&mut self.forward, &mut self.left,
+                                         &mut self.up, &to_ana);
+            }
+        }
     }
 
     /// Calculates the direction in the fourth axis.

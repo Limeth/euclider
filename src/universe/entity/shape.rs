@@ -20,6 +20,7 @@ use util::HasId;
 use util::Provider;
 use util::TypePairMap;
 use num::Zero;
+use num::One;
 use num::NumCast;
 use mopa;
 use na;
@@ -747,10 +748,9 @@ pub struct Hyperplane<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P
 shape!(Hyperplane<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>);
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Hyperplane<F, P, V> {
-    pub fn new(normal: V, constant: F) -> Hyperplane<F, P, V> {
-        if normal.norm_squared() <= <F as Zero>::zero() {
-            panic!("Cannot have a normal with length of 0.");
-        }
+    pub fn new(normal: V, constant: F) -> Self {
+        assert!(normal.norm_squared() > <F as Zero>::zero(),
+                "Cannot have a normal with length of 0.");
 
         Hyperplane {
             normal: normal,
@@ -759,7 +759,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Hyperplane<F, 
         }
     }
 
-    pub fn new_with_point(normal: V, point: &P) -> Hyperplane<F, P, V> {
+    pub fn new_with_point(normal: V, point: &P) -> Self {
         // D = -(A*x + B*y + C*z)
         let constant = -na::dot(&normal, point.as_vector());
 
@@ -769,7 +769,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Hyperplane<F, 
     pub fn new_with_vectors(vector_a: &V,
                             vector_b: &V,
                             point: &P)
-                            -> Hyperplane<F, P, V> where V: Cross<CrossProductType=V> {
+                            -> Self where V: Cross<CrossProductType=V> {
         // A*x + B*y + C*z + D = 0
         let normal = na::cross(vector_a, vector_b);
 
@@ -872,6 +872,139 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V>
     }
 }
 
+#[derive(Debug)]
+pub struct Cylinder<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
+    pub center: P,  // Must be normalized; TODO: update after upgrading nalgebra
+    pub direction: V,
+    pub radius: F,
+}
+
+shape!(Cylinder<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>);
+
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Cylinder<F, P, V> {
+    pub fn new(center: P, direction: &V, radius: F) -> Self {
+        assert!(direction.norm_squared() > <F as Zero>::zero(),
+                "Cannot have a direction with length of 0.");
+        assert!(radius > <F as Zero>::zero(),
+                "The radius must be positive.");
+
+        Cylinder {
+            center: center,
+            direction: direction.normalize(),
+            radius: radius,
+        }
+    }
+
+    fn get_closest_point_on_axis(&self, to: &P) -> P {
+        (self.direction * self.direction.dot(&(*to - self.center)))
+            .translate(&self.center)
+    }
+
+    #[allow(unused_variables)]
+    pub fn intersect_linear(location: &P,
+                               direction: &V,
+                               vacuum: &Material<F, P, V>,
+                               shape: &Shape<F, P, V>,
+                               intersect: Intersector<F, P, V>)
+                               -> Box<IntersectionMarcher<F, P, V>> {
+        let cylinder: &Cylinder<F, P, V> = shape.as_any().downcast_ref::<Cylinder<F, P, V>>().unwrap();
+
+        // The intersection of a line and an infinite cylinder is calculated as follows:
+        // `|(Q - {S_c + [v_c dot (Q - S_c)] * v_c})|^2 - r^2 = 0`
+        // where `Q` is a point on the line (typically `S_l + t * v_l`),
+        //       `S_c` is a point on the axis of the cylinder,
+        //       `v_c` is the direction of the cylinder axis (must be normalized),
+        //       `r` is the radius of the cylinder.
+        //
+        // `[v_c dot (Q - S_c)] * v_c` is the vector from `S_c` to the closest point
+        // to the ray on the cylinder axis.
+        //
+        // After substituting `Q = S_l + t * v_l`, we can arrange as `A * t^2 + B * t + C = 0`.
+
+        let a_vec = *direction - cylinder.direction * direction.dot(&cylinder.direction);
+        let delta_location = *location - cylinder.center;
+        let c_vec = delta_location - cylinder.direction * delta_location.dot(&cylinder.direction);
+        let a = a_vec.norm_squared();
+        let b = (<F as One>::one() + <F as One>::one()) * a_vec.dot(&c_vec);
+        let c = c_vec.norm_squared() - cylinder.radius * cylinder.radius;
+
+        // Discriminant = b^2 - 4*a*c
+        let d: F = b * b - <F as NumCast>::from(4.0).unwrap() * a * c;
+
+        if d < <F as Zero>::zero() {
+            return Box::new(iter::empty());
+        }
+
+        let d_sqrt = d.sqrt();
+        let mut t_first: Option<F> = None;  // The smallest non-negative vector modifier
+        let mut t_second: Option<F> = None;  // The second smallest non-negative vector modifier
+        let t1: F = (-b - d_sqrt) / (<F as NumCast>::from(2.0).unwrap() * a);
+        let t2: F = (-b + d_sqrt) / (<F as NumCast>::from(2.0).unwrap() * a);
+
+        if t1 >= <F as Zero>::zero() {
+            t_first = Some(t1);
+
+            if t2 >= <F as Zero>::zero() {
+                t_second = Some(t2);
+            }
+        } else if t2 >= <F as Zero>::zero() {
+            t_first = Some(t2);
+        }
+
+        if t_first.is_none() {
+            return Box::new(iter::empty());  // Don't trace in the opposite direction
+        }
+
+        let t_first = t_first.unwrap();
+        let mut closures: VecLazy<Intersection<F, P, V>> = Vec::new();
+        // Move the following variables inside the closures.
+        // This lets the closures move outside the scope.
+        let direction = *direction;
+        let location = *location;
+        // `[v_c dot (Q - S_c)] * v_c` is the vector from `S_c` to the closest point
+        let result_vector = direction * t_first;
+        let result_point_1 = location + result_vector;
+        let closest_point_on_axis = cylinder.get_closest_point_on_axis(&result_point_1);
+
+        closures.push(Box::new(move || {
+            let mut normal = result_point_1 - closest_point_on_axis;
+            normal = na::normalize(&normal);
+
+            Some(Intersection::new(result_point_1,
+                                   direction,
+                                   normal,
+                                   t_first))
+        }));
+
+        if let Some(t_second) = t_second {
+            closures.push(Box::new(move || {
+                let result_vector = direction * t_second;
+                let result_point_2 = location + result_vector;
+
+                let mut normal = result_point_2 - closest_point_on_axis;
+                normal = na::normalize(&normal);
+
+                Some(Intersection::new(result_point_2,
+                                       direction,
+                                       normal,
+                                       t_second))
+            }));
+        }
+
+        Box::new(IterLazy::new(closures))
+    }
+}
+
+impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V> for Cylinder<F, P, V> {
+    #[allow(unused_variables)]
+    fn is_point_inside(&self, point: &P) -> bool {
+        let closest_point_on_axis = self.get_closest_point_on_axis(point);
+        let vector_to_point = *point - closest_point_on_axis;
+
+        vector_to_point.norm_squared() <= self.radius * self.radius
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use universe::entity::material::Vacuum;
@@ -951,6 +1084,34 @@ mod tests {
         assert_eq!(first.direction, Vector2::new(1.0, 0.0));
         assert_eq!(first.normal, Vector2::new(-1.0, 0.0));
         assert!(first.distance.approx_eq_ulps(&1.0, 2));
+        assert!(marcher.next().is_none());
+    }
+
+    #[test]
+    fn intersect_cylinder_linear() {
+        let mut marcher = Cylinder::intersect_linear(
+            &Point2::new(0.0, 0.0),
+            &Vector2::new(1.0, 0.0),
+            &Vacuum::new(),
+            &Cylinder::new(
+                Point2::new(2.0, 0.0),
+                &Vector2::new(0.0, 1.0),
+                1.0
+            ),
+            &|_, _| { unimplemented!() }
+        );
+
+        let first = marcher.next().unwrap();
+        let second = marcher.next().unwrap();
+
+        assert_eq!(first.location, Point2::new(1.0, 0.0));
+        assert_eq!(first.direction, Vector2::new(1.0, 0.0));
+        assert_eq!(first.normal, Vector2::new(-1.0, 0.0));
+        assert!(first.distance.approx_eq_ulps(&1.0, 2));
+        assert_eq!(second.location, Point2::new(3.0, 0.0));
+        assert_eq!(second.direction, Vector2::new(1.0, 0.0));
+        assert_eq!(second.normal, Vector2::new(1.0, 0.0));
+        assert!(second.distance.approx_eq_ulps(&3.0, 2));
         assert!(marcher.next().is_none());
     }
 }

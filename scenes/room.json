@@ -166,6 +166,62 @@
       {
         "Entity3Impl::new_with_surface": [
           {
+            "Cylinder3::new": [
+              {
+                "Point3::new": [
+                  8,
+                  -6,
+                  0
+                ]
+              },
+              {
+                "Vector3::new": [
+                  1,
+                  1,
+                  4
+                ]
+              },
+              1
+            ]
+          },
+          {
+            "Vacuum3::new": []
+          },
+          {
+            "ComposableSurface3": {
+              "reflection_ratio": {
+                "reflection_ratio_fresnel_3": [
+                  1.458,
+                  1
+                ]
+              },
+              "reflection_direction": {
+                "reflection_direction_specular_3": []
+              },
+              "threshold_direction": {
+                "threshold_direction_snell_3": [
+                    1.458
+                ]
+              },
+              "surface_color": {
+                "surface_color_uniform_3": [
+                  {
+                    "Rgba::new": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "Entity3Impl::new_with_surface": [
+          {
             "ComposableShape3::of": [
               [
                 {

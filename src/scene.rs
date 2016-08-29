@@ -890,6 +890,22 @@ impl Parser {
                 }
             }
 
+            add_deserializer! {
+                "Cylinder3", "Cylinder3::new";
+                [center: Point3<F>] [direction: Vector3<F>] [radius: F]
+                -> Box<Shape<F, Point3<F>, Vector3<F>>> {
+                    Box::new(Cylinder::new(center, &direction, radius))
+                }
+            }
+
+            add_deserializer! {
+                "Cylinder4", "Cylinder4::new";
+                [center: Point4<F>] [direction: Vector4<F>] [radius: F]
+                -> Box<Shape<F, Point4<F>, Vector4<F>>> {
+                    Box::new(Cylinder::new(center, &direction, radius))
+                }
+            }
+
             // Materials
 
             add_deserializer! {

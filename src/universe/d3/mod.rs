@@ -35,6 +35,8 @@ impl<F: CustomFloat> Universe3<F> {
                             Box::new(Hyperplane::<F, Point3<F>, Vector3<F>>::intersect_linear));
         intersectors.insert((Vacuum::id_static(), HalfSpace::<F, Point3<F>, Vector3<F>>::id_static()),
                             Box::new(HalfSpace::<F, Point3<F>, Vector3<F>>::intersect_linear));
+        intersectors.insert((Vacuum::id_static(), Cylinder::<F, Point3<F>, Vector3<F>>::id_static()),
+                            Box::new(Cylinder::<F, Point3<F>, Vector3<F>>::intersect_linear));
         intersectors.insert((Vacuum::id_static(),
                      ComposableShape::<F, Point3<F>, Vector3<F>>::id_static()),
                     Box::new(ComposableShape::<F, Point3<F>, Vector3<F>>::intersect_linear));
@@ -46,6 +48,8 @@ impl<F: CustomFloat> Universe3<F> {
                             Box::new(Hyperplane::<F, Point3<F>, Vector3<F>>::intersect_linear));
         intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), HalfSpace::<F, Point3<F>, Vector3<F>>::id_static()),
                             Box::new(HalfSpace::<F, Point3<F>, Vector3<F>>::intersect_linear));
+        intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), Cylinder::<F, Point3<F>, Vector3<F>>::id_static()),
+                            Box::new(Cylinder::<F, Point3<F>, Vector3<F>>::intersect_linear));
         intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(),
                      ComposableShape::<F, Point3<F>, Vector3<F>>::id_static()),
                     Box::new(ComposableShape::<F, Point3<F>, Vector3<F>>::intersect_linear));

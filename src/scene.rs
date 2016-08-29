@@ -906,6 +906,22 @@ impl Parser {
                 }
             }
 
+            add_deserializer! {
+                "Cylinder3::new_with_height";
+                [center: Point3<F>] [direction: Vector3<F>] [radius: F] [height: F]
+                -> Box<Shape<F, Point3<F>, Vector3<F>>> {
+                    Box::new(Cylinder::new_with_height(center, &direction, radius, height))
+                }
+            }
+
+            add_deserializer! {
+                "Cylinder4::new_with_height";
+                [center: Point4<F>] [direction: Vector4<F>] [radius: F] [height: F]
+                -> Box<Shape<F, Point4<F>, Vector4<F>>> {
+                    Box::new(Cylinder::new_with_height(center, &direction, radius, height))
+                }
+            }
+
             // Materials
 
             add_deserializer! {

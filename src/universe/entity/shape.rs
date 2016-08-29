@@ -895,6 +895,29 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Cylinder<F, P,
         }
     }
 
+    pub fn new_with_height(center: P, direction: &V, radius: F, height: F) -> ComposableShape<F, P, V> {
+        let normalized_direction = direction.normalize();
+        let half_height = height / (<F as One>::one() + <F as One>::one());
+        let shapes: Vec<Box<Shape<F, P, V>>> = vec![
+                Box::new(Self::new(center, direction, radius)),
+                Box::new(HalfSpace::new_with_point(
+                    Hyperplane::new_with_point(normalized_direction,
+                        &(normalized_direction * half_height).translate(&center)),
+                    &center
+                )),
+                Box::new(HalfSpace::new_with_point(
+                    Hyperplane::new_with_point(normalized_direction,
+                        &(normalized_direction * -half_height).translate(&center)),
+                    &center
+                ))
+            ];
+
+        ComposableShape::of(
+            shapes,
+            SetOperation::Intersection
+        )
+    }
+
     fn get_closest_point_on_axis(&self, to: &P) -> P {
         (self.direction * self.direction.dot(&(*to - self.center)))
             .translate(&self.center)

@@ -1,4 +1,5 @@
 use palette::Rgba;
+use palette::Hsva;
 use std::any::Any;
 use std::collections::HashMap;
 use util::CustomFloat;
@@ -652,6 +653,13 @@ impl Parser {
                 "Rgba::new_u8";
                 [r: u8] [g: u8] [b: u8] [a: u8] -> Rgba<F> {
                     Rgba::<F>::new_u8(r, g, b, a)
+                }
+            };
+
+            add_deserializer! {
+                "Rgba::from_hsva";
+                [hue: F] [saturation: F] [value: F] [alpha: F] -> Rgba<F> {
+                    Hsva::new(hue.into(), saturation, value, alpha).into()
                 }
             };
 

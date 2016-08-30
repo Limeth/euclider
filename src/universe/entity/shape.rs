@@ -534,12 +534,12 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableShap
         };
 
         for shape in shapes {
-            result.b = Arc::new(Box::new(ComposableShape {
-                a: result.b,
+            result = ComposableShape {
+                a: Arc::new(Box::new(result)),
                 b: Arc::new(shape),
                 operation: operation,
                 marker: PhantomData,
-            }));
+            };
         }
 
         result

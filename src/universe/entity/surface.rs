@@ -74,6 +74,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
             } else {
                 let trace = context.trace;
 
+                let mut transitioned_direction = (self.threshold_direction)(&context.general);
                 // Offset the new origin, so it doesn't hit the same shape over and over
                 // The question is -- is there a better way? I think not.
                 let new_origin = context.general.intersection.location +
@@ -89,15 +90,14 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
                 } else {
                     context.general.intersection_traceable
                 };
-                let mut transitioned_direction = (self.threshold_direction)(&context.general);
 
                 context.general.origin_traceable.material().exit(&new_origin, &mut transitioned_direction);
                 destination_traceable.material().enter(&new_origin, &mut transitioned_direction);
 
                 let transition_color = trace(&context.general.time,
-                      destination_traceable,
-                      &new_origin,
-                      &transitioned_direction);
+                                             destination_traceable,
+                                             &new_origin,
+                                             &transitioned_direction);
                 let surface_palette: Rgba<F> = palette::Rgba::new_u8(surface_color_data[0],
                                                                      surface_color_data[1],
                                                                      surface_color_data[2],
@@ -119,10 +119,6 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
                             -> Option<Rgba<F>> {
         if reflection_ratio <= <F as Zero>::zero() {
             return None;
-        }
-
-        if context.general.exiting {
-            return Some(Rgba::new(<F as Zero>::zero(), <F as Zero>::zero(), <F as Zero>::zero(), <F as Zero>::zero()))
         }
 
         let reflection_direction = self.get_reflection_direction(&context.general);
@@ -202,7 +198,13 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Surface<F, P, 
 pub fn reflection_ratio_uniform<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
     (ratio: F)
      -> Box<ReflectionRatioProvider<F, P, V>> {
-    Box::new(move |context: &TracingContext<F, P, V>| ratio)
+    Box::new(move |context: &TracingContext<F, P, V>| {
+        if context.exiting {
+            <F as Zero>::zero()
+        } else {
+            ratio
+        }
+    })
 }
 
 #[allow(unused_variables)]
@@ -218,10 +220,25 @@ pub fn reflection_ratio_fresnel<F: CustomFloat, P: CustomPoint<F, V>, V: CustomV
             (refractive_index_outside, refractive_index_inside)
         };
         let to_theta = ((from_index / to_index) * from_theta.sin()).asin();
-        let product_1 = from_index * to_theta.cos();
-        let product_2 = to_index * from_theta.cos();
 
-        ((product_1 - product_2) / (product_1 + product_2)).powi(2)
+        let ratio = if to_theta.is_nan() {
+            <F as One>::one()
+        } else {
+            // s-polarized light
+            let product_1_s = from_index * from_theta.cos();
+            let product_2_s = to_index * to_theta.cos();
+            // p-polarized light
+            let product_1_p = from_index * to_theta.cos();
+            let product_2_p = to_index * from_theta.cos();
+
+            let reflectance_s = ((product_1_s - product_2_s) / (product_1_s + product_2_s)).powi(2);
+            let reflectance_p = ((product_1_p - product_2_p) / (product_1_p + product_2_p)).powi(2);
+
+            // to get the reflectance of unpolarised light, we take the average
+            (reflectance_s + reflectance_p) / (<F as One>::one() + <F as One>::one())
+        };
+
+        ratio
     })
 }
 

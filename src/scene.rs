@@ -21,6 +21,7 @@ use universe::d3::entity::camera::*;
 use universe::d4::entity::Entity4Impl;
 use universe::d4::entity::Camera4;
 use universe::d4::entity::surface::*;
+use universe::d4::entity::shape::*;
 use universe::d4::entity::camera::*;
 use na::Point3;
 use na::Vector3;
@@ -895,6 +896,14 @@ impl Parser {
                 [center: Point3<F>] [dimensions: Vector3<F>]
                 -> Box<Shape<F, Point3<F>, Vector3<F>>> {
                     Box::new(cuboid(center, dimensions))
+                }
+            }
+
+            add_deserializer! {
+                "HalfSpace4::hypercuboid";
+                [center: Point4<F>] [dimensions: Vector4<F>]
+                -> Box<Shape<F, Point4<F>, Vector4<F>>> {
+                    Box::new(hypercuboid(center, dimensions))
                 }
             }
 

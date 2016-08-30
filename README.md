@@ -14,7 +14,7 @@ Dual-licensed under [MIT](https://opensource.org/licenses/MIT) or the [UNLICENSE
 3. Clone this repository and `cd` into it
 4. Build with `cargo build --release`
 5. Run with `target/release/euclider`
-6. Open a scene with `target/release/euclider --scene scenes/room.json`
+6. Open a scene with `target/release/euclider --scene scenes/3d_room.json`
 
 
 # Controls

@@ -1,0 +1,235 @@
+{
+  "Universe4": {
+    "camera": {
+      "FreeCamera4": []
+    },
+    "entities": [
+      {
+        "Entity4Impl::new_with_surface": [
+          {
+            "ComposableShape4::of": [
+              [
+                  {
+                    "HalfSpace4::hypercuboid": {
+                      "center": {
+                        "Point4::new": [
+                          0,
+                          0,
+                          0,
+                          0
+                        ]
+                      },
+                      "dimensions": {
+                        "Vector4::new": [
+                          4,
+                          4,
+                          4,
+                          4
+                        ]
+                      }
+                    }
+                  },
+              {
+                "ComposableShape4::of": [
+                  [
+              {
+                "HalfSpace4::hypercuboid": {
+                  "center": {
+                    "Point4::new": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ]
+                  },
+                  "dimensions": {
+                    "Vector4::new": [
+                      5,
+                      3,
+                      3,
+                      3
+                    ]
+                  }
+                }
+              },
+              {
+                "HalfSpace4::hypercuboid": {
+                  "center": {
+                    "Point4::new": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ]
+                  },
+                  "dimensions": {
+                    "Vector4::new": [
+                      3,
+                      5,
+                      3,
+                      3
+                    ]
+                  }
+                }
+              },
+              {
+                "HalfSpace4::hypercuboid": {
+                  "center": {
+                    "Point4::new": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ]
+                  },
+                  "dimensions": {
+                    "Vector4::new": [
+                      3,
+                      3,
+                      5,
+                      3
+                    ]
+                  }
+                }
+              },
+              {
+                "HalfSpace4::hypercuboid": {
+                  "center": {
+                    "Point4::new": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ]
+                  },
+                  "dimensions": {
+                    "Vector4::new": [
+                      3,
+                      3,
+                      3,
+                      5
+                    ]
+                  }
+                }
+              }
+                  ],
+                  {
+                    "SetOperation": [
+                      "Union"
+                    ]
+                  }
+                ]
+              }
+              ],
+              {
+                "SetOperation": [
+                  "Complement"
+                ]
+              }
+            ]
+          },
+          {
+            "Vacuum4": []
+          },
+          {
+            "ComposableSurface4": {
+              "reflection_ratio": {
+                "reflection_ratio_uniform_4": [
+                  0
+                ]
+              },
+              "reflection_direction": {
+                "reflection_direction_specular_4": []
+              },
+              "threshold_direction": {
+                "threshold_direction_identity_4": []
+              },
+              "surface_color": {
+                "surface_color_blend_4": [
+                  {
+                    "surface_color_illumination_global_4": [
+                      {
+                        "Rgba::new": [
+                          1,
+                          1,
+                          1,
+                          0
+                        ]
+                      },
+                      {
+                        "Rgba::new": [
+                          0,
+                          0,
+                          0,
+                          0.5
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "surface_color_illumination_directional_4": [
+                      {
+                        "Vector4::new": [
+                          0,
+                          0,
+                          -1,
+                          0
+                        ]
+                      },
+                      {
+                        "Rgba::new": [
+                          1,
+                          1,
+                          1,
+                          1
+                        ]
+                      },
+                      {
+                        "Rgba::new": [
+                          0.25,
+                          0.25,
+                          0.25,
+                          1
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "blend_function_darken": []
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "Void4::new_with_vacuum": []
+      }
+    ],
+    "background": {
+      "MappedTextureImpl4::new": [
+        {
+          "uv_derank_4": [
+            {
+              "uv_sphere_3": [
+                {
+                  "Point3::new": [
+                    0,
+                    0,
+                    0
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "texture_image": [
+            "./resources/pixelcg_uv.jpg"
+          ]
+        }
+      ]
+    }
+  }
+}

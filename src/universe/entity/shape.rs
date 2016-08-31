@@ -108,6 +108,7 @@ pub struct TracingContext<'a,
                           P: 'a + CustomPoint<F, V>,
                           V: 'a + CustomVector<F, P>>
 {
+    pub debugging: bool,
     pub time: Duration,
     pub origin_traceable: &'a Traceable<F, P, V>,
     pub origin_location: P,

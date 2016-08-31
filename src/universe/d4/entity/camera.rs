@@ -199,7 +199,8 @@ impl<F: CustomFloat> Camera<F, Point4<F>, Vector4<F>> for FreeCamera4<F> {
                     = universe.trace_path_unknown(delta_time,
                                                   &distance,
                                                   &self.location,
-                                                  &direction) {
+                                                  &direction,
+                                                  context.debugging) {
                 let rotation_scale = direction.angle_between(&new_direction);
 
                 if !ApproxEq::approx_eq_ulps(&rotation_scale,

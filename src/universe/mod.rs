@@ -86,6 +86,7 @@ pub trait Universe<F: CustomFloat>
                          belongs_to: &'a Traceable<F, Self::P, Self::V>,
                          location: &Self::P,
                          direction: &Self::V,
+                         debug: bool,
                          filter: &Fn(&Traceable<F, Self::P, Self::V>) -> bool)
                          -> Option<TraceResult<'a, F, Self::P, Self::V>> {
         let material = belongs_to.material();
@@ -124,6 +125,7 @@ pub trait Universe<F: CustomFloat>
                 if closest_distance.is_none() ||
                    closest_distance.unwrap() > intersection.distance {
                     let context = TracingContext {
+                        debugging: debug,
                         time: *time,
                         origin_traceable: belongs_to,
                         origin_location: *location,
@@ -149,10 +151,11 @@ pub trait Universe<F: CustomFloat>
              max_depth: &u32,
              belongs_to: &Traceable<F, Self::P, Self::V>,
              location: &Self::P,
-             direction: &Self::V)
+             direction: &Self::V,
+             debug: bool)
              -> Rgba<F> {
         if *max_depth > 0 {
-            let result = self.trace_closest(time, belongs_to, location, direction, &|other| {
+            let result = self.trace_closest(time, belongs_to, location, direction, debug, &|other| {
                 other.surface().is_some()
             });
 
@@ -163,7 +166,7 @@ pub trait Universe<F: CustomFloat>
                     general: general_context,
                     depth_remaining: max_depth,
                     trace: &|time, traceable, location, direction| {
-                        self.trace(time, &(*max_depth - 1), traceable, location, direction)
+                        self.trace(time, &(*max_depth - 1), traceable, location, direction, debug)
                     },
                     material_at: &|point| {
                         self.material_at(point)
@@ -185,9 +188,10 @@ pub trait Universe<F: CustomFloat>
              distance: &F,
              belongs_to: &Traceable<F, Self::P, Self::V>,
              location: &Self::P,
-             direction: &Self::V)
+             direction: &Self::V,
+             debug: bool)
              -> (Self::P, Self::V) {
-        let result = self.trace_closest(time, belongs_to, location, direction, &|other| {
+        let result = self.trace_closest(time, belongs_to, location, direction, debug, &|other| {
             other.surface().is_some()
         });
 
@@ -198,7 +202,7 @@ pub trait Universe<F: CustomFloat>
                 general: general_context,
                 distance: distance,
                 trace: &|time, distance, traceable, location, direction| {
-                    self.trace_path(time, distance, traceable, location, direction)
+                    self.trace_path(time, distance, traceable, location, direction, debug)
                 },
                 material_at: &|point| {
                     self.material_at(point)
@@ -250,7 +254,8 @@ pub trait Universe<F: CustomFloat>
                      time: &Duration,
                      max_depth: &u32,
                      location: &Self::P,
-                     direction: &Self::V)
+                     direction: &Self::V,
+                     debug: bool)
                      -> Option<Rgb<F>> {
         self.material_at(location).map(|belongs_to| {
             let mut transitioned_direction = *direction;
@@ -258,7 +263,8 @@ pub trait Universe<F: CustomFloat>
             let background =
                 Rgba::from(Rgb::new(Cast::from(1.0), Cast::from(1.0), Cast::from(1.0)))
                     .into_premultiplied();
-            let foreground = self.trace(time, max_depth, belongs_to, location, &transitioned_direction)
+            let foreground = self.trace(time, max_depth, belongs_to, location,
+                                        &transitioned_direction, debug)
                 .into_premultiplied();
             Rgb::from_premultiplied(foreground.over(background))
         })
@@ -268,13 +274,14 @@ pub trait Universe<F: CustomFloat>
                           time: &Duration,
                           distance: &F,
                           location: &Self::P,
-                          direction: &Self::V)
+                          direction: &Self::V,
+                          debug: bool)
                           -> Option<(Self::P, Self::V)> {
         self.material_at(location).map(|belongs_to| {
             let mut transitioned_direction = *direction;
 
             belongs_to.material().enter(location, &mut transitioned_direction);
-            self.trace_path(time, distance, belongs_to, location, &transitioned_direction)
+            self.trace_path(time, distance, belongs_to, location, &transitioned_direction, debug)
         })
     }
 }
@@ -287,7 +294,8 @@ pub trait Environment<F: CustomFloat>: Sync {
                           screen_x: i32,
                           screen_y: i32,
                           screen_width: i32,
-                          screen_height: i32)
+                          screen_height: i32,
+                          debug: bool)
                           -> Rgb<F>;
     fn render(&self,
               dimensions: (u32, u32),
@@ -302,18 +310,35 @@ pub trait Environment<F: CustomFloat>: Sync {
         let max_depth = self.max_depth();
         let mut data: Vec<u8> = vec!(0; (buffer_width * buffer_height) as usize * COLOR_DIM);
         let mut pool = Pool::new(threads);
+        let buffer_width_half = buffer_width / 2;
+        let buffer_height_half = buffer_height / 2;
 
         pool.scoped(|scope| {
             for (index, chunk) in &mut data.chunks_mut(COLOR_DIM).enumerate() {
                 scope.execute(move || {
                     let x = index as u32 % buffer_width;
                     let y = index as u32 / buffer_width;
-                    let color = self.trace_screen_point(time,
-                                                        &max_depth,
-                                                        x as i32,
-                                                        y as i32,
-                                                        buffer_width as i32,
-                                                        buffer_height as i32);
+                    let debug_pixel = context.debugging
+                                    && x == buffer_width_half
+                                    && y == buffer_height_half;
+                    let debug_pixel_surrounding = context.debugging
+                                    && (x == buffer_width_half
+                                        && (y == buffer_height_half - 1
+                                            || y == buffer_height_half + 1)
+                                        || y == buffer_height_half
+                                        && (x == buffer_width_half - 1
+                                            || x == buffer_width_half + 1));
+                    let color = if debug_pixel_surrounding {
+                        Rgb::new_u8(255, 0, 0)
+                    } else {
+                        self.trace_screen_point(time,
+                                                &max_depth,
+                                                x as i32,
+                                                y as i32,
+                                                buffer_width as i32,
+                                                buffer_height as i32,
+                                                debug_pixel)
+                    };
                     let color = image::Rgb { data: color.to_pixel() };
 
                     for (i, result) in chunk.iter_mut().enumerate() {
@@ -349,14 +374,15 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, U: Universe<F,
                           screen_x: i32,
                           screen_y: i32,
                           screen_width: i32,
-                          screen_height: i32)
+                          screen_height: i32,
+                          debug: bool)
                           -> Rgb<F> {
         let camera = self.camera().try_read()
             .expect("Could not get the origin location and direction, the camera is mutably borrowed.");
         let point = camera.get_ray_point(screen_x, screen_y, screen_width, screen_height);
         let vector = camera.get_ray_vector(screen_x, screen_y, screen_width, screen_height);
 
-        match self.trace_unknown(time, max_depth, &point, &vector) {
+        match self.trace_unknown(time, max_depth, &point, &vector, debug) {
             Some(color) => color,
             None => {
                 let checkerboard_size = 8;

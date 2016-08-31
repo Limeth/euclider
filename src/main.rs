@@ -55,6 +55,7 @@ fn main() {
 
 fn run<F: CustomFloat>() {
     const ARG_SCENE: &'static str = "SCENE";
+    const ARG_DEBUG: &'static str = "DEBUG";
 
     let matches = App::new("euclider")
                       .version(crate_version!())
@@ -66,9 +67,14 @@ fn run<F: CustomFloat>() {
                                .help("Loads a `.json` scene file")
                                .takes_value(true)
                                .required(true))
+                      .arg(Arg::with_name(ARG_DEBUG)
+                               .short("d")
+                               .long("debug")
+                               .help("Displays debug info"))
                       .get_matches();
 
     let scene = matches.value_of(ARG_SCENE).unwrap();
+    let debug = matches.is_present(ARG_DEBUG);
     let mut reader = BufReader::new(File::open(scene)
         .expect("Unable to find the scene file."));
     let mut json = String::new();
@@ -80,7 +86,12 @@ fn run<F: CustomFloat>() {
     let simulation = Simulation::builder()
         .environment(*environment)
         .threads(num_cpus::get() as u32)
+        .debug(debug)
         .build();
+
+    if debug {
+        println!("Running in debug mode.");
+    }
 
     simulation.start();
 }

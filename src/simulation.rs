@@ -22,6 +22,7 @@ use universe::Environment;
 use util::CustomFloat;
 
 pub struct Simulation<F: CustomFloat> {
+    debug: bool,
     threads: u32,
     environment: Box<Environment<F>>,
     facade: Option<GlutinFacade>,
@@ -34,6 +35,7 @@ pub struct Simulation<F: CustomFloat> {
 pub struct SimulationBuilder<F: CustomFloat> {
     environment: Option<Box<Environment<F>>>,
     threads: Option<u32>,
+    debug: bool,
     float_precision: PhantomData<F>,
 }
 
@@ -101,7 +103,7 @@ impl<F: CustomFloat> Simulation<F> {
         }
 
         self.last_updated_instant = Some(now);
-        let result = self.context.update(self.facade.as_mut().unwrap());
+        let result = self.context.update(self.facade.as_mut().unwrap(), self.debug);
 
         self.environment.update(&delta, &self.context);
 
@@ -112,6 +114,7 @@ impl<F: CustomFloat> Simulation<F> {
         SimulationBuilder {
             environment: None,
             threads: None,
+            debug: false,
             float_precision: PhantomData,
         }
     }
@@ -128,8 +131,14 @@ impl<F: CustomFloat> SimulationBuilder<F> {
         self
     }
 
+    pub fn debug(mut self, debug: bool) -> Self {
+        self.debug = debug;
+        self
+    }
+
     pub fn build(self) -> Simulation<F> {
         Simulation {
+            debug: self.debug,
             threads: self.threads.expect("Specify the number of threads before building the simulation."),
             environment: self.environment.expect("Specify the environment before bulding the simulation."),
             facade: None,
@@ -148,6 +157,7 @@ pub struct SimulationContext {
     pub mouse: Point2<i32>,
     pub delta_mouse: Vector2<i32>,
     pub resolution: u32,
+    pub debugging: bool,
 }
 
 impl SimulationContext {
@@ -158,6 +168,7 @@ impl SimulationContext {
             mouse: na::origin(),
             delta_mouse: na::zero(),
             resolution: 8,
+            debugging: false,
         }
     }
 
@@ -178,7 +189,7 @@ impl SimulationContext {
     }
 
     #[allow(unused_variables)]
-    pub fn update(&mut self, facade: &mut GlutinFacade) -> Result<(), Event> {
+    pub fn update(&mut self, facade: &mut GlutinFacade, debug: bool) -> Result<(), Event> {
         self.reset_delta_mouse();
         for event in facade.poll_events() {
             match event {
@@ -186,13 +197,26 @@ impl SimulationContext {
                     match state {
                         ElementState::Pressed => {
                             self.pressed_keys.insert(virtual_code);
+
+                            if debug && virtual_code == VirtualKeyCode::LAlt {
+                                self.debugging = true;
+                            }
                         }
                         ElementState::Released => {
                             self.pressed_keys.remove(&virtual_code);
 
-                            if virtual_code == VirtualKeyCode::Escape {
-                                return Err(event);
+                            match virtual_code {
+                                VirtualKeyCode::Escape => {
+                                    return Err(event);
+                                },
+                                VirtualKeyCode::LAlt => {
+                                    if debug {
+                                        self.debugging = false;
+                                    }
+                                },
+                                _ => ()
                             }
+
                         }
                     };
                 }

@@ -194,7 +194,8 @@ impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for PitchYawCamera3<F> {
                     = universe.trace_path_unknown(delta_time,
                                                   &distance,
                                                   &self.data.location,
-                                                  &direction) {
+                                                  &direction,
+                                                  context.debugging) {
                 let rotation_scale = direction.angle_between(&new_direction);
 
                 if !ApproxEq::approx_eq_ulps(&rotation_scale,
@@ -391,7 +392,8 @@ impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for FreeCamera3<F> {
                     = universe.trace_path_unknown(delta_time,
                                                   &distance,
                                                   &self.data.location,
-                                                  &direction) {
+                                                  &direction,
+                                                  context.debugging) {
                 let rotation_scale = direction.angle_between(&new_direction);
 
                 if !ApproxEq::approx_eq_ulps(&rotation_scale,

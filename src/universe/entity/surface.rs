@@ -126,7 +126,8 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
         // Offset the new origin, so it doesn't hit the same shape over and over
         // The question is -- is there a better way? I think not.
         let new_origin = context.general.intersection.location +
-                         (reflection_direction * F::epsilon() * Cast::from(128.0));
+                         (context.general.intersection_normal_closer
+                            * F::epsilon() * Cast::from(128.0));
 
         Some(trace(&context.general.time,
                    context.general.origin_traceable,
@@ -248,14 +249,9 @@ pub fn reflection_direction_specular<F: CustomFloat, P: CustomPoint<F, V>, V: Cu
 {
     Box::new(move |context: &TracingContext<F, P, V>| {
         // R = 2*(V dot N)*N - V
-        let mut normal = context.intersection.normal;
-
-        if context.intersection.direction.angle_between(&normal) > BaseFloat::frac_pi_2() {
-            normal = -normal;
-        }
-
-        normal * <F as NumCast>::from(-2.0).unwrap() *
-        na::dot(&context.intersection.direction, &normal) + context.intersection.direction
+        context.intersection_normal_closer * <F as NumCast>::from(-2.0).unwrap()
+            * context.intersection.direction.dot(&context.intersection_normal_closer)
+            + context.intersection.direction
     })
 }
 

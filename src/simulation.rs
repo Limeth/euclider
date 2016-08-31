@@ -2,7 +2,9 @@ use std::collections::HashSet;
 use std::time::Instant;
 use std::time::Duration;
 use std::marker::PhantomData;
+use num::One;
 use na;
+use na::Cast;
 use na::Point2;
 use na::Vector2;
 use glium::DisplayBuild;
@@ -100,6 +102,13 @@ impl<F: CustomFloat> Simulation<F> {
             delta = now - self.start_instant.unwrap();
         } else {
             delta = now - self.last_updated_instant.unwrap();
+        }
+
+        if self.context.debugging {
+            let delta_millis: F = <F as One>::one()
+                / Cast::from((delta * 1000).as_secs() as f64 / 1000.0);
+
+            println!("FPS: {}", delta_millis);
         }
 
         self.last_updated_instant = Some(now);

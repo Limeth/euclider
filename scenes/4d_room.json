@@ -1,0 +1,872 @@
+{
+  "Universe4": {
+    "camera": {
+      "FreeCamera4": []
+    },
+    "entities": [
+      {
+        "Entity4Impl::new_with_surface": [
+          {
+            "Sphere4::new": [
+              {
+                "Point4::new": [
+                  15,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              3
+            ]
+          },
+          {
+            "Vacuum4::new": []
+          },
+          {
+            "ComposableSurface4": {
+              "reflection_ratio": {
+                "reflection_ratio_uniform_4": [
+                  0.5
+                ]
+              },
+              "reflection_direction": {
+                "reflection_direction_specular_4": []
+              },
+              "threshold_direction": {
+                "threshold_direction_identity_4": []
+              },
+              "surface_color": {
+                "surface_color_blend_4": [
+                  {
+                    "surface_color_illumination_global_4": [
+                      {
+                        "Rgba::from_hsva": [
+                          0,
+                          0,
+                          0,
+                          0
+                        ]
+                      },
+                      {
+                        "Rgba::from_hsva": [
+                          0,
+                          0,
+                          0,
+                          0.5
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "surface_color_illumination_directional_4": [
+                      {
+                        "Vector4::new": [
+                          0,
+                          0,
+                          -1,
+                          0
+                        ]
+                      },
+                      {
+                        "Rgba::from_hsva": [
+                          225,
+                          1,
+                          1,
+                          1
+                        ]
+                      },
+                      {
+                        "Rgba::from_hsva": [
+                          225,
+                          1,
+                          0.2,
+                          1
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "blend_function_darken": []
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "Entity4Impl::new_with_surface": [
+          {
+            "Sphere4::new": [
+              {
+                "Point4::new": [
+                  15,
+                  0,
+                  4.24264068712,
+                  4.24264068712
+                ]
+              },
+              3
+            ]
+          },
+          {
+            "Vacuum4::new": []
+          },
+          {
+            "ComposableSurface4": {
+              "reflection_ratio": {
+                "reflection_ratio_uniform_4": [
+                  0.5
+                ]
+              },
+              "reflection_direction": {
+                "reflection_direction_specular_4": []
+              },
+              "threshold_direction": {
+                "threshold_direction_identity_4": []
+              },
+              "surface_color": {
+                "surface_color_blend_4": [
+                  {
+                    "surface_color_illumination_global_4": [
+                      {
+                        "Rgba::from_hsva": [
+                          0,
+                          0,
+                          0,
+                          0
+                        ]
+                      },
+                      {
+                        "Rgba::from_hsva": [
+                          0,
+                          0,
+                          0,
+                          0.5
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "surface_color_illumination_directional_4": [
+                      {
+                        "Vector4::new": [
+                          0,
+                          0,
+                          -1,
+                          0
+                        ]
+                      },
+                      {
+                        "Rgba::from_hsva": [
+                          315,
+                          1,
+                          1,
+                          1
+                        ]
+                      },
+                      {
+                        "Rgba::from_hsva": [
+                          315,
+                          1,
+                          0.2,
+                          1
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "blend_function_darken": []
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "Entity4Impl::new_with_surface": [
+          {
+            "Sphere4::new": [
+              {
+                "Point4::new": [
+                  15,
+                  6,
+                  0,
+                  0
+                ]
+              },
+              3
+            ]
+          },
+          {
+            "Vacuum4::new": []
+          },
+          {
+            "ComposableSurface4": {
+              "reflection_ratio": {
+                "reflection_ratio_uniform_4": [
+                  0.5
+                ]
+              },
+              "reflection_direction": {
+                "reflection_direction_specular_4": []
+              },
+              "threshold_direction": {
+                "threshold_direction_identity_4": []
+              },
+              "surface_color": {
+                "surface_color_blend_4": [
+                  {
+                    "surface_color_illumination_global_4": [
+                      {
+                        "Rgba::from_hsva": [
+                          0,
+                          0,
+                          0,
+                          0
+                        ]
+                      },
+                      {
+                        "Rgba::from_hsva": [
+                          0,
+                          0,
+                          0,
+                          0.5
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "surface_color_illumination_directional_4": [
+                      {
+                        "Vector4::new": [
+                          0,
+                          0,
+                          -1,
+                          0
+                        ]
+                      },
+                      {
+                        "Rgba::from_hsva": [
+                          90,
+                          1,
+                          1,
+                          1
+                        ]
+                      },
+                      {
+                        "Rgba::from_hsva": [
+                          90,
+                          1,
+                          0.2,
+                          1
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "blend_function_darken": []
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "Entity4Impl::new_with_surface": [
+          {
+            "HalfSpace4::hypercuboid": [
+              { "Point4::new": [ 10, -10, -5, 5 ] },
+              { "Vector4::new": [ 6, 6, 6, 6 ] }
+            ]
+          },
+          {
+            "Vacuum4": []
+          },
+          {
+            "ComposableSurface4": {
+              "reflection_ratio": {
+                "reflection_ratio_fresnel_4": [
+                  1.458,
+                  1
+                ]
+              },
+              "reflection_direction": {
+                "reflection_direction_specular_4": []
+              },
+              "threshold_direction": {
+                "threshold_direction_identity_4": []
+              },
+              "surface_color": {
+                "surface_color_uniform_4": [
+                  {
+                    "Rgba::new": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "Entity4Impl::new_with_surface": [
+          {
+            "HalfSpace4::hypercuboid": [
+              { "Point4::new": [ -10, 10, -5, 5 ] },
+              { "Vector4::new": [ 8, 8, 8, 8 ] }
+            ]
+          },
+          {
+            "Vacuum4": []
+          },
+          {
+            "ComposableSurface4": {
+              "reflection_ratio": {
+                "reflection_ratio_uniform_4": [
+                  0
+                ]
+              },
+              "reflection_direction": {
+                "reflection_direction_specular_4": []
+              },
+              "threshold_direction": {
+                "threshold_direction_identity_4": []
+              },
+              "surface_color": {
+                "surface_color_blend_4": [
+                  {
+                    "surface_color_illumination_global_4": [
+                      {
+                        "Rgba::from_hsva": [
+                          0,
+                          0,
+                          1,
+                          1
+                        ]
+                      },
+                      {
+                        "Rgba::from_hsva": [
+                          0,
+                          0,
+                          0,
+                          0.5
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "surface_color_illumination_directional_4": [
+                      {
+                        "Vector4::new": [
+                          0,
+                          0,
+                          -1,
+                          0
+                        ]
+                      },
+                      {
+                        "Rgba::from_hsva": [
+                          180,
+                          1,
+                          1,
+                          1
+                        ]
+                      },
+                      {
+                        "Rgba::from_hsva": [
+                          180,
+                          1,
+                          0.2,
+                          1
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "blend_function_darken": []
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "Entity4Impl::new_with_surface": [
+          {
+            "Cylinder4::new": [
+              { "Point4::new": [ 0, 0, 0, 0 ] },
+              { "Vector4::new": [ 1, 1, 1, 1 ] },
+              2
+            ]
+          },
+          {
+            "Vacuum4": []
+          },
+          {
+            "ComposableSurface4": {
+              "reflection_ratio": {
+                "reflection_ratio_uniform_4": [
+                  0
+                ]
+              },
+              "reflection_direction": {
+                "reflection_direction_specular_4": []
+              },
+              "threshold_direction": {
+                "threshold_direction_identity_4": []
+              },
+              "surface_color": {
+                "surface_color_blend_4": [
+                  {
+                    "surface_color_illumination_global_4": [
+                      {
+                        "Rgba::from_hsva": [
+                          0,
+                          0,
+                          1,
+                          1
+                        ]
+                      },
+                      {
+                        "Rgba::from_hsva": [
+                          0,
+                          0,
+                          0,
+                          0.5
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "surface_color_illumination_directional_4": [
+                      {
+                        "Vector4::new": [
+                          0,
+                          0,
+                          -1,
+                          0
+                        ]
+                      },
+                      {
+                        "Rgba::from_hsva": [
+                          0,
+                          1,
+                          1,
+                          1
+                        ]
+                      },
+                      {
+                        "Rgba::from_hsva": [
+                          0,
+                          1,
+                          0.2,
+                          1
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "blend_function_darken": []
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "Entity4Impl::new_with_surface": [
+          {
+            "ComposableShape4::of": [
+              [
+              {
+                "VoidShape4": []
+              },
+              {
+                "ComposableShape4::of": [
+                  [
+                    {
+                      "HalfSpace4::new_with_point": [
+                        {
+                          "Hyperplane4::new_with_point": [
+                            {
+                              "Vector4::new": [
+                                1,
+                                0,
+                                0,
+                                0
+                              ]
+                            },
+                            {
+                              "Point4::new": [
+                                20,
+                                0,
+                                0,
+                                0
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "Point4::new": [
+                            0,
+                            0,
+                            0,
+                            0
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "HalfSpace4::new_with_point": [
+                        {
+                          "Hyperplane4::new_with_point": [
+                            {
+                              "Vector4::new": [
+                                -1,
+                                0,
+                                0,
+                                0
+                              ]
+                            },
+                            {
+                              "Point4::new": [
+                                -20,
+                                0,
+                                0,
+                                0
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "Point4::new": [
+                            0,
+                            0,
+                            0,
+                            0
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "HalfSpace4::new_with_point": [
+                        {
+                          "Hyperplane4::new_with_point": [
+                            {
+                              "Vector4::new": [
+                                0,
+                                1,
+                                0,
+                                0
+                              ]
+                            },
+                            {
+                              "Point4::new": [
+                                0,
+                                20,
+                                0,
+                                0
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "Point4::new": [
+                            0,
+                            0,
+                            0,
+                            0
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "HalfSpace4::new_with_point": [
+                        {
+                          "Hyperplane4::new_with_point": [
+                            {
+                              "Vector4::new": [
+                                0,
+                                -1,
+                                0,
+                                0
+                              ]
+                            },
+                            {
+                              "Point4::new": [
+                                0,
+                                -20,
+                                0,
+                                0
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "Point4::new": [
+                            0,
+                            0,
+                            0,
+                            0
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "HalfSpace4::new_with_point": [
+                        {
+                          "Hyperplane4::new_with_point": [
+                            {
+                              "Vector4::new": [
+                                0,
+                                0,
+                                1,
+                                0
+                              ]
+                            },
+                            {
+                              "Point4::new": [
+                                0,
+                                0,
+                                10,
+                                0
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "Point4::new": [
+                            0,
+                            0,
+                            0,
+                            0
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "HalfSpace4::new_with_point": [
+                        {
+                          "Hyperplane4::new_with_point": [
+                            {
+                              "Vector4::new": [
+                                0,
+                                0,
+                                -1,
+                                0
+                              ]
+                            },
+                            {
+                              "Point4::new": [
+                                0,
+                                0,
+                                -10,
+                                0
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "Point4::new": [
+                            0,
+                            0,
+                            0,
+                            0
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "HalfSpace4::new_with_point": [
+                        {
+                          "Hyperplane4::new_with_point": [
+                            {
+                              "Vector4::new": [
+                                0,
+                                0,
+                                0,
+                                1
+                              ]
+                            },
+                            {
+                              "Point4::new": [
+                                0,
+                                0,
+                                0,
+                                10
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "Point4::new": [
+                            0,
+                            0,
+                            0,
+                            0
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "HalfSpace4::new_with_point": [
+                        {
+                          "Hyperplane4::new_with_point": [
+                            {
+                              "Vector4::new": [
+                                0,
+                                0,
+                                0,
+                                -1
+                              ]
+                            },
+                            {
+                              "Point4::new": [
+                                0,
+                                0,
+                                0,
+                                -10
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "Point4::new": [
+                            0,
+                            0,
+                            0,
+                            0
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  {
+                    "SetOperation": [
+                      "Intersection"
+                    ]
+                  }
+                ]
+              }
+              ],
+              {
+                "SetOperation": [
+                  "Complement"
+                ]
+              }
+            ]
+          },
+          {
+            "Vacuum4": []
+          },
+          {
+            "ComposableSurface4": {
+              "reflection_ratio": {
+                "reflection_ratio_uniform_4": [
+                  0
+                ]
+              },
+              "reflection_direction": {
+                "reflection_direction_specular_4": []
+              },
+              "threshold_direction": {
+                "threshold_direction_identity_4": []
+              },
+              "surface_color": {
+                "surface_color_blend_4": [
+                  {
+                    "surface_color_illumination_global_4": [
+                      {
+                        "Rgba::new": [
+                          1,
+                          1,
+                          1,
+                          0
+                        ]
+                      },
+                      {
+                        "Rgba::new": [
+                          0,
+                          0,
+                          0,
+                          0.5
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "surface_color_illumination_directional_4": [
+                      {
+                        "Vector4::new": [
+                          0,
+                          0,
+                          -1,
+                          0
+                        ]
+                      },
+                      {
+                        "Rgba::new": [
+                          1,
+                          1,
+                          1,
+                          1
+                        ]
+                      },
+                      {
+                        "Rgba::new": [
+                          0.5,
+                          0.5,
+                          0.5,
+                          1
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "blend_function_darken": []
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "Void4::new_with_vacuum": []
+      }
+    ],
+    "background": {
+      "MappedTextureImpl4::new": [
+        {
+          "uv_derank_4": [
+            {
+              "uv_sphere_3": [
+                {
+                  "Point3::new": [
+                    0,
+                    0,
+                    0
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "texture_image": [
+            "./resources/pixelcg_uv.jpg"
+          ]
+        }
+      ]
+    }
+  }
+}

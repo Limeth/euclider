@@ -1243,6 +1243,14 @@ impl Parser {
             }
 
             add_deserializer! {
+                "threshold_direction_snell_4";
+                [refractive_index: F]
+                -> Box<ThresholdDirectionProvider<F, Point4<F>, Vector4<F>>> {
+                    threshold_direction_snell(refractive_index)
+                }
+            }
+
+            add_deserializer! {
                 "threshold_direction_identity_3";
                 -> Box<ThresholdDirectionProvider<F, Point3<F>, Vector3<F>>> {
                     threshold_direction_identity()

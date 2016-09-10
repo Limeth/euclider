@@ -39,6 +39,9 @@ use num::traits::ToPrimitive;
 use palette;
 use image::Rgba;
 use na;
+use na::Eye;
+use na::Column;
+use na::Transpose;
 use na::BaseFloat;
 use na::Cast;
 use na::ApproxEq;
@@ -61,14 +64,19 @@ use na::Mean;
 use na::Translate;
 use na::Point2;
 use na::Vector2;
+use na::Matrix2;
 use na::Point3;
 use na::Vector3;
+use na::Matrix3;
 use na::Point4;
 use na::Vector4;
+use na::Matrix4;
 use na::Point5;
 use na::Vector5;
+use na::Matrix5;
 use na::Point6;
 use na::Vector6;
+use na::Matrix6;
 use core::iter::FromIterator;
 use core::marker::Reflect;
 use core::ops::DerefMut;
@@ -532,6 +540,7 @@ pub trait CustomPoint<F: CustomFloat, V: CustomVector<F, Self>>:
 
 pub trait CustomVector<F: CustomFloat, P: CustomPoint<F, Self>>:
 // Rotate<O> +
+    GeneralRotation<F> +
     AngleBetween<F> +
     PartialOrder +
     Div<F, Output=Self> +
@@ -618,8 +627,15 @@ pub trait Derank {
     fn derank(&self) -> Self::Type;
 }
 
+/// Use the Gram-Schmidt process to orthonormalize this vector in relation to the other
+/// and return the rotation matrix.
+// TODO: Not very ergonomic having to pass in a slice.
+pub trait GeneralRotation<F: CustomFloat>: Sized {
+    fn general_rotation(&self, other: &Self, angle: F, vectors_to_rotate: &mut [Self]);
+}
+
 macro_rules! dimension {
-    ($point:ident, $vector:ident) => {
+    ($point:ident, $vector:ident, $matrix:ident, $dimension:expr) => {
         impl<F: CustomFloat> CustomPoint<F, $vector<F>> for $point<F> {}
         impl<F: CustomFloat> CustomVector<F, $point<F>> for $vector<F> {}
 
@@ -638,14 +654,51 @@ macro_rules! dimension {
                 *self.as_mut() = *coords.as_ref();
             }
         }
+
+        impl<F: CustomFloat> GeneralRotation<F> for $vector<F> {
+            fn general_rotation(&self, other: &Self, angle: F, vectors_to_rotate: &mut [$vector<F>]) {
+                let mut original = $matrix::new_identity($dimension);
+
+                // Set the rotation plane
+                original.set_column(0, *self);
+                original.set_column(1, *other);
+
+                // Orthonormalize the rotation plane vectors using the Gram-Schmidt process
+                // in order to get the translation matrix
+                let mut result = original;
+
+                {
+                    result.set_column(0, original.column(0));
+
+                    for i in 1 .. $dimension {
+                        for j in 0 .. i {
+                            let original_column = original.column(i);
+                            original.set_column(i, original_column - result.column(j) * result.column(j).dot(&original_column));
+                        }
+
+                        result.set_column(i, original.column(i).normalize());
+                    }
+                }
+
+                // Create the rotation matrix that rotates translated vectors
+                let mut rotation_matrix = $matrix::new_identity($dimension);
+                rotation_matrix.m11 = angle.cos(); rotation_matrix.m12 = -angle.sin();
+                rotation_matrix.m21 = angle.sin(); rotation_matrix.m22 = angle.cos();
+                let result = result * (rotation_matrix * result.transpose());
+
+                for vector in vectors_to_rotate {
+                    *vector = result * *vector;
+                }
+            }
+        }
     }
 }
 
-dimension!(Point2, Vector2);
-dimension!(Point3, Vector3);
-dimension!(Point4, Vector4);
-dimension!(Point5, Vector5);
-dimension!(Point6, Vector6);
+dimension!(Point2, Vector2, Matrix2, 2);
+dimension!(Point3, Vector3, Matrix3, 3);
+dimension!(Point4, Vector4, Matrix4, 4);
+dimension!(Point5, Vector5, Matrix5, 5);
+dimension!(Point6, Vector6, Matrix6, 6);
 
 impl<F: CustomFloat> Derank for Point4<F> {
     type Type = Point3<F>;

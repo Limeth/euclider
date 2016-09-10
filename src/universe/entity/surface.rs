@@ -17,7 +17,6 @@ use util::CustomPoint;
 use util::CustomVector;
 use num::Zero;
 use num::One;
-use na;
 use na::Cast;
 use na::Point2;
 use palette::Rgb;
@@ -222,7 +221,7 @@ pub fn reflection_ratio_fresnel<F: CustomFloat, P: CustomPoint<F, V>, V: CustomV
         };
         let to_theta = ((from_index / to_index) * from_theta.sin()).asin();
 
-        let ratio = if to_theta.is_nan() {
+        if to_theta.is_nan() {
             <F as One>::one()
         } else {
             // s-polarized light
@@ -237,9 +236,7 @@ pub fn reflection_ratio_fresnel<F: CustomFloat, P: CustomPoint<F, V>, V: CustomV
 
             // to get the reflectance of unpolarised light, we take the average
             (reflectance_s + reflectance_p) / (<F as One>::one() + <F as One>::one())
-        };
-
-        ratio
+        }
     })
 }
 
@@ -262,6 +259,28 @@ pub fn threshold_direction_identity<F: CustomFloat, P: CustomPoint<F, V>, V: Cus
 {
     Box::new(move |context: &TracingContext<F, P, V>| {
         context.intersection.direction
+    })
+}
+
+pub fn threshold_direction_snell<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+    (refractive_index: F)
+    -> Box<ThresholdDirectionProvider<F, P, V>>
+{
+    Box::new(move |context: &TracingContext<F, P, V>| {
+        let normal = -context.intersection_normal_closer;
+        let from_theta = context.intersection.direction.angle_between(&normal);
+        let refractive_index_modifier = if context.exiting {
+            refractive_index
+        } else {
+            <F as One>::one() / refractive_index
+        };
+        let to_theta = (refractive_index_modifier * from_theta.sin()).asin();
+        let angle_delta = to_theta - from_theta;
+        let mut data = [context.intersection.direction];
+
+        normal.general_rotation(&context.intersection.direction, angle_delta, &mut data);
+
+        data[0]
     })
 }
 

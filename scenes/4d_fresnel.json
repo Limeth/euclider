@@ -1,0 +1,86 @@
+{
+  "Universe4": {
+    "camera": {
+      "FreeCamera4": []
+    },
+    "entities": [
+      {
+        "Entity4Impl::new": [
+          {
+            "Sphere4::new": [
+              {
+                "Point4::new": [
+                  10,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              3
+            ]
+          },
+          {
+            "Vacuum4::new": []
+          },
+          {
+            "ComposableSurface4": {
+              "reflection_ratio": {
+                "reflection_ratio_fresnel_4": [
+                  1.458,
+                  1
+                ]
+              },
+              "reflection_direction": {
+                "reflection_direction_specular_4": []
+              },
+              "threshold_direction": {
+                "threshold_direction_snell_4": [
+                    1.458
+                ]
+              },
+              "surface_color": {
+                "surface_color_uniform_4": [
+                  {
+                    "Rgba::new": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "Void4::new_with_vacuum": []
+      }
+    ],
+    "background": {
+      "MappedTextureImpl4::new": [
+        {
+          "uv_derank_4": [
+            {
+              "uv_sphere_3": [
+                {
+                  "Point3::new": [
+                    0,
+                    0,
+                    0
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "texture_image": [
+            "./resources/pixelcg_uv.jpg"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,10 +1,6 @@
 use num::traits::NumCast;
 use rand::StdRng;
 use rand::Rand;
-use num::One;
-use na;
-use na::Rotate;
-use na::UnitQuaternion;
 use na::Cast;
 use na::Point2;
 use na::Point3;
@@ -16,9 +12,7 @@ use palette;
 use palette::Hsv;
 use palette::RgbHue;
 use util::CustomFloat;
-use util::AngleBetween;
 use universe::entity::surface::Surface;
-use universe::entity::surface::ThresholdDirectionProvider;
 use universe::entity::surface::UVFn;
 use universe::entity::surface::SurfaceColorProvider;
 use universe::entity::shape::TracingContext;
@@ -40,28 +34,6 @@ pub fn surface_color_perlin_hue<F: CustomFloat>
         palette::Rgba::from(Hsv::new(RgbHue::from(value * Cast::from(360.0)),
                                      Cast::from(1.0),
                                      Cast::from(1.0)))
-    })
-}
-
-// Possibly generalize for n-dimensional spaces
-// http://math.stackexchange.com/questions/1402362/rotation-in-4d
-pub fn threshold_direction_snell<F: CustomFloat>
-    (refractive_index: F)
-    -> Box<ThresholdDirectionProvider<F, Point3<F>, Vector3<F>>>
-{
-    Box::new(move |context: &TracingContext<F, Point3<F>, Vector3<F>>| {
-        let normal = -context.intersection_normal_closer;
-        let axis = na::cross(&context.intersection.direction, &normal);
-        let from_theta = context.intersection.direction.angle_between(&normal);
-        let refractive_index_modifier = if context.exiting {
-            refractive_index
-        } else {
-            <F as One>::one() / refractive_index
-        };
-        let to_theta = (refractive_index_modifier * from_theta.sin()).asin();
-        let quaternion = UnitQuaternion::new(axis * (from_theta - to_theta));
-
-        quaternion.rotate(&context.intersection.direction)
     })
 }
 

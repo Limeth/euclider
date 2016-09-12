@@ -1,7 +1,16 @@
 {
   "Universe4": {
     "camera": {
-      "FreeCamera4": []
+      "FreeCamera4::new_with_location": [
+        {
+          "Point4": [
+            -10,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
     },
     "entities": [
       {

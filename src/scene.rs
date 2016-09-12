@@ -1329,7 +1329,6 @@ impl Parser {
                 }
             }
 
-            // TODO: Add optional parameters via `Option<$($item_type:tt)+>`
             add_deserializer! {
                 "PitchYawCamera3", "PitchYawCamera3::new";
                 -> Box<Camera3<F>> {
@@ -1337,11 +1336,24 @@ impl Parser {
                 }
             }
 
-            // TODO: Add optional parameters via `Option<$($item_type:tt)+>`
+            add_deserializer! {
+                "PitchYawCamera3::new_with_location";
+                [location: Point3<F>] -> Box<Camera3<F>> {
+                    Box::new(PitchYawCamera3::new_with_location(location))
+                }
+            }
+
             add_deserializer! {
                 "FreeCamera3", "FreeCamera3::new";
                 -> Box<Camera3<F>> {
                     Box::new(FreeCamera3::new())
+                }
+            }
+
+            add_deserializer! {
+                "FreeCamera3::new_with_location";
+                [location: Point3<F>] -> Box<Camera3<F>> {
+                    Box::new(FreeCamera3::new_with_location(location))
                 }
             }
 
@@ -1360,11 +1372,17 @@ impl Parser {
                 }
             }
 
-            // TODO: Add optional parameters via `Option<$($item_type:tt)+>`
             add_deserializer! {
                 "FreeCamera4", "FreeCamera4::new";
                 -> Box<Camera4<F>> {
                     Box::new(FreeCamera4::new())
+                }
+            }
+
+            add_deserializer! {
+                "FreeCamera4::new_with_location";
+                [location: Point4<F>] -> Box<Camera4<F>> {
+                    Box::new(FreeCamera4::new_with_location(location))
                 }
             }
         }

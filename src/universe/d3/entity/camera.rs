@@ -42,6 +42,13 @@ impl<F: CustomFloat> Camera3Data<F> {
         }
     }
 
+    pub fn new_with_location(location: Point3<F>) -> Self {
+        Camera3Data {
+            location: location,
+            .. Self::new()
+        }
+    }
+
     fn get_left(&self) -> Vector3<F> {
         na::cross(&self.up, &self.forward).normalize()
     }
@@ -62,6 +69,12 @@ impl<F: CustomFloat> PitchYawCamera3<F> {
     pub fn new() -> PitchYawCamera3<F> {
         PitchYawCamera3 {
             data: Camera3Data::new(),
+        }
+    }
+
+    pub fn new_with_location(location: Point3<F>) -> Self {
+        PitchYawCamera3 {
+            data: Camera3Data::new_with_location(location)
         }
     }
 
@@ -263,6 +276,12 @@ impl<F: CustomFloat> FreeCamera3<F> {
     pub fn new() -> FreeCamera3<F> {
         FreeCamera3 {
             data: Camera3Data::new(),
+        }
+    }
+
+    pub fn new_with_location(location: Point3<F>) -> Self {
+        FreeCamera3 {
+            data: Camera3Data::new_with_location(location)
         }
     }
 

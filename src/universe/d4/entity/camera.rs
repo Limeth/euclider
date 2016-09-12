@@ -48,6 +48,13 @@ impl<F: CustomFloat> FreeCamera4<F> {
         }
     }
 
+    pub fn new_with_location(location: Point4<F>) -> Self {
+        FreeCamera4 {
+            location: location,
+            .. Self::new()
+        }
+    }
+
     fn update_rotation(&mut self, delta_millis: F, context: &SimulationContext) {
         let pressed_keys: &HashSet<VirtualKeyCode> = context.pressed_keys();
         let mut angle: F = <F as Zero>::zero();

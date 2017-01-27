@@ -60,7 +60,7 @@ impl<F: CustomFloat> Simulation<F> {
         self.render();
 
         'simulation: loop {
-            if let Err(_) = self.update() {
+            if self.update().is_err() {
                 break 'simulation;
             }
 

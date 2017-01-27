@@ -103,7 +103,7 @@ impl<F: CustomFloat> FreeCamera4<F> {
                 {
                     let mut vectors_to_rotate = [&mut self.forward, &mut self.left, &mut self.up];
 
-                    for vector_to_rotate in (&mut vectors_to_rotate).into_iter() {
+                    for vector_to_rotate in &mut vectors_to_rotate {
                         **vector_to_rotate = normalize_matrix * (rotation_matrix
                                                                  * (transpose_normalize_matrix * **vector_to_rotate));
                     }

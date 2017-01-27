@@ -9,6 +9,7 @@ use universe::entity::Locatable;
 use universe::entity::Rotatable;
 use universe::entity::Traceable;
 use universe::entity::Camera;
+use universe::d4::Universe4;
 use universe::d4::entity::*;
 use num::traits::NumCast;
 use num::Zero;
@@ -125,7 +126,7 @@ impl<F: CustomFloat> FreeCamera4<F> {
     }
 }
 
-impl<F: CustomFloat> Camera<F, Point4<F>, Vector4<F>> for FreeCamera4<F> {
+impl<F: CustomFloat> Camera<F, Point4<F>, Vector4<F>, Universe4<F>> for FreeCamera4<F> {
     #[allow(unused_variables)]
     fn get_ray_point(&self,
                      screen_x: i32,
@@ -164,7 +165,7 @@ impl<F: CustomFloat> Camera<F, Point4<F>, Vector4<F>> for FreeCamera4<F> {
         self.max_depth
     }
 
-    fn update(&mut self, delta_time: &Duration, context: &SimulationContext, universe: &Universe<F, P=Point4<F>, V=Vector4<F>>) {
+    fn update(&mut self, delta_time: &Duration, context: &SimulationContext, universe: &Universe4<F>) {
         let delta_millis = <F as NumCast>::from((*delta_time * 1000u32).as_secs()).unwrap() /
                            Cast::from(1000.0);
 

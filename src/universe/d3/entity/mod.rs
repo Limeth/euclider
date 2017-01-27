@@ -6,6 +6,7 @@ pub mod surface;
 use na::Point3;
 use na::Vector3;
 use util::CustomFloat;
+use universe::d3::Universe3;
 use universe::entity::Entity;
 use universe::entity::Camera;
 use universe::entity::Traceable;
@@ -16,7 +17,7 @@ use self::shape::Shape3;
 use self::surface::Surface3;
 
 pub type Entity3<F> = Entity<F, Point3<F>, Vector3<F>>;
-pub type Camera3<F> = Camera<F, Point3<F>, Vector3<F>>;
+pub type Camera3<F> = Camera<F, Point3<F>, Vector3<F>, Universe3<F>>;
 pub type Traceable3<F> = Traceable<F, Point3<F>, Vector3<F>>;
 pub type Locatable3<F> = Locatable<F, Point3<F>, Vector3<F>>;
 pub type Rotatable3<F> = Rotatable<F, Point3<F>, Vector3<F>>;

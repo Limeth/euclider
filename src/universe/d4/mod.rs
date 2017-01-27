@@ -67,7 +67,7 @@ impl<F: CustomFloat> Universe<F> for Universe4<F> {
     type P = Point4<F>;
     type V = Vector4<F>;
 
-    fn camera(&self) -> &RwLock<Box<Camera<F, Point4<F>, Vector4<F>>>> {
+    fn camera(&self) -> &RwLock<Box<Camera<F, Point4<F>, Vector4<F>, Universe4<F>>>> {
         &self.camera
     }
 

@@ -751,7 +751,6 @@ impl<F: CustomFloat, V: Dot<F> + Norm<F>> AngleBetween<F> for V {
 pub trait CustomFloat:
     ApproxEq<Self> +
     BaseFloat +
-    Consts +
     NumCast +
     Num<FromStrRadixErr=ParseFloatError> +
     ApproxEq<Self> +
@@ -791,22 +790,6 @@ pub trait CustomFloat:
 
 impl CustomFloat for f64 {}
 impl CustomFloat for f32 {}
-
-pub trait Consts {
-    fn epsilon() -> Self;
-}
-
-impl Consts for f64 {
-    fn epsilon() -> Self {
-        std::f64::EPSILON
-    }
-}
-
-impl Consts for f32 {
-    fn epsilon() -> Self {
-        std::f32::EPSILON
-    }
-}
 
 pub trait JsonFloat {
     fn float_from_json(val: &JsonValue) -> Option<Self> where Self: Sized;

@@ -45,7 +45,7 @@ pub trait Universe<F: CustomFloat>
     type P: CustomPoint<F, Self::V>;
     type V: CustomVector<F, Self::P>;
 
-    fn camera(&self) -> &RwLock<Box<Camera<F, Self::P, Self::V>>>;
+    fn camera(&self) -> &RwLock<Box<Camera<F, Self::P, Self::V, Self>>>;
     fn entities_mut(&mut self) -> &mut Vec<Box<Entity<F, Self::P, Self::V>>>;
     fn entities(&self) -> &Vec<Box<Entity<F, Self::P, Self::V>>>;
     fn set_entities(&mut self, entities: Vec<Box<Entity<F, Self::P, Self::V>>>);

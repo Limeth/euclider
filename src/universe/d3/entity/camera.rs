@@ -9,6 +9,7 @@ use universe::entity::Locatable;
 use universe::entity::Rotatable;
 use universe::entity::Traceable;
 use universe::entity::Camera;
+use universe::d3::Universe3;
 use universe::d3::entity::*;
 use num::traits::NumCast;
 use num::Zero;
@@ -131,7 +132,7 @@ impl<F: CustomFloat> PitchYawCamera3<F> {
     }
 }
 
-impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for PitchYawCamera3<F> {
+impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>, Universe3<F>> for PitchYawCamera3<F> {
     #[allow(unused_variables)]
     fn get_ray_point(&self,
                      screen_x: i32,
@@ -170,7 +171,7 @@ impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for PitchYawCamera3<F> {
         self.data.max_depth
     }
 
-    fn update(&mut self, delta_time: &Duration, context: &SimulationContext, universe: &Universe<F, P=Point3<F>, V=Vector3<F>>) {
+    fn update(&mut self, delta_time: &Duration, context: &SimulationContext, universe: &Universe3<F>) {
         self.update_rotation(context);
 
         let pressed_keys: &HashSet<VirtualKeyCode> = context.pressed_keys();
@@ -334,7 +335,7 @@ impl<F: CustomFloat> FreeCamera3<F> {
     }
 }
 
-impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for FreeCamera3<F> {
+impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>, Universe3<F>> for FreeCamera3<F> {
     #[allow(unused_variables)]
     fn get_ray_point(&self,
                      screen_x: i32,
@@ -373,7 +374,7 @@ impl<F: CustomFloat> Camera<F, Point3<F>, Vector3<F>> for FreeCamera3<F> {
         self.data.max_depth
     }
 
-    fn update(&mut self, delta_time: &Duration, context: &SimulationContext, universe: &Universe<F, P=Point3<F>, V=Vector3<F>>) {
+    fn update(&mut self, delta_time: &Duration, context: &SimulationContext, universe: &Universe3<F>) {
         let delta_millis = <F as NumCast>::from((*delta_time * 1000u32).as_secs()).unwrap() /
                            Cast::from(1000.0);
 

@@ -22,7 +22,7 @@ pub trait Entity<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: S
     fn as_traceable(&self) -> Option<&Traceable<F, P, V>>;
 }
 
-pub trait Camera<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+pub trait Camera<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, U: Universe<F, P=P, V=V>>
     : Entity<F, P, V> {
     fn get_ray_point(&self,
                      screen_x: i32,
@@ -37,7 +37,7 @@ pub trait Camera<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
                       screen_height: i32)
                       -> V;
     fn max_depth(&self) -> u32;
-    fn update(&mut self, delta_time: &Duration, context: &SimulationContext, universe: &Universe<F, P=P, V=V>);
+    fn update(&mut self, delta_time: &Duration, context: &SimulationContext, universe: &U);
 }
 
 pub trait Traceable<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>

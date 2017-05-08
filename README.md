@@ -19,11 +19,22 @@ Dual-licensed under [MIT](https://opensource.org/licenses/MIT) or the [UNLICENSE
 
 # Controls
 
-* Mouse - camera rotation
 * Mouse wheel - resolution adjustment
-* [`W`/`A`/`S`/`D`/`Shift`/`Control`] - camera movement
 * [`Esc`] - exit
 
+## 3D Scenes
+
+* Mouse - camera rotation
+* [`W`/`A`/`S`/`D`/`Shift`/`Control`] - camera movement
+
+## 4D Scenes
+
+* Generalized rotations happen in a plane, not around an axis. A plane is given by two axes of the camera. Rotate by holding two buttons bound to the following axes and pressing [`C`/`M`]:
+  * [`I`] - x axis
+  * [`O`] - Y axis
+  * [`K`] - Z axis
+  * [`L`] - W axis
+* [`W`/`A`/`S`/`D`/`Shift`/`Control`/`Q`/`E`] - camera movement
 
 # Preview of version 0.9.0
 

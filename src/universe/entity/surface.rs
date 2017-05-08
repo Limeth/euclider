@@ -158,8 +158,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Surface<F, P, 
     }
 
     fn get_path(&self, context: PathTracingContext<F, P, V>) -> Option<(P, V)> {
-        if *context.distance * *context.distance
-            - context.general.intersection.distance <= <F as Zero>::zero() {
+        if *context.distance - context.general.intersection.distance <= <F as Zero>::zero() {
             None
         } else {
             let new_distance = *context.distance - context.general.intersection.distance;

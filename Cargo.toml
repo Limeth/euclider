@@ -6,6 +6,7 @@ license = "MIT/Unlicense"
 authors = ["Jakub Hlusička <jakub.hlusicka@email.cz>"]
 repository = "https://github.com/Limeth/euclider"
 keywords = ["graphics", "rendering", "ray", "tracing"]
+categories = ["rendering::engine"]
 readme = "README.md"
 include = [
     "**/*.rs",

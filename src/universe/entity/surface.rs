@@ -26,6 +26,7 @@ pub type ReflectionRatioProvider<F, P, V> = Fn(&TracingContext<F, P, V>) -> F;
 pub type ReflectionDirectionProvider<F, P, V> = Fn(&TracingContext<F, P, V>) -> V;
 pub type ThresholdDirectionProvider<F, P, V> = Fn(&TracingContext<F, P, V>) -> V;
 pub type SurfaceColorProvider<F, P, V> = Fn(&TracingContext<F, P, V>) -> Rgba<F>;
+pub type ThresholdPathModifier<F, P, V> = Fn(&PathTracingContext<F, P, V>, &mut P, &mut V);
 
 pub trait Surface<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
     fn get_color(&self, context: ColorTracingContext<F, P, V>) -> Rgba<F>;

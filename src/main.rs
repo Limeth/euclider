@@ -1,5 +1,4 @@
 #![feature(plugin)]
-#![feature(reflect_marker)]
 #![feature(custom_attribute)]
 #![feature(const_fn)]
 #![feature(concat_idents)]

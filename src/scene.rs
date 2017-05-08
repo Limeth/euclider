@@ -1408,7 +1408,7 @@ impl Parser {
 
     pub fn deserialize<T: Any>(&self, key: &str, json: &JsonValue, parent_json: &JsonValue) -> Result<Box<T>, ParserError> {
         let deserializer = try!(self.deserializer(key));
-        let result = try!(deserializer(parent_json, json, &self)).downcast::<T>();
+        let result = try!(deserializer(parent_json, json, self)).downcast::<T>();
 
         match result {
             Ok(value) => Ok(value),

@@ -1,4 +1,3 @@
-use std;
 use std::any::TypeId;
 use std::any::Any;
 use std::collections::HashSet;
@@ -78,7 +77,6 @@ use na::Point6;
 use na::Vector6;
 use na::Matrix6;
 use core::iter::FromIterator;
-use core::marker::Reflect;
 use core::ops::DerefMut;
 use json::JsonValue;
 use mopa;
@@ -114,7 +112,7 @@ impl<T> RemoveIf<T, HashSet<T>> for HashSet<T>
 
 pub trait HasId {
     fn id_static() -> TypeId
-        where Self: Sized + Reflect + 'static
+        where Self: Sized + 'static
     {
         TypeId::of::<Self>()
     }
@@ -122,35 +120,6 @@ pub trait HasId {
     fn id(&self) -> TypeId;
     fn as_any(&self) -> &Any;
     fn as_any_mut(&mut self) -> &mut Any;
-}
-
-#[macro_export]
-macro_rules! reflect_internal {
-    (
-        $trait_:ident
-        {
-            constr: [ $($constr:tt)* ],
-            params: [ $($args:tt)* ],
-            $($_fields:tt)*
-        },
-    ) => {
-        as_item! {
-            #[allow(dead_code)]
-            impl<$($constr)*> Reflect for $trait_<$($args)*> {
-            }
-        }
-    }
-}
-
-#[macro_export]
-macro_rules! reflect {
-    ($trait_:ident $($t:tt)*) => {
-        parse_generics_shim! {
-            { .. },
-            then reflect_internal!($trait_),
-            $($t)*
-        }
-    }
 }
 
 #[macro_export]
@@ -525,7 +494,6 @@ pub trait CustomPoint<F: CustomFloat, V: CustomVector<F, Self>>:
 // MulAssign<UnitQuaternion<F>>
 // Mul<Rotation3<F>>
 // MulAssign<Rotation3<F>>
-    Reflect +
     Copy +
     Debug +
 // Hash +
@@ -591,7 +559,6 @@ pub trait CustomVector<F: CustomFloat, P: CustomPoint<F, Self>>:
     Translate<P> +
 // Cross<CrossProductType=Self> +
     VectorAsPoint<Point=P> +
-    Reflect +
     Copy +
     Debug +
 // Hash +
@@ -754,7 +721,6 @@ pub trait CustomFloat:
     NumCast +
     Num<FromStrRadixErr=ParseFloatError> +
     ApproxEq<Self> +
-    Reflect +
     UpperExp +
     LowerExp +
     Display +

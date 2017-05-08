@@ -5,7 +5,6 @@ pub mod d4;
 
 use std::time::Duration;
 use std::borrow::Cow;
-use std::marker::Reflect;
 use std::sync::RwLock;
 use na::Cast;
 use na::BaseFloat;
@@ -40,7 +39,7 @@ pub type TraceResult<'a, F, P, V> = (&'a Traceable<F, P, V>,
                                      TracingContext<'a, F, P, V>);
 
 pub trait Universe<F: CustomFloat>
-    where Self: Sync + Reflect + 'static
+    where Self: Sync + 'static
 {
     type P: CustomPoint<F, Self::V>;
     type V: CustomVector<F, Self::P>;

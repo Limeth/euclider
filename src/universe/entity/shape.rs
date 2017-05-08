@@ -4,7 +4,6 @@ use util::IterLazy;
 use std::fmt;
 use std::fmt::Debug;
 use std::fmt::Display;
-use std::marker::Reflect;
 use std::time::Duration;
 use std::any::TypeId;
 use std::any::Any;
@@ -73,7 +72,6 @@ mopafy!(Shape<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>);
 #[macro_export]
 macro_rules! shape {
     ($($t:tt)*) => {
-        reflect!($($t)*);
         has_id!($($t)*);
         name_as_display!($($t)*);
     }

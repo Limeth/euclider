@@ -9,7 +9,7 @@ use util::CustomPoint;
 use util::CustomVector;
 use util::HasId;
 use na::Dimension;
-use meval::Expr;
+use meval::{Expr, Context as MevalContext};
 use num::NumCast;
 
 pub trait Material<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
@@ -86,7 +86,7 @@ impl ComponentTransformation {
 
         result
     }
-    
+
     fn transform_with<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, E: Fn(&ComponentTransformationExpr) -> &Expr>
         (&self, vector: &mut V, expr: &E, legend: &str) {
         let dim = <P as Dimension>::dimension(None);
@@ -95,10 +95,15 @@ impl ComponentTransformation {
             panic!("The number of functions must be equal to the number of dimensions ({})!", dim);
         }
 
-        let context = Self::create_context(vector, legend);
+        let mut context = MevalContext::new();
+
+        for (key, value) in Self::create_context(vector, legend)
+        {
+            context.var(key, value);
+        }
 
         for (component, expression) in vector.iter_mut().zip(self.expressions.iter()) {
-            let result = expr(expression).eval(context.clone())
+            let result = expr(expression).eval_with_context(context.clone())
                         .expect("Could not evaluate the expression.");
 
             *component = <F as NumCast>::from(result).unwrap();

@@ -30,6 +30,7 @@ use na::Vector4;
 use util::JsonFloat;
 use image;
 use meval::Expr;
+use core::str::FromStr;
 
 macro_rules! deserializer {
     (

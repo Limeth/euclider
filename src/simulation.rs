@@ -10,7 +10,6 @@ use na::Point2;
 use na::Vector2;
 use glium::Surface as GliumSurface;
 use glium::BlitTarget;
-use glium::backend::Facade;
 use glium::backend::glutin::Display;
 use glium::glutin::ContextBuilder;
 use glium::glutin::Event;
@@ -209,12 +208,12 @@ impl SimulationContext {
 
     #[allow(unused_variables)]
     pub fn update(&mut self, display: &Display, debug: bool) -> Result<(), WindowEvent> {
-        if let None = self.events_loop {
+        if self.events_loop.is_none() {
             return Ok(());
         }
 
         let mut return_value: Result<(), WindowEvent> = Ok(());
-        let mut events_loop = self.events_loop.as_ref().unwrap().clone();
+        let events_loop = Arc::clone(self.events_loop.as_ref().unwrap());
 
         self.reset_delta_mouse();
 

@@ -15,6 +15,8 @@ use universe::entity::shape::*;
 use universe::Universe;
 use util::CustomFloat;
 use util::HasId;
+use core::ops::Deref;
+use core::ops::DerefMut;
 
 pub struct Universe4<F: CustomFloat> {
     pub camera: Arc<RwLock<Box<Camera4<F>>>>,
@@ -95,12 +97,12 @@ impl<F: CustomFloat> Universe<F> for Universe4<F> {
         self.intersections = intersections;
     }
 
-    fn background_mut(&mut self) -> &mut Box<MappedTexture<F, Self::P, Self::V>> {
-        &mut self.background
+    fn background_mut(&mut self) -> &mut MappedTexture<F, Self::P, Self::V> {
+        self.background.deref_mut()
     }
 
-    fn background(&self) -> &Box<MappedTexture<F, Self::P, Self::V>> {
-        &self.background
+    fn background(&self) -> &MappedTexture<F, Self::P, Self::V> {
+        self.background.deref()
     }
 
     fn set_background(&mut self, background: Box<MappedTexture<F, Self::P, Self::V>>) {

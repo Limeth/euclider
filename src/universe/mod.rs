@@ -52,8 +52,8 @@ pub trait Universe<F: CustomFloat>
     fn intersectors_mut(&mut self) -> &mut GeneralIntersectors<F, Self::P, Self::V>;
     fn intersectors(&self) -> &GeneralIntersectors<F, Self::P, Self::V>;
     fn set_intersectors(&mut self, intersections: GeneralIntersectors<F, Self::P, Self::V>);
-    fn background_mut(&mut self) -> &mut Box<MappedTexture<F, Self::P, Self::V>>;
-    fn background(&self) -> &Box<MappedTexture<F, Self::P, Self::V>>;
+    fn background_mut(&mut self) -> &mut MappedTexture<F, Self::P, Self::V>;
+    fn background(&self) -> &MappedTexture<F, Self::P, Self::V>;
     fn set_background(&mut self, background: Box<MappedTexture<F, Self::P, Self::V>>);
 
     fn intersect(&self,
@@ -107,8 +107,9 @@ pub trait Universe<F: CustomFloat>
 
             let shape = other_traceable.shape();
             let provider = self.intersect(location, direction, material, shape);
+            let mut provider_iter = provider.iter();
 
-            for intersection in provider.iter() {
+            if let Some(intersection) = provider_iter.next() {
                 let exiting: bool;
                 let closer_normal: Self::V;
 
@@ -137,8 +138,6 @@ pub trait Universe<F: CustomFloat>
                     closest = Some((other_traceable, context));
                     closest_distance = Some(intersection.distance);
                 }
-
-                break;
             }
         }
 

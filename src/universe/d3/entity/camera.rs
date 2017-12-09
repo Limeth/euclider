@@ -59,6 +59,12 @@ impl<F: CustomFloat> Camera3Data<F> {
     }
 }
 
+impl<F: CustomFloat> Default for Camera3Data<F> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(Clone, Copy, PartialEq)]
 pub struct PitchYawCamera3<F: CustomFloat> {
     data: Camera3Data<F>,
@@ -129,6 +135,12 @@ impl<F: CustomFloat> PitchYawCamera3<F> {
 
     fn rotate_pitch(&mut self, angle: F) {
         Self::rotate_pitch_static(&mut self.data.forward, &mut self.data.up, angle, true);
+    }
+}
+
+impl<F: CustomFloat> Default for PitchYawCamera3<F> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -332,6 +344,12 @@ impl<F: CustomFloat> FreeCamera3<F> {
 
     fn rotate_roll(&mut self, angle: F) {
         Self::rotate_roll_static(&mut self.data.forward, &mut self.data.up, angle);
+    }
+}
+
+impl<F: CustomFloat> Default for FreeCamera3<F> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

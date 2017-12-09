@@ -433,65 +433,64 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
 //     ^-^ ^-^ ^-^   ^-^
     #[allow(useless_let_if_seq)]
     fn next(&mut self) -> Option<Self::Item> {
-        loop {
-            let intersection_a = self.data.provider_a[self.data.index_a];
-            let intersection_b = self.data.provider_b[self.data.index_b];
+        let intersection_a = self.data.provider_a[self.data.index_a];
+        let intersection_b = self.data.provider_b[self.data.index_b];
 
-            if intersection_a.is_some() {
-                if intersection_b.is_some() {
-                    let unwrapped_a = intersection_a.unwrap();
-                    let unwrapped_b = intersection_b.unwrap();
-                    let closer: Intersection<F, P, V>;
-                    let closer_index: &mut usize;
-                    let further_shape: &Shape<F, P, V>;
+        if intersection_a.is_some() {
+            if intersection_b.is_some() {
+                let unwrapped_a = intersection_a.unwrap();
+                let unwrapped_b = intersection_b.unwrap();
+                let closer: Intersection<F, P, V>;
+                let closer_index: &mut usize;
+                let further_shape: &Shape<F, P, V>;
 
-                    if unwrapped_a.distance < unwrapped_b.distance {
-                        closer = unwrapped_a;
-                        closer_index = &mut self.data.index_a;
-                        further_shape = self.data.shape_b.as_ref().as_ref();
-                    } else {
-                        closer = unwrapped_b;
-                        closer_index = &mut self.data.index_b;
-                        further_shape = self.data.shape_a.as_ref().as_ref();
-                    }
-
-                    if further_shape.is_point_inside(&closer.location) {
-                        *closer_index += 1;
-                        let mut closer_inverted = closer;
-                        closer_inverted.normal = -closer_inverted.normal;
-                        return Some(closer_inverted);
-                    }
-
-                    *closer_index += 1;
-                    return Some(closer);
+                if unwrapped_a.distance < unwrapped_b.distance {
+                    closer = unwrapped_a;
+                    closer_index = &mut self.data.index_a;
+                    further_shape = self.data.shape_b.as_ref().as_ref();
                 } else {
-                    let unwrapped_a = intersection_a.unwrap();
-
-                    self.data.index_a += 1;
-
-                    if self.data.shape_b.is_point_inside(&unwrapped_a.location) {
-                        let mut closer_inverted = unwrapped_a;
-                        closer_inverted.normal = -closer_inverted.normal;
-                        return Some(closer_inverted);
-                    }
-
-                    return intersection_a;
+                    closer = unwrapped_b;
+                    closer_index = &mut self.data.index_b;
+                    further_shape = self.data.shape_a.as_ref().as_ref();
                 }
+
+                if further_shape.is_point_inside(&closer.location) {
+                    *closer_index += 1;
+                    let mut closer_inverted = closer;
+                    closer_inverted.normal = -closer_inverted.normal;
+                    return Some(closer_inverted);
+                }
+
+                *closer_index += 1;
+
+                Some(closer)
             } else {
-                if intersection_b.is_some() {
-                    let unwrapped_b = intersection_b.unwrap();
+                let unwrapped_a = intersection_a.unwrap();
 
-                    self.data.index_b += 1;
+                self.data.index_a += 1;
 
-                    if self.data.shape_a.is_point_inside(&unwrapped_b.location) {
-                        let mut closer_inverted = unwrapped_b;
-                        closer_inverted.normal = -closer_inverted.normal;
-                        return Some(closer_inverted);
-                    }
+                if self.data.shape_b.is_point_inside(&unwrapped_a.location) {
+                    let mut closer_inverted = unwrapped_a;
+                    closer_inverted.normal = -closer_inverted.normal;
+                    return Some(closer_inverted);
                 }
 
-                return intersection_b;
+                intersection_a
             }
+        } else {
+            if intersection_b.is_some() {
+                let unwrapped_b = intersection_b.unwrap();
+
+                self.data.index_b += 1;
+
+                if self.data.shape_a.is_point_inside(&unwrapped_b.location) {
+                    let mut closer_inverted = unwrapped_b;
+                    closer_inverted.normal = -closer_inverted.normal;
+                    return Some(closer_inverted);
+                }
+            }
+
+            intersection_b
         }
     }
 }
@@ -523,7 +522,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableShap
     pub fn of<I: IntoIterator<Item = Box<Shape<F, P, V>>>>(shapes: I,
                                                           operation: SetOperation)
                                                           -> ComposableShape<F, P, V> {
-        const PANIC: &'static str = "2 or more `Shape`s are needed to construct a `ComposableShape`.";
+        const PANIC: &str = "2 or more `Shape`s are needed to construct a `ComposableShape`.";
         let mut shapes = shapes.into_iter();
         let mut result = ComposableShape {
             a: Arc::new(shapes.next().expect(PANIC)),
@@ -557,26 +556,26 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableShap
         let provider_b = intersect(vacuum, composed.b.as_ref().as_ref());
         match composed.operation {
             SetOperation::Union => {
-                Box::new(UnionIterator::new(composed.a.clone(),
-                                            composed.b.clone(),
+                Box::new(UnionIterator::new(Arc::clone(&composed.a),
+                                            Arc::clone(&composed.b),
                                             provider_a,
                                             provider_b))
             }
             SetOperation::Intersection => {
-                Box::new(IntersectionIterator::new(composed.a.clone(),
-                                                   composed.b.clone(),
+                Box::new(IntersectionIterator::new(Arc::clone(&composed.a),
+                                                   Arc::clone(&composed.b),
                                                    provider_a,
                                                    provider_b))
             }
             SetOperation::Complement => {
-                Box::new(ComplementIterator::new(composed.a.clone(),
-                                                 composed.b.clone(),
+                Box::new(ComplementIterator::new(Arc::clone(&composed.a),
+                                                 Arc::clone(&composed.b),
                                                  provider_a,
                                                  provider_b))
             }
             SetOperation::SymmetricDifference => {
-                Box::new(SymmetricDifferenceIterator::new(composed.a.clone(),
-                                                          composed.b.clone(),
+                Box::new(SymmetricDifferenceIterator::new(Arc::clone(&composed.a),
+                                                          Arc::clone(&composed.b),
                                                           provider_a,
                                                           provider_b))
             }

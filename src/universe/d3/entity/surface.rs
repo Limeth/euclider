@@ -1,7 +1,5 @@
 use num::traits::NumCast;
 use rand;
-use rand::StdRng;
-use rand::Rand;
 use na::Cast;
 use na::Point2;
 use na::Point3;
@@ -24,7 +22,7 @@ pub fn surface_color_perlin_hue<F: CustomFloat>
      size: F,
      speed: F)
      -> Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>> {
-    let mut perlin = Perlin::new();
+    let perlin = Perlin::new();
 
     perlin.set_seed(seed);
 

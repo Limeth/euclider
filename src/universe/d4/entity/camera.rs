@@ -126,6 +126,12 @@ impl<F: CustomFloat> FreeCamera4<F> {
     }
 }
 
+impl<F: CustomFloat> Default for FreeCamera4<F> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<F: CustomFloat> Camera<F, Point4<F>, Vector4<F>, Universe4<F>> for FreeCamera4<F> {
     #[allow(unused_variables)]
     fn get_ray_point(&self,

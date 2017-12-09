@@ -5,6 +5,7 @@
 #![feature(trace_macros)]
 
 #![plugin(clippy)]
+#![allow(too_many_arguments)]
 
 extern crate core;
 extern crate nalgebra as na;
@@ -53,8 +54,8 @@ fn main() {
 }
 
 fn run<F: CustomFloat>() {
-    const ARG_SCENE: &'static str = "SCENE";
-    const ARG_DEBUG: &'static str = "DEBUG";
+    const ARG_SCENE: &str = "SCENE";
+    const ARG_DEBUG: &str = "DEBUG";
 
     let matches = App::new("euclider")
                       .version(crate_version!())

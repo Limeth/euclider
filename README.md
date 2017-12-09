@@ -1,8 +1,7 @@
 # euclider
 [![Build Status](https://travis-ci.org/Limeth/euclider.svg?branch=master)](https://travis-ci.org/Limeth/euclider)
-[![Clippy Linting Result](https://clippy.bashy.io/github/Limeth/euclider/master/badge.svg)](https://clippy.bashy.io/github/Limeth/euclider/master/log)
 
-A non-euclidean ray tracing prototype written in Rust.
+A higher-dimensional "non-euclidean" ray tracing prototype written in Rust.
 
 Dual-licensed under [MIT](https://opensource.org/licenses/MIT) or the [UNLICENSE](http://unlicense.org).
 
@@ -36,23 +35,20 @@ Dual-licensed under [MIT](https://opensource.org/licenses/MIT) or the [UNLICENSE
   * [`L`] - W axis
 * [`W`/`A`/`S`/`D`/`Shift`/`Control`/`Q`/`E`] - camera movement
 
-# Preview of version 0.9.0
+# Preview
 
-![Deep Reflection](preview_3_deep_reflection.png)
-A reflection chamber.
+![Fresnel Sphere](preview/preview_3d_fresnel_sphere.png)
+A simple sphere displaying Fresnel equations.
 
-![Textures](preview_4_textures.png)
-Universe background and a textured sphere. Thank you NASA for providing the
-materials.
+![3D Room](preview/preview_3d_room.png)
+A scene containing a room with several entities. Listed from left to right:
+* a blue sphere with a partially reflective surface;
+* a cuboid with an animated perlin noise surface;
+* a glass material in the shape of the complement set operation on a cube and a sphere;
+* an infinite cylinder passing through the ceiling and the floor
 
+![3D Hallways](preview/preview_3d_hallways.png)
+A non-euclidean 3D scene consisting of hallways that either stretch the space inside (left) or shrink it (right).
 
-# Preview of version 0.5.0
-
-![Reflection](preview_2_reflection.png)
-A sphere reflecting another sphere.
-
-
-# Preview of version 0.4.0
-
-![A perlin noise surface](preview_1_perlin.png)
-An implementation of a perlin noise HSV surface on a sphere and a test shape.
+![4D Cylindric Hypercube Frame](preview/preview_4d_cylinder_frame.png)
+A frame of a 4D hypercube made of cylinders as edges. Notice how the rays on the cyan cylinder in the bottom right are reflected to the fourth dimension, revealing more of the frame.

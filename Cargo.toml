@@ -18,9 +18,10 @@ include = [
 
 [features]
 low_precision = []
+default = []
 
 [dependencies]
-clippy = "0.*"
+clippy = { version = "0.*", optional = true }
 glium = "0.18.1"
 nalgebra = "0.8.2"  # TODO: Update for to the newest version
 image = "0.18.0"

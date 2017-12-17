@@ -1,11 +1,11 @@
-#![feature(plugin)]
 #![feature(custom_attribute)]
 #![feature(const_fn)]
 #![feature(concat_idents)]
 #![feature(trace_macros)]
 
-#![plugin(clippy)]
-#![allow(too_many_arguments)]
+#![cfg_attr(feature="clippy", feature(plugin))]
+#![cfg_attr(feature="clippy", plugin(clippy))]
+#![cfg_attr(feature="clippy", allow(too_many_arguments))]
 
 extern crate core;
 extern crate nalgebra as na;

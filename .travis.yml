@@ -1,204 +1,163 @@
+# Based on the "trust" template v0.1.1
+# https://github.com/japaric/trust/tree/v0.1.1
+
+dist: trusty
 language: rust
-cache: cargo
+services: docker
+sudo: required
+
+# Rust builds on stable by default, this can be
+# overridden on a case by case basis down below.
 
 env:
   global:
-    # This will be part of the release tarball
-    # change the project name
-    - PROJECT_NAME=euclider
-    # comment out this variable if you don't want to build .deb packages on all the targets.
-    - MAKE_DEB=yes
-    # update these two variables. They are part of the .deb package metadata
-    - DEB_MAINTAINER="Jakub Hlusička <jakub.hlusicka@email.cz>"
-    - DEB_DESCRIPTION="A non-euclidean raytracing prototype"
+    - CRATE_NAME=euclider
 
-# AFAICT There are a few ways to set up the build jobs. This one is not the DRYest but I feel is the
-# easiest to reason about.
-# Feel free to remove the channels/targets you don't need
-# NOTE Make *sure* you don't remove a reference (&foo) if you are going to dereference it (*foo)
 matrix:
+  # These are all the build jobs. Adjust as necessary. Comment out what you
+  # don't need
   include:
-    # # Stable channel
-    # - os: linux
-    #   rust: stable
-    #   env: TARGET=aarch64-unknown-linux-gnu
-    #   # need Trusty because the glibc in Precise is too old and doesn't support 64-bit arm
-    #   dist: trusty
-    #   sudo: required
-    #   # Extra packages only for this job
-    #   addons:
-    #     apt:
-    #       packages: &aarch64_unknown_linux_gnu
-    #         # Transparent emulation
-    #         - qemu-user-static
-    #         - binfmt-support
-    # - os: linux
-    #   rust: stable
-    #   env: TARGET=armv7-unknown-linux-gnueabihf
-    #   # sudo is needed for binfmt_misc, which is needed for transparent user qemu emulation
-    #   sudo: required
-    #   addons:
-    #     apt:
-    #       packages: &armv7_unknown_linux_gnueabihf
-    #         # Cross compiler and cross compiled C libraries
-    #         - gcc-arm-linux-gnueabihf
-    #         - libc6-armhf-cross
-    #         - libc6-dev-armhf-cross
-    #         # Transparent emulation
-    #         - qemu-user-static
-    #         - binfmt-support
-    # - os: osx
-    #   rust: stable
-    #   env: TARGET=i686-apple-darwin
-    #   sudo: required
-    # - os: linux
-    #   rust: stable
-    #   env: TARGET=i686-unknown-linux-gnu
-    #   addons:
-    #     apt:
-    #       packages: &i686_unknown_linux_gnu
-    #         # Cross compiler and cross compiled C libraries
-    #         - gcc-multilib
-    #   sudo: required
-    # - os: osx
-    #   rust: stable
-    #   env: TARGET=x86_64-apple-darwin
-    #   sudo: required
-    # - os: linux
-    #   rust: stable
-    #   env: TARGET=x86_64-unknown-linux-gnu
-    #   sudo: required
-    # - os: linux
-    #   rust: stable
-    #   env: TARGET=x86_64-unknown-linux-musl
-    #   sudo: required
-    # # Beta channel
-    # - os: linux
-    #   rust: beta
-    #   env: TARGET=aarch64-unknown-linux-gnu
-    #   dist: trusty
-    #   sudo: required
-    #   addons:
-    #     apt:
-    #       packages: *aarch64_unknown_linux_gnu
-    # - os: linux
-    #   rust: beta
-    #   env: TARGET=armv7-unknown-linux-gnueabihf
-    #   sudo: required
-    #   addons:
-    #     apt:
-    #       # Use the same packages the stable version uses
-    #       packages: *armv7_unknown_linux_gnueabihf
-    # - os: osx
-    #   rust: beta
-    #   env: TARGET=i686-apple-darwin
-    #   sudo: required
-    # - os: linux
-    #   rust: beta
-    #   env: TARGET=i686-unknown-linux-gnu
-    #   addons:
-    #     apt:
-    #       packages: *i686_unknown_linux_gnu
-    #   sudo: required
-    # - os: osx
-    #   rust: beta
-    #   env: TARGET=x86_64-apple-darwin
-    #   sudo: required
-    # - os: linux
-    #   rust: beta
-    #   env: TARGET=x86_64-unknown-linux-gnu
-    #   sudo: required
-    # - os: linux
-    #   rust: beta
-    #   env: TARGET=x86_64-unknown-linux-musl
-    #   sudo: required
-    # Nightly channel
-    # - os: linux
-    #   rust: nightly
-    #   env: TARGET=aarch64-unknown-linux-gnu
-    #   dist: trusty
-    #   sudo: required
-    #   addons:
-    #     apt:
-    #       packages: *aarch64_unknown_linux_gnu
-    # - os: linux
-    #   rust: nightly
-    #   env: TARGET=armv7-unknown-linux-gnueabihf
-    #   sudo: required
-    #   addons:
-    #     apt:
-    #       # Use the same packages the stable version uses
-    #       packages: *armv7_unknown_linux_gnueabihf
-    # - os: osx
-    #   rust: nightly
-    #   env: TARGET=i686-apple-darwin
-    #   sudo: required
-    # - os: linux
-    #   rust: nightly
-    #   env: TARGET=i686-unknown-linux-gnu
-    #   sudo: required
-    #   addons:
-    #     apt:
-    #       packages: *i686_unknown_linux_gnu
-    # - os: osx
-    #   rust: nightly
-    #   env: TARGET=x86_64-apple-darwin
-    #   sudo: required
-    - os: linux
+    # Android
+    - env: TARGET=aarch64-linux-android DISABLE_TESTS=1
       rust: nightly
-      env: TARGET=x86_64-unknown-linux-gnu
-      sudo: required
-    # - os: linux
-    #   rust: nightly
-    #   env: TARGET=x86_64-unknown-linux-musl
-    #   sudo: required
+    - env: TARGET=arm-linux-androideabi DISABLE_TESTS=1
+      rust: nightly
+    - env: TARGET=armv7-linux-androideabi DISABLE_TESTS=1
+      rust: nightly
+    - env: TARGET=i686-linux-android DISABLE_TESTS=1
+      rust: nightly
+    - env: TARGET=x86_64-linux-android DISABLE_TESTS=1
+      rust: nightly
+
+    # iOS
+    - env: TARGET=aarch64-apple-ios DISABLE_TESTS=1
+      os: osx
+      rust: nightly
+    - env: TARGET=armv7-apple-ios DISABLE_TESTS=1
+      os: osx
+      rust: nightly
+    - env: TARGET=armv7s-apple-ios DISABLE_TESTS=1
+      os: osx
+      rust: nightly
+    - env: TARGET=i386-apple-ios DISABLE_TESTS=1
+      os: osx
+      rust: nightly
+    - env: TARGET=x86_64-apple-ios DISABLE_TESTS=1
+      os: osx
+      rust: nightly
+
+    # Linux
+    - env: TARGET=aarch64-unknown-linux-gnu
+      rust: nightly
+    - env: TARGET=arm-unknown-linux-gnueabi
+      rust: nightly
+    - env: TARGET=armv7-unknown-linux-gnueabihf
+      rust: nightly
+    - env: TARGET=i686-unknown-linux-gnu
+      rust: nightly
+    - env: TARGET=i686-unknown-linux-musl
+      rust: nightly
+    - env: TARGET=mips-unknown-linux-gnu
+      rust: nightly
+    - env: TARGET=mips64-unknown-linux-gnuabi64
+      rust: nightly
+    - env: TARGET=mips64el-unknown-linux-gnuabi64
+      rust: nightly
+    - env: TARGET=mipsel-unknown-linux-gnu
+      rust: nightly
+    - env: TARGET=powerpc-unknown-linux-gnu
+      rust: nightly
+    - env: TARGET=powerpc64-unknown-linux-gnu
+      rust: nightly
+    - env: TARGET=powerpc64le-unknown-linux-gnu
+      rust: nightly
+    - env: TARGET=s390x-unknown-linux-gnu DISABLE_TESTS=1
+      rust: nightly
+    - env: TARGET=x86_64-unknown-linux-gnu
+      rust: nightly
+    - env: TARGET=x86_64-unknown-linux-musl
+      rust: nightly
+
+    # OSX
+    - env: TARGET=i686-apple-darwin
+      os: osx
+      rust: nightly
+    - env: TARGET=x86_64-apple-darwin
+      os: osx
+      rust: nightly
+
+    # *BSD
+    - env: TARGET=i686-unknown-freebsd DISABLE_TESTS=1
+      rust: nightly
+    - env: TARGET=x86_64-unknown-freebsd DISABLE_TESTS=1
+      rust: nightly
+    - env: TARGET=x86_64-unknown-netbsd DISABLE_TESTS=1
+      rust: nightly
+
+    # Windows
+    - env: TARGET=x86_64-pc-windows-gnu
+      rust: nightly
+
+    # Bare metal
+    # These targets don't support std and as such are likely not suitable for
+    # most crates.
+    # - env: TARGET=thumbv6m-none-eabi
+    # - env: TARGET=thumbv7em-none-eabi
+    # - env: TARGET=thumbv7em-none-eabihf
+    # - env: TARGET=thumbv7m-none-eabi
+
+    # Testing other channels
+    - env: TARGET=x86_64-unknown-linux-gnu
+      rust: nightly
+    - env: TARGET=x86_64-apple-darwin
+      os: osx
+      rust: nightly
 
 before_install:
-  - export PATH="$PATH:$HOME/.cargo/bin"
+  - set -e
+  - rustup self update
 
 install:
-  - bash ci/install.sh
-
-before_script:
-  - "export DISPLAY=:99.0"
-  - "sh -e /etc/init.d/xvfb start"
-  - sleep 3 # give xvfb some time to start
+  - sh ci/install.sh
+  - source ~/.cargo/env || true
 
 script:
   - bash ci/script.sh
 
+after_script: set +e
+
 before_deploy:
-  - bash ci/before_deploy.sh
+  - sh ci/before_deploy.sh
 
 deploy:
-  provider: releases
-  # Regenerate this api_key for your project, this one won't work for you. Here's how:
-  # - Go to 'https://github.com/settings/tokens/new' and generate a Token with only the
-  # `public_repo` scope enabled
-  # - Call `travis encrypt $github_token` where $github_token is the token you got in the previous
-  # step and `travis` is the official Travis CI gem (see https://rubygems.org/gems/travis/)
-  # - Enter the "encrypted value" below
+  # update `api_key.secure`
+  # - Create a `public_repo` GitHub token. Go to: https://github.com/settings/tokens/new
+  # - Encrypt it: `travis encrypt 0123456789012345678901234567890123456789
+  # - Paste the output down here
   api_key:
     secure: WkEseynlTuuGGPHkkXVxILLXU1Oj8Qnjkbk83vig3rcv95mO5NnQGslse/J5ygQHXcZ6FabAZ2Z9JTn2QbBVwhko1+e9y4CKLULsDJuEydH5HS/xE4/geFMyKl3FtqMH419Z9jy7UCPvlBr/mubtMBIykzK9aHTnHk7wQjyO/QrnUWkAWKwR2MXA8kAW9L+xW7BZTw2jNUjIu5Ow+w4NzHsoAQCiHMPhHinwTNpCbUNTpGCpGVepiTTD0nI2uBnTmJ76Pvmh8nmwgruoHfjlKROkyoOD0spMi6sTdasgnj2UlzNASy/nKuEWb3WUiU2rk9gIHiZQZqT+ypgEBYYCzzggB0cGI4/kWGSNmEbeDCjSxEOXFNAs/4b5LmGuYvuL+WNTc5PnnjOp43X2jAzp2LnRxkq3LTYrQtzS52PgXLX9xmPteLfxyr8t2HQXxojNsc0inAJiBUU7XcNMLwIWfE+DwLNesyyDvbJWqNW1u8P5Xt771gu/H6BWMRhrHd33hGTqGjSPKoiK9t4oLtjUO3FbMuJwtDQL/kqs5pgSw+KADJCLhFABcs+QOssrxArVu1+B3zGvHmHRuFrNfWok1Mb6o9Udlgz5oRYOPnA4SwHrw65P9m2JwrmtBWoKBwxG9QMbLWcx2UzdAa5MgfF7Y6P2vIK7hcRrAusF0G8JIFE=
   file_glob: true
-  file: ${PROJECT_NAME}-${TRAVIS_TAG}-${TARGET}.*
-  # don't delete the artifacts from previous phases
-  skip_cleanup: true
-  # deploy when a new tag is pushed
+  file: $CRATE_NAME-$TRAVIS_TAG-$TARGET.*
   on:
-    # channel to use to produce the release artifacts
-    # NOTE make sure you only release *once* per target
-    # you may want to pick a different channel
+    # Here you can pick which targets will generate binary releases
+    # In this example, there are some targets that are tested using the stable
+    # and nightly channels. This condition makes sure there is only one release
+    # for such targets and that's generated using the stable channel
     condition: $TRAVIS_RUST_VERSION = nightly
     tags: true
+  provider: releases
+  skip_cleanup: true
+
+cache: cargo
+before_cache:
+  # Travis can't cache files that are not readable by "others"
+  - chmod -R a+r $HOME/.cargo
 
 branches:
   only:
-    # Pushes and PR to the master branch
-    - master
-    # IMPORTANT Ruby regex to match tags. Required, or travis won't trigger deploys when a new tag
-    # is pushed. This regex matches semantic versions like v1.2.3-rc4+2016.02.22
+    # release tags
     - /^v\d+\.\d+\.\d+.*$/
+    - master
 
 notifications:
   email:

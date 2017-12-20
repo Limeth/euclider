@@ -1,5 +1,6 @@
 # euclider
 [![Build Status](https://travis-ci.org/Limeth/euclider.svg?branch=master)](https://travis-ci.org/Limeth/euclider)
+[![Build status](https://ci.appveyor.com/api/projects/status/gcp1wxqfhjjk70vg/branch/master?svg=true)](https://ci.appveyor.com/project/Limeth/euclider/branch/master)
 
 A higher-dimensional "non-euclidean" ray tracing prototype written in Rust.
 

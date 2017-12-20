@@ -81,6 +81,16 @@ use core::ops::DerefMut;
 use json::JsonValue;
 use mopa;
 
+macro_rules! assert_eq_ulps {
+    ($a:expr, $b:expr, $ulps:expr) => ({
+        use float_cmp::Ulps;
+        assert!($a.approx_eq_ulps(&$b, $ulps),
+                "assertion failed: `(left !== right)` \
+                           (left: `{:?}`, right: `{:?}`, expect ulps: `{:?}`, real ulps: `{:?}`)",
+                 $a, $b, $ulps, $a.ulps(&$b));
+    })  
+}
+
 /// Ties a combination of ordered `TypeId`s to a value
 pub type TypePairMap<V> = HashMap<(TypeId, TypeId), V>;
 
@@ -1001,25 +1011,33 @@ mod tests {
 
     #[test]
     fn angle_between() {
-        assert_eq! {
+        assert_eq_ulps! {
             Vector3::new(1.0, 0.0, 0.0).angle_between(
                 &Vector3::new(0.0, 1.0, 0.0)
-            ), <f32 as BaseFloat>::frac_pi_2()
+            ),
+            <f32 as BaseFloat>::frac_pi_2(),
+            1
         }
-        assert_eq! {
+        assert_eq_ulps! {
             Vector3::new(1.0, 0.0, 0.0).angle_between(
                 &Vector3::new(1.0, 1.0, 0.0)
-            ), <f32 as BaseFloat>::frac_pi_4()
+            ),
+            <f32 as BaseFloat>::frac_pi_4(),
+            1
         }
-        assert_eq! {
+        assert_eq_ulps! {
             Vector3::new(1.0, 0.0, 0.0).angle_between(
                 &Vector3::new(-1.0, 1.0, 0.0)
-            ), <f32 as BaseFloat>::frac_pi_4() * 3.0
+            ),
+            <f32 as BaseFloat>::frac_pi_4() * 3.0,
+            1
         }
-        assert_eq! {
+        assert_eq_ulps! {
             Vector3::new(1.0, 0.0, 0.0).angle_between(
                 &Vector3::new(-1.0, 0.0, 0.0)
-            ), <f32 as BaseFloat>::pi()
+            ),
+            <f32 as BaseFloat>::pi(),
+            1
         }
     }
 

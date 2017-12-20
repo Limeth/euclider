@@ -20,8 +20,8 @@ main() {
     cross rustc --bin euclider --target $TARGET --release -- -C lto
 
     cp target/$TARGET/release/euclider $stage/
-    cp -r target/$TARGET/scenes $stage/
-    cp -r target/$TARGET/resources $stage/
+    cp -r scenes $stage/
+    cp -r resources $stage/
 
     cd $stage
     tar czf $src/$CRATE_NAME-$TRAVIS_TAG-$TARGET.tar.gz *

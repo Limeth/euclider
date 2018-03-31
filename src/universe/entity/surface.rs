@@ -286,7 +286,8 @@ pub fn threshold_direction_snell<F: CustomFloat, P: CustomPoint<F, V>, V: Custom
 
 pub type BlendFunction<F> = Fn(Rgba<F>, Rgba<F>) -> Rgba<F>;
 pub type PaletteBlendFunction<C: Blend<Color=C> + ComponentWise> =
-    Fn(PreAlpha<C, C::Scalar>, PreAlpha<C, C::Scalar>) -> PreAlpha<C, C::Scalar>;
+    Fn(PreAlpha<C, <C as ComponentWise>::Scalar>, PreAlpha<C, <C as ComponentWise>::Scalar>)
+    -> PreAlpha<C, <C as ComponentWise>::Scalar>;
 
 pub fn surface_color_blend<F: CustomFloat,
                            P: CustomPoint<F, V>,

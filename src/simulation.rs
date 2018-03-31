@@ -2,7 +2,6 @@ use std::collections::HashSet;
 use std::time::Instant;
 use std::time::Duration;
 use std::marker::PhantomData;
-use std::sync::{Arc, Mutex};
 use num::One;
 use na;
 use na::Cast;
@@ -28,6 +27,7 @@ use universe::Environment;
 use util::CustomFloat;
 
 pub struct Simulation<F: CustomFloat> {
+    events_loop: Option<EventsLoop>,
     debug: bool,
     threads: u32,
     environment: Box<Environment<F>>,
@@ -62,7 +62,7 @@ impl<F: CustomFloat> Simulation<F> {
             .expect("Could not hide the cursor!");
 
         self.display = Some(display);
-        self.context.events_loop = Some(Arc::new(Mutex::new(events_loop)));
+        self.events_loop = Some(events_loop);
         self.start_instant = Some(Instant::now());
 
         self.render();
@@ -120,7 +120,7 @@ impl<F: CustomFloat> Simulation<F> {
         }
 
         self.last_updated_instant = Some(now);
-        let result = self.context.update(self.display.as_ref().unwrap(), self.debug);
+        let result = self.context.update(&mut self.events_loop, self.display.as_ref().unwrap(), self.debug);
 
         self.environment.update(&delta, &self.context);
 
@@ -155,6 +155,7 @@ impl<F: CustomFloat> SimulationBuilder<F> {
 
     pub fn build(self) -> Simulation<F> {
         Simulation {
+            events_loop: None,
             debug: self.debug,
             threads: self.threads.expect("Specify the number of threads before building the simulation."),
             environment: self.environment.expect("Specify the environment before bulding the simulation."),
@@ -168,7 +169,6 @@ impl<F: CustomFloat> SimulationBuilder<F> {
 }
 
 pub struct SimulationContext {
-    pub events_loop: Option<Arc<Mutex<EventsLoop>>>,
     pub pressed_keys: HashSet<VirtualKeyCode>,
     pub pressed_mouse_buttons: HashSet<MouseButton>,
     pub mouse: Point2<f64>,
@@ -180,7 +180,6 @@ pub struct SimulationContext {
 impl SimulationContext {
     fn new() -> SimulationContext {
         SimulationContext {
-            events_loop: None,
             pressed_keys: HashSet::new(),
             pressed_mouse_buttons: HashSet::new(),
             mouse: na::origin(),
@@ -207,18 +206,17 @@ impl SimulationContext {
     }
 
     #[allow(unused_variables)]
-    pub fn update(&mut self, display: &Display, debug: bool) -> Result<(), WindowEvent> {
-        if self.events_loop.is_none() {
+    pub fn update(&mut self, events_loop: &mut Option<EventsLoop>, display: &Display, debug: bool) -> Result<(), WindowEvent> {
+        if events_loop.is_none() {
             return Ok(());
         }
 
         let mut return_value: Result<(), WindowEvent> = Ok(());
-        let events_loop = Arc::clone(self.events_loop.as_ref().unwrap());
 
         self.reset_delta_mouse();
 
         // TODO: Consider using `run_forever`
-        events_loop.lock().unwrap().poll_events(|outer_event| {
+        events_loop.as_mut().unwrap().poll_events(|outer_event| {
             if let Event::WindowEvent { event, .. } = outer_event {
                 match event {
                     WindowEvent::KeyboardInput {

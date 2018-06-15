@@ -1047,14 +1047,26 @@ impl Parser {
             }
 
             add_deserializer! {
-                "texture_image";
+                "texture_image_nearest_neighbor";
                 [path: &str] -> Box<Texture<F>> {
                     let data = try!(image::open(path)
                         .map_err(|_| ParserError::CustomError {
                             description: format!("Could not load texture `{}`", path),
                         }));
 
-                    texture_image(data)
+                    texture_image_nearest_neighbor(data)
+                }
+            }
+
+            add_deserializer! {
+                "texture_image_linear";
+                [path: &str] -> Box<Texture<F>> {
+                    let data = try!(image::open(path)
+                        .map_err(|_| ParserError::CustomError {
+                            description: format!("Could not load texture `{}`", path),
+                        }));
+
+                    texture_image_linear(data)
                 }
             }
 

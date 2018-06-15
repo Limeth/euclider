@@ -698,7 +698,7 @@
           ]
         },
         {
-          "texture_image": [
+          "texture_image_linear": [
             "./resources/universe_dim.jpg"
           ]
         }

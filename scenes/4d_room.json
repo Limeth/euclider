@@ -871,7 +871,7 @@
           ]
         },
         {
-          "texture_image": [
+          "texture_image_linear": [
             "./resources/pixelcg_uv.jpg"
           ]
         }

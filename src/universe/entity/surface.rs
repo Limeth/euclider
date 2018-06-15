@@ -428,7 +428,26 @@ pub fn surface_color_uniform<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVect
 pub type UVFn<F, P> = (Fn(&P) -> Point2<F>) + Send + Sync;
 pub type Texture<F> = (Fn(&Point2<F>) -> Rgba<F>) + Send + Sync;
 
-pub fn texture_image<F: CustomFloat>(dynamic_image: DynamicImage) -> Box<Texture<F>> {
+pub fn texture_image_nearest_neighbor<F: CustomFloat>(dynamic_image: DynamicImage) -> Box<Texture<F>> {
+    Box::new(move |point: &Point2<F>| {
+        let (width, height) = dynamic_image.dimensions();
+        let (x, y) = (point.x * <F as NumCast>::from(width).unwrap(),
+                      point.y * <F as NumCast>::from(height).unwrap());
+        let (x, y) = (x.floor(), y.floor());
+        let (x, y) = (<u32 as NumCast>::from(x).unwrap(), <u32 as NumCast>::from(y).unwrap());
+        let (x, y) = (util::remainder(x, width), util::remainder(y, height));
+        let pixel = dynamic_image.get_pixel(x, y);
+
+        Rgba::new(
+            <F as NumCast>::from(pixel[0]).unwrap() / <F as NumCast>::from(std::u8::MAX).unwrap(),
+            <F as NumCast>::from(pixel[1]).unwrap() / <F as NumCast>::from(std::u8::MAX).unwrap(),
+            <F as NumCast>::from(pixel[2]).unwrap() / <F as NumCast>::from(std::u8::MAX).unwrap(),
+            <F as NumCast>::from(pixel[3]).unwrap() / <F as NumCast>::from(std::u8::MAX).unwrap(),
+        )
+    })
+}
+
+pub fn texture_image_linear<F: CustomFloat>(dynamic_image: DynamicImage) -> Box<Texture<F>> {
     Box::new(move |point: &Point2<F>| {
         let (width, height) = dynamic_image.dimensions();
         let (x, y) = (point.x * <F as NumCast>::from(width).unwrap() - Cast::from(0.5),

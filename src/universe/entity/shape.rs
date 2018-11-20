@@ -25,8 +25,8 @@ use num::NumCast;
 use mopa;
 use na;
 use na::Cross;
-use smalliter::SmallIter;
-use smalliter::SmallVec;
+use smallvec::SmallVec;
+use smallvec::IntoIter;
 
 /// Ties a `Material` the ray is passing through and a `Shape` the ray is intersecting to a
 /// `GeneralIntersector`
@@ -635,7 +635,7 @@ pub fn intersect_void<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P
      intersect: Intersector<F, P, V>)
      -> GeneralIntersectionMarcher<F, P, V> {
     void.as_any().downcast_ref::<VoidShape>().unwrap();
-    PossiblyImmediateIterator::Immediate(SmallIter::new(SmallVec::new()))
+    PossiblyImmediateIterator::Immediate(SmallVec::new().into_iter())
 }
 
 #[derive(Debug)]
@@ -676,7 +676,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Sphere<F, P, V
         let d: F = b * b - <F as NumCast>::from(4.0).unwrap() * a * c;
 
         if d < <F as Zero>::zero() {
-            return PossiblyImmediateIterator::Immediate(SmallIter::new(SmallVec::new()));
+            return PossiblyImmediateIterator::Immediate(SmallVec::new().into_iter());
         }
 
         let d_sqrt = d.sqrt();
@@ -697,7 +697,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Sphere<F, P, V
 
         if t_first.is_none() {
             // Don't trace in the opposite direction
-            return PossiblyImmediateIterator::Immediate(SmallIter::new(SmallVec::new()));
+            return PossiblyImmediateIterator::Immediate(SmallVec::new().into_iter());
         }
 
         let t_first = t_first.unwrap();
@@ -735,7 +735,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Sphere<F, P, V
                                                  t_second));
         }
 
-        PossiblyImmediateIterator::Immediate(SmallIter::new(intersections))
+        PossiblyImmediateIterator::Immediate(intersections.into_iter())
     }
 }
 
@@ -798,7 +798,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Hyperplane<F, 
                    na::dot(&plane.normal, direction);
 
         if t < <F as Zero>::zero() {
-            return PossiblyImmediateIterator::Immediate(SmallIter::new(SmallVec::new()));
+            return PossiblyImmediateIterator::Immediate(SmallVec::new().into_iter());
         }
 
         let result_vector = *direction * t;
@@ -813,7 +813,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Hyperplane<F, 
                                              normal,
                                              t));
 
-        PossiblyImmediateIterator::Immediate(SmallIter::new(intersections))
+        PossiblyImmediateIterator::Immediate(intersections.into_iter())
     }
 }
 
@@ -871,10 +871,10 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> HalfSpace<F, P
 
             intersections.push(intersection);
 
-            return PossiblyImmediateIterator::Immediate(SmallIter::new(intersections));
+            return PossiblyImmediateIterator::Immediate(intersections.into_iter());
         }
 
-        PossiblyImmediateIterator::Immediate(SmallIter::new(SmallVec::new()))
+        PossiblyImmediateIterator::Immediate(SmallVec::new().into_iter())
     }
 }
 
@@ -971,7 +971,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Cylinder<F, P,
         let d: F = b * b - <F as NumCast>::from(4.0).unwrap() * a * c;
 
         if d < <F as Zero>::zero() {
-            return PossiblyImmediateIterator::Immediate(SmallIter::new(SmallVec::new()));
+            return PossiblyImmediateIterator::Immediate(SmallVec::new().into_iter());
         }
 
         let d_sqrt = d.sqrt();
@@ -992,7 +992,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Cylinder<F, P,
 
         if t_first.is_none() {
             // Don't trace in the opposite direction
-            return PossiblyImmediateIterator::Immediate(SmallIter::new(SmallVec::new()));
+            return PossiblyImmediateIterator::Immediate(SmallVec::new().into_iter());
         }
 
         let t_first = t_first.unwrap();
@@ -1031,7 +1031,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Cylinder<F, P,
                                                  t_second));
         }
 
-        PossiblyImmediateIterator::Immediate(SmallIter::new(intersections))
+        PossiblyImmediateIterator::Immediate(intersections.into_iter())
     }
 }
 

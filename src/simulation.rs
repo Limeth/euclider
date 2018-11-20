@@ -12,14 +12,15 @@ use glium::BlitTarget;
 use glium::backend::glutin::Display;
 use glium::glutin::ContextBuilder;
 use glium::glutin::Event;
+use glium::glutin::dpi::LogicalPosition;
 use glium::glutin::EventsLoop;
 use glium::glutin::KeyboardInput;
 use glium::glutin::VirtualKeyCode;
 use glium::glutin::MouseButton;
 use glium::glutin::ElementState;
 use glium::glutin::WindowEvent;
-use glium::glutin::CursorState;
 use glium::glutin::MouseScrollDelta;
+use glium::glutin::MouseCursor;
 use glium::glutin::WindowBuilder;
 use glium::texture::Texture2d;
 use glium::uniforms::MagnifySamplerFilter;
@@ -48,7 +49,7 @@ pub struct SimulationBuilder<F: CustomFloat> {
 impl<F: CustomFloat> Simulation<F> {
     pub fn start(mut self) {
         let window_builder = WindowBuilder::new()
-            .with_dimensions(1024, 768)
+            .with_dimensions((1024, 768).into())
             .with_title(format!("euclider {}", crate_version!()));
         let events_loop = EventsLoop::new();
         let display: Display = Display::new(
@@ -58,8 +59,7 @@ impl<F: CustomFloat> Simulation<F> {
         ).unwrap();
 
         (*display.gl_window())
-            .set_cursor_state(CursorState::Hide)
-            .expect("Could not hide the cursor!");
+            .hide_cursor(true);
 
         self.display = Some(display);
         self.events_loop = Some(events_loop);
@@ -268,21 +268,21 @@ impl SimulationContext {
                             }
                         }
                     }
-                    WindowEvent::MouseMoved {
-                        position: (x, y),
+                    WindowEvent::CursorMoved {
+                        position: LogicalPosition { x, y },
                         ..
                     } => {
                         let window = display.gl_window();
-                        let window_size = window.get_inner_size_pixels().unwrap();
-                        let center_x = window_size.0 / 2;
-                        let center_y = window_size.1 / 2;
+                        let window_size = window.get_inner_size().unwrap();
+                        let center_x = window_size.width / 2.0;
+                        let center_y = window_size.height / 2.0;
 
                         self.delta_mouse.x = self.mouse.x - x;
                         self.delta_mouse.y = self.mouse.y - y;
                         self.mouse.x = x;
                         self.mouse.y = y;
 
-                        window.set_cursor_position(center_x as i32, center_y as i32)
+                        window.set_cursor_position((center_x, center_y).into())
                             .expect("Could not reset the cursor position.");
                     }
                     WindowEvent::MouseWheel {
@@ -293,11 +293,14 @@ impl SimulationContext {
                         let up: bool;
                         let down: bool;
                         match mouse_scroll_delta {
-                            MouseScrollDelta::LineDelta(delta_x, delta_y) |
-                            MouseScrollDelta::PixelDelta(delta_x, delta_y) => {
+                            MouseScrollDelta::LineDelta(delta_x, delta_y) => {
                                 up = delta_y > 0.0;
                                 down = delta_y < 0.0;
-                            }
+                            },
+                            MouseScrollDelta::PixelDelta(LogicalPosition { x: delta_x, y: delta_y }) => {
+                                up = delta_y > 0.0;
+                                down = delta_y < 0.0;
+                            },
                         }
                         if up && self.resolution > 1 {
                             self.resolution -= 1;
@@ -305,7 +308,7 @@ impl SimulationContext {
                             self.resolution += 1;
                         }
                     }
-                    WindowEvent::Closed => {
+                    WindowEvent::CloseRequested => {
                         return_value = Err(event);
                         return;
                     }

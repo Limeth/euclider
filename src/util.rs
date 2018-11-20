@@ -81,8 +81,8 @@ use na::Matrix6;
 use core::iter::FromIterator;
 use core::ops::DerefMut;
 use json::JsonValue;
-use smalliter::SmallIter;
-use smalliter::CloneableArray;
+use smallvec::Array;
+use smallvec::IntoIter;
 use mopa;
 
 macro_rules! assert_eq_ulps {
@@ -352,12 +352,12 @@ impl<'a, T> Iterator for IterLazy<'a, T> {
     }
 }
 
-pub enum PossiblyImmediateIterator<I: Clone, A: CloneableArray<Item=I>> {
-    Immediate(SmallIter<A>),
+pub enum PossiblyImmediateIterator<I: Clone, A: Array<Item=I>> {
+    Immediate(IntoIter<A>),
     Dynamic(Box<Iterator<Item=I>>),
 }
 
-impl<I: Clone, A: CloneableArray<Item=I>> Iterator for PossiblyImmediateIterator<I, A> {
+impl<I: Clone, A: Array<Item=I>> Iterator for PossiblyImmediateIterator<I, A> {
     type Item = I;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -368,16 +368,16 @@ impl<I: Clone, A: CloneableArray<Item=I>> Iterator for PossiblyImmediateIterator
     }
 }
 
-pub struct ProviderData<T: Clone, A: CloneableArray<Item=T>> {
+pub struct ProviderData<T: Clone, A: Array<Item=T>> {
     items: Vec<Option<T>>,
     iterator: PossiblyImmediateIterator<T, A>,
 }
 
-pub struct Provider<T: Clone, A: CloneableArray<Item=T>> {
+pub struct Provider<T: Clone, A: Array<Item=T>> {
     data: Arc<RwLock<ProviderData<T, A>>>,
 }
 
-impl<T: Clone, A: CloneableArray<Item=T>> Provider<T, A> {
+impl<T: Clone, A: Array<Item=T>> Provider<T, A> {
     // Create an object that provides iterators which lazily compute values
     // that have not been requested yet
     pub fn new(iterator: PossiblyImmediateIterator<T, A>) -> Provider<T, A> {
@@ -397,15 +397,13 @@ impl<T: Clone, A: CloneableArray<Item=T>> Provider<T, A> {
     }
 
     pub fn get(&self, index: usize) -> Option<T> {
-        let cache_len = {
+        {
             let data = self.data.read().unwrap();
             let cache_len = data.items.len();
 
             if index < cache_len {
                 return data.items[index].clone();
             }
-
-            cache_len
         };
 
         let mut data = self.data.write().unwrap();
@@ -420,12 +418,12 @@ impl<T: Clone, A: CloneableArray<Item=T>> Provider<T, A> {
     }
 }
 
-pub struct ProviderIter<T: Clone, A: CloneableArray<Item=T>> {
+pub struct ProviderIter<T: Clone, A: Array<Item=T>> {
     index: usize,
     data: Arc<RwLock<ProviderData<T, A>>>,
 }
 
-impl<T: Clone, A: CloneableArray<Item=T>> Iterator for ProviderIter<T, A> {
+impl<T: Clone, A: Array<Item=T>> Iterator for ProviderIter<T, A> {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {

@@ -1,4 +1,5 @@
 use std;
+use std::sync::Arc;
 use palette::ComponentWise;
 use palette::blend::PreAlpha;
 use num::traits::NumCast;
@@ -22,22 +23,22 @@ use na::Point2;
 use palette::Rgb;
 use na::BaseFloat;
 
-pub type ReflectionRatioProvider<F, P, V> = Fn(&TracingContext<F, P, V>) -> F;
-pub type ReflectionDirectionProvider<F, P, V> = Fn(&TracingContext<F, P, V>) -> V;
-pub type ThresholdDirectionProvider<F, P, V> = Fn(&TracingContext<F, P, V>) -> V;
-pub type SurfaceColorProvider<F, P, V> = Fn(&TracingContext<F, P, V>) -> Rgba<F>;
-pub type ThresholdPathModifier<F, P, V> = Fn(&PathTracingContext<F, P, V>, &mut P, &mut V);
+pub type ReflectionRatioProvider<F, P, V> = (Fn(&TracingContext<F, P, V>) -> F) + Send + Sync;
+pub type ReflectionDirectionProvider<F, P, V> = (Fn(&TracingContext<F, P, V>) -> V) + Send + Sync;
+pub type ThresholdDirectionProvider<F, P, V> = (Fn(&TracingContext<F, P, V>) -> V) + Send + Sync;
+pub type SurfaceColorProvider<F, P, V> = (Fn(&TracingContext<F, P, V>) -> Rgba<F>) + Send + Sync;
+pub type ThresholdPathModifier<F, P, V> = (Fn(&PathTracingContext<F, P, V>, &mut P, &mut V)) + Send + Sync;
 
-pub trait Surface<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
+pub trait Surface<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: Send + Sync {
     fn get_color(&self, context: ColorTracingContext<F, P, V>) -> Rgba<F>;
     fn get_path(&self, context: PathTracingContext<F, P, V>) -> Option<(P, V)>;
 }
 
 pub struct ComposableSurface<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
-    pub reflection_ratio: Box<ReflectionRatioProvider<F, P, V>>,
-    pub reflection_direction: Box<ReflectionDirectionProvider<F, P, V>>,
-    pub threshold_direction: Box<ThresholdDirectionProvider<F, P, V>>,
-    pub surface_color: Box<SurfaceColorProvider<F, P, V>>,
+    pub reflection_ratio: Arc<ReflectionRatioProvider<F, P, V>>,
+    pub reflection_direction: Arc<ReflectionDirectionProvider<F, P, V>>,
+    pub threshold_direction: Arc<ThresholdDirectionProvider<F, P, V>>,
+    pub surface_color: Arc<SurfaceColorProvider<F, P, V>>,
 }
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurface<F, P, V> {
@@ -284,10 +285,10 @@ pub fn threshold_direction_snell<F: CustomFloat, P: CustomPoint<F, V>, V: Custom
     })
 }
 
-pub type BlendFunction<F> = Fn(Rgba<F>, Rgba<F>) -> Rgba<F>;
+pub type BlendFunction<F> = (Fn(Rgba<F>, Rgba<F>) -> Rgba<F>) + Send + Sync;
 pub type PaletteBlendFunction<C: Blend<Color=C> + ComponentWise> =
-    Fn(PreAlpha<C, <C as ComponentWise>::Scalar>, PreAlpha<C, <C as ComponentWise>::Scalar>)
-    -> PreAlpha<C, <C as ComponentWise>::Scalar>;
+    (Fn(PreAlpha<C, <C as ComponentWise>::Scalar>, PreAlpha<C, <C as ComponentWise>::Scalar>)
+    -> PreAlpha<C, <C as ComponentWise>::Scalar>) + Send + Sync;
 
 pub fn surface_color_blend<F: CustomFloat,
                            P: CustomPoint<F, V>,
@@ -296,6 +297,9 @@ pub fn surface_color_blend<F: CustomFloat,
      destination: Box<SurfaceColorProvider<F, P, V>>,
      blend_function: Box<BlendFunction<F>>)
      -> Box<SurfaceColorProvider<F, P, V>> {
+    let source: Arc<SurfaceColorProvider<F, P, V>> = source.into();
+    let destination: Arc<SurfaceColorProvider<F, P, V>> = destination.into();
+    let blend_function: Arc<BlendFunction<F>> = blend_function.into();
     Box::new(move |context: &TracingContext<F, P, V>| {
         blend_function(source(context), destination(context))
     })

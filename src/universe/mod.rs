@@ -28,6 +28,7 @@ use universe::entity::shape::TracingContext;
 use universe::entity::shape::ColorTracingContext;
 use universe::entity::shape::PathTracingContext;
 use universe::entity::surface::MappedTexture;
+use universe::entity::shape::IntersectionProvider;
 use util::CustomPoint;
 use util::CustomVector;
 use util::CustomFloat;
@@ -61,7 +62,7 @@ pub trait Universe<F: CustomFloat>
                  direction: &Self::V,
                  material: &Material<F, Self::P, Self::V>,
                  shape: &Shape<F, Self::P, Self::V>)
-                 -> Provider<Intersection<F, Self::P, Self::V>> {
+                 -> IntersectionProvider<F, Self::P, Self::V> {
         let material_id = material.id();
         let shape_id = shape.id();
         let intersector = self.intersectors().get(&(material_id, shape_id));
@@ -131,9 +132,9 @@ pub trait Universe<F: CustomFloat>
                         origin_location: *location,
                         origin_direction: *direction,
                         intersection_traceable: other_traceable,
-                        intersection: *intersection,
+                        intersection,
                         intersection_normal_closer: closer_normal,
-                        exiting: exiting,
+                        exiting,
                     };
                     closest = Some((other_traceable, context));
                     closest_distance = Some(intersection.distance);
@@ -178,7 +179,7 @@ pub trait Universe<F: CustomFloat>
             }
         }
 
-        self.background().get_color(direction.as_point())
+        self.background().get_color(&direction.to_point())
     }
 
     fn trace_path(&self,

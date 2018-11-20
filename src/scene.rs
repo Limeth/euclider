@@ -1096,10 +1096,10 @@ impl Parser {
                 [surface_color: Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>]
                 -> Box<Surface<F, Point3<F>, Vector3<F>>> {
                     Box::new(ComposableSurface {
-                        reflection_ratio: reflection_ratio,
-                        reflection_direction: reflection_direction,
-                        threshold_direction: threshold_direction,
-                        surface_color: surface_color
+                        reflection_ratio: reflection_ratio.into(),
+                        reflection_direction: reflection_direction.into(),
+                        threshold_direction: threshold_direction.into(),
+                        surface_color: surface_color.into(),
                     })
                 }
             }
@@ -1112,10 +1112,10 @@ impl Parser {
                 [surface_color: Box<SurfaceColorProvider<F, Point4<F>, Vector4<F>>>]
                 -> Box<Surface<F, Point4<F>, Vector4<F>>> {
                     Box::new(ComposableSurface {
-                        reflection_ratio: reflection_ratio,
-                        reflection_direction: reflection_direction,
-                        threshold_direction: threshold_direction,
-                        surface_color: surface_color
+                        reflection_ratio: reflection_ratio.into(),
+                        reflection_direction: reflection_direction.into(),
+                        threshold_direction: threshold_direction.into(),
+                        surface_color: surface_color.into(),
                     })
                 }
             }

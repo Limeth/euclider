@@ -1,0 +1,111 @@
+{
+  "Universe3": {
+    "camera": {
+      "PitchYawCamera3": []
+    },
+    "entities": [
+      {
+        "Entity3Impl::new": [
+          {
+            "ComposableShape3::of": [
+              [
+                {
+                  "Sphere3::new": [
+                    {
+                      "Point3::new": [
+                        10,
+                        0,
+                        0
+                      ]
+                    },
+                    3
+                  ]
+                },
+                {
+                  "Cylinder3::new": [
+                    {
+                      "Point3::new": [
+                        10,
+                        0,
+                        0
+                      ]
+                    },
+                    {
+                      "Vector3::new": [
+                        1,
+                        1,
+                        1
+                      ]
+                    },
+                    1.0
+                  ]
+                }
+              ],
+              {
+                "SetOperation": [
+                    "Complement"
+                ]
+              }
+            ]
+          },
+          {
+            "Vacuum3::new": []
+          },
+          {
+            "ComposableSurface3": {
+              "reflection_ratio": {
+                "reflection_ratio_fresnel_3": [
+                  1.458,
+                  1
+                ]
+              },
+              "reflection_direction": {
+                "reflection_direction_specular_3": []
+              },
+              "threshold_direction": {
+                "threshold_direction_snell_3": [
+                    1.458
+                ]
+              },
+              "surface_color": {
+                "surface_color_uniform_3": [
+                  {
+                    "Rgba::new": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "Void3::new_with_vacuum": []
+      }
+    ],
+    "background": {
+      "MappedTextureImpl3::new": [
+        {
+          "uv_sphere_3": [
+            {
+              "Point3::new": [
+                0,
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        {
+          "texture_image_nearest_neighbor": [
+            "./resources/simple.png"
+          ]
+        }
+      ]
+    }
+  }
+}

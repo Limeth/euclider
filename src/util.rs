@@ -29,6 +29,8 @@ use std::default::Default;
 use std::mem;
 use std::cell::RefCell;
 use std::cell::RefMut;
+use std::sync::Arc;
+use std::sync::RwLock;
 use num::Num;
 use num::One;
 use num::Zero;
@@ -79,6 +81,8 @@ use na::Matrix6;
 use core::iter::FromIterator;
 use core::ops::DerefMut;
 use json::JsonValue;
+use smalliter::SmallIter;
+use smalliter::CloneableArray;
 use mopa;
 
 macro_rules! assert_eq_ulps {
@@ -348,105 +352,97 @@ impl<'a, T> Iterator for IterLazy<'a, T> {
     }
 }
 
-pub struct ProviderData<T> {
-    items: Vec<Option<T>>,
-    iterator: Box<Iterator<Item = T>>,
+pub enum PossiblyImmediateIterator<I: Clone, A: CloneableArray<Item=I>> {
+    Immediate(SmallIter<A>),
+    Dynamic(Box<Iterator<Item=I>>),
 }
 
-pub struct Provider<T> {
-    data: RefCell<ProviderData<T>>,
-}
-
-impl<T> Provider<T> {
-    // Create an object that provides iterators which lazily compute values
-    // that have not been requested yet
-    pub fn new<I: Iterator<Item = T> + 'static>(a: I) -> Provider<T> {
-        Provider {
-            data: RefCell::new(ProviderData {
-                items: Vec::new(),
-                iterator: Box::new(a),
-            }),
-        }
-    }
-
-    pub fn iter(&self) -> Marcher<T> {
-        Marcher {
-            index: 0,
-            provider: self.data.borrow_mut(),
-        }
-    }
-
-    unsafe fn iter_index(&self, index: usize) -> Marcher<T> {
-        Marcher {
-            index: index,
-            provider: self.data.borrow_mut(),
-        }
-    }
-}
-
-impl<T> Index<usize> for Provider<T> {
-    type Output = Option<T>;
-
-    fn index(&self, _index: usize) -> &Self::Output {
-        let length = self.data.borrow().items.len();
-
-        if _index >= length {
-            let mut iter = unsafe { self.iter_index(length) };
-
-            for _ in 0..(_index + 1 - length) {
-                iter.next();
-            }
-        }
-
-        unsafe { mem::transmute(&self.data.borrow().items[_index]) }
-    }
-}
-
-impl<T> IndexMut<usize> for Provider<T> {
-    fn index_mut(&mut self, _index: usize) -> &mut Self::Output {
-        let length = self.data.borrow().items.len();
-
-        if _index >= length {
-            let mut iter = unsafe { self.iter_index(length) };
-
-            for _ in 0..(_index + 1 - length) {
-                iter.next();
-            }
-        }
-
-        unsafe { mem::transmute(&mut self.data.borrow_mut().items[_index]) }
-    }
-}
-
-pub struct Marcher<'a, T: 'a> {
-    index: usize,
-    provider: RefMut<'a, ProviderData<T>>,
-}
-
-impl<'a, T> Iterator for Marcher<'a, T> {
-    type Item = &'a mut T;
+impl<I: Clone, A: CloneableArray<Item=I>> Iterator for PossiblyImmediateIterator<I, A> {
+    type Item = I;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let result: Option<Self::Item>;
+        match self {
+            &mut PossiblyImmediateIterator::Immediate(ref mut small_iter) => small_iter.next(),
+            &mut PossiblyImmediateIterator::Dynamic(ref mut boxed_iter) => boxed_iter.next(),
+        }
+    }
+}
 
-        if self.index >= self.provider.items.len() {
-            let item = self.provider.iterator.next();
+pub struct ProviderData<T: Clone, A: CloneableArray<Item=T>> {
+    items: Vec<Option<T>>,
+    iterator: PossiblyImmediateIterator<T, A>,
+}
+
+pub struct Provider<T: Clone, A: CloneableArray<Item=T>> {
+    data: Arc<RwLock<ProviderData<T, A>>>,
+}
+
+impl<T: Clone, A: CloneableArray<Item=T>> Provider<T, A> {
+    // Create an object that provides iterators which lazily compute values
+    // that have not been requested yet
+    pub fn new(iterator: PossiblyImmediateIterator<T, A>) -> Provider<T, A> {
+        Provider {
+            data: Arc::new(RwLock::new(ProviderData {
+                items: Vec::new(),
+                iterator,
+            })),
+        }
+    }
+
+    pub fn iter(&self) -> ProviderIter<T, A> {
+        ProviderIter {
+            index: 0,
+            data: self.data.clone(),
+        }
+    }
+
+    pub fn get(&self, index: usize) -> Option<T> {
+        let cache_len = {
+            let data = self.data.read().unwrap();
+            let cache_len = data.items.len();
+
+            if index < cache_len {
+                return data.items[index].clone();
+            }
+
+            cache_len
+        };
+
+        let mut data = self.data.write().unwrap();
+
+        while index >= data.items.len() {
+            let item = data.iterator.next();
+
+            data.items.push(item);
+        }
+
+        data.items[index].clone()
+    }
+}
+
+pub struct ProviderIter<T: Clone, A: CloneableArray<Item=T>> {
+    index: usize,
+    data: Arc<RwLock<ProviderData<T, A>>>,
+}
+
+impl<T: Clone, A: CloneableArray<Item=T>> Iterator for ProviderIter<T, A> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut data = self.data.write().unwrap();
+        let result = if self.index >= data.items.len() {
+            let item = data.iterator.next();
 
             if item.is_some() {
-                self.provider.items.push(item);
-                let index = self.provider.items.len() - 1;
-                let provider: &'a mut ProviderData<T> =
-                    unsafe { mem::transmute(self.provider.deref_mut()) };
-                result = provider.items[index].as_mut();
+                data.items.push(item.clone());
+                item
             } else {
-                self.provider.items.push(None);
-                result = None;
+                data.items.push(None);
+                None
             }
         } else {
-            let provider: &'a mut ProviderData<T> =
-                unsafe { mem::transmute(self.provider.deref_mut()) };
-            result = provider.items[self.index].as_mut();
-        }
+            data.items[self.index].clone()
+        };
 
         self.index += 1;
 
@@ -585,7 +581,7 @@ pub trait CustomVector<F: CustomFloat, P: CustomPoint<F, Self>>:
 pub trait VectorAsPoint {
     type Point;
     fn to_point(self) -> Self::Point where Self: Sized;
-    fn as_point(&self) -> &Self::Point where Self: Sized;
+    // fn as_point(&self) -> &Self::Point where Self: Sized;
     fn set_coords(&mut self, coords: Self::Point) where Self: Sized;
 }
 
@@ -624,9 +620,9 @@ macro_rules! dimension {
                 na::origin::<Self::Point>() + self
             }
 
-            fn as_point(&self) -> &Self::Point {
-                unsafe { mem::transmute(self) }
-            }
+            // fn as_point(&self) -> &Self::Point {
+            //     unsafe { mem::transmute(self) }
+            // }
 
             fn set_coords(&mut self, coords: Self::Point) {
                 *self.as_mut() = *coords.as_ref();
@@ -988,26 +984,26 @@ mod tests {
         assert_eq!(iter.next(), None);
     }
 
-    #[test]
-    fn vector_as_point() {
-        assert_eq! {
-            Vector3::new(21.0, 42.0, 84.0).to_point(),
-            Point3::new(21.0, 42.0, 84.0)
-        }
-        assert_eq! {
-            Vector3::new(21.0, 42.0, 84.0).as_point(),
-            &Point3::new(21.0, 42.0, 84.0)
-        }
+    // #[test]
+    // fn vector_as_point() {
+    //     assert_eq! {
+    //         Vector3::new(21.0, 42.0, 84.0).to_point(),
+    //         Point3::new(21.0, 42.0, 84.0)
+    //     }
+    //     assert_eq! {
+    //         Vector3::new(21.0, 42.0, 84.0).as_point(),
+    //         &Point3::new(21.0, 42.0, 84.0)
+    //     }
 
-        let mut vector = Vector3::new(0.0, 0.0, 0.0);
+    //     let mut vector = Vector3::new(0.0, 0.0, 0.0);
         
-        vector.set_coords(Point3::new(21.0, 42.0, 84.0));
+    //     vector.set_coords(Point3::new(21.0, 42.0, 84.0));
 
-        assert_eq! {
-            vector,
-            Vector3::new(21.0, 42.0, 84.0)
-        }
-    }
+    //     assert_eq! {
+    //         vector,
+    //         Vector3::new(21.0, 42.0, 84.0)
+    //     }
+    // }
 
     #[test]
     fn angle_between() {

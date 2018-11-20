@@ -32,8 +32,6 @@ pub struct FreeCamera4<F: CustomFloat> {
     max_depth: u32,
 }
 
-unsafe impl<F: CustomFloat> Sync for FreeCamera4<F> {}
-
 impl<F: CustomFloat> FreeCamera4<F> {
     pub fn new() -> FreeCamera4<F> {
         FreeCamera4 {

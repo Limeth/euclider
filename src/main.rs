@@ -21,6 +21,7 @@ extern crate num_cpus;
 extern crate meval;
 extern crate boolinator;
 extern crate float_cmp;
+extern crate smalliter;
 #[macro_use]
 extern crate mopa;
 #[macro_use]

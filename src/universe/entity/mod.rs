@@ -5,6 +5,7 @@ pub mod shape;
 pub mod surface;
 
 use std::time::Duration;
+use std::sync::Arc;
 use simulation::SimulationContext;
 use universe::Universe;
 use universe::entity::shape::Shape;
@@ -60,23 +61,23 @@ pub trait Rotatable<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
 }
 
 pub struct Void<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
-    shape: Box<VoidShape>,
-    material: Box<Material<F, P, V>>,
+    shape: Arc<VoidShape>,
+    material: Arc<Material<F, P, V>>,
 }
-
-unsafe impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Send for Void<F, P, V> {}
-unsafe impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Sync for Void<F, P, V> {}
 
 impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Void<F, P, V> {
     pub fn new(material: Box<Material<F, P, V>>) -> Void<F, P, V> {
         Void {
-            shape: Box::new(VoidShape::new()),
-            material: material,
+            shape: Arc::new(VoidShape::new()),
+            material: material.into(),
         }
     }
 
     pub fn new_with_vacuum() -> Void<F, P, V> {
-        Self::new(Box::new(Vacuum::new()))
+        Void {
+            shape: Arc::new(VoidShape::new()),
+            material: Arc::new(Vacuum::new()),
+        }
     }
 }
 

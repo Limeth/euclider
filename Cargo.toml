@@ -39,3 +39,4 @@ num_cpus = "1.7.0"
 float-cmp = "0.2.5"
 det = "0.1.0"
 boolinator = "0.1.0"
+smalliter = { git = "https://github.com/Limeth/smalliter" }

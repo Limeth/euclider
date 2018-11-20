@@ -13,7 +13,7 @@ use meval::{Expr, Context as MevalContext};
 use num::NumCast;
 
 pub trait Material<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
-    where Self: HasId + Debug + Display
+    where Self: HasId + Debug + Display + Send + Sync
 {
     fn enter(&self, location: &P, direction: &mut V);
     fn exit(&self, location: &P, direction: &mut V);
@@ -55,7 +55,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Material<F, P,
     }
 }
 
-pub trait LinearTransformation<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: Debug {
+pub trait LinearTransformation<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: Debug + Send + Sync {
     fn transform(&self, vector: &mut V, legend: &str);
     fn inverse_transform(&self, vector: &mut V, legend: &str);
 }

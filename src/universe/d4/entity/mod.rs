@@ -3,6 +3,7 @@ pub mod material;
 pub mod shape;
 pub mod surface;
 
+use std::sync::Arc;
 use na::Point4;
 use na::Vector4;
 use util::CustomFloat;
@@ -23,13 +24,10 @@ pub type Locatable4<F> = Locatable<F, Point4<F>, Vector4<F>>;
 pub type Rotatable4<F> = Rotatable<F, Point4<F>, Vector4<F>>;
 
 pub struct Entity4Impl<F: CustomFloat> {
-    shape: Box<Shape4<F>>,
-    material: Box<Material4<F>>,
-    surface: Option<Box<Surface4<F>>>,
+    shape: Arc<Shape4<F>>,
+    material: Arc<Material4<F>>,
+    surface: Option<Arc<Surface4<F>>>,
 }
-
-unsafe impl<F: CustomFloat> Send for Entity4Impl<F> {}
-unsafe impl<F: CustomFloat> Sync for Entity4Impl<F> {}
 
 impl<F: CustomFloat> Entity4Impl<F> {
     pub fn new(shape: Box<Shape4<F>>,
@@ -37,9 +35,9 @@ impl<F: CustomFloat> Entity4Impl<F> {
                surface: Option<Box<Surface4<F>>>)
                -> Self {
         Entity4Impl {
-            shape: shape,
-            material: material,
-            surface: surface,
+            shape: shape.into(),
+            material: material.into(),
+            surface: surface.map(|surface| surface.into()),
         }
     }
 

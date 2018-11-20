@@ -70,8 +70,6 @@ pub struct PitchYawCamera3<F: CustomFloat> {
     data: Camera3Data<F>,
 }
 
-unsafe impl<F: CustomFloat> Sync for PitchYawCamera3<F> {}
-
 impl<F: CustomFloat> PitchYawCamera3<F> {
     pub fn new() -> PitchYawCamera3<F> {
         PitchYawCamera3 {
@@ -282,8 +280,6 @@ impl<F: CustomFloat> Rotatable<F, Point3<F>, Vector3<F>> for PitchYawCamera3<F> 
 pub struct FreeCamera3<F: CustomFloat> {
     data: Camera3Data<F>,
 }
-
-unsafe impl<F: CustomFloat> Sync for FreeCamera3<F> {}
 
 impl<F: CustomFloat> FreeCamera3<F> {
     pub fn new() -> FreeCamera3<F> {

@@ -1,5 +1,5 @@
-use na::Point3;
-use na::Vector3;
+use universe::d3::Point3;
+use universe::d3::Vector3;
 use universe::entity::material::Material;
 
-pub type Material3<F> = Material<F, Point3<F>, Vector3<F>>;
+pub type Material3 = Material<Point3, Vector3>;

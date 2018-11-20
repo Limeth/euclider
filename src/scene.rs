@@ -23,14 +23,15 @@ use universe::d4::entity::Camera4;
 use universe::d4::entity::surface::*;
 use universe::d4::entity::shape::*;
 use universe::d4::entity::camera::*;
-use na::Point3;
-use na::Vector3;
-use na::Point4;
-use na::Vector4;
+use universe::d3::Point3;
+use universe::d3::Vector3;
+use universe::d4::Point4;
+use universe::d4::Vector4;
 use util::JsonFloat;
 use image;
 use meval::Expr;
 use core::str::FromStr;
+use ::F;
 
 macro_rules! deserializer {
     (
@@ -560,7 +561,7 @@ impl Parser {
     }
 
     #[allow(unused_variables)]
-    pub fn default<F: CustomFloat>() -> Self {
+    pub fn default() -> Self {
         let mut parser = Self::empty();
 
         {
@@ -618,28 +619,28 @@ impl Parser {
 
             add_deserializer! {
                 "Point3", "Point3::new";
-                [x: F] [y: F] [z: F] -> Point3<F> {
+                [x: F] [y: F] [z: F] -> Point3 {
                     Point3::new(x, y, z)
                 }
             };
 
             add_deserializer! {
                 "Point4", "Point4::new";
-                [x: F] [y: F] [z: F] [w: F] -> Point4<F> {
+                [x: F] [y: F] [z: F] [w: F] -> Point4 {
                     Point4::new(x, y, z, w)
                 }
             };
 
             add_deserializer! {
                 "Vector3", "Vector3::new";
-                [x: F] [y: F] [z: F] -> Vector3<F> {
+                [x: F] [y: F] [z: F] -> Vector3 {
                     Vector3::new(x, y, z)
                 }
             };
 
             add_deserializer! {
                 "Vector4", "Vector4::new";
-                [x: F] [y: F] [z: F] [w: F] -> Vector4<F> {
+                [x: F] [y: F] [z: F] [w: F] -> Vector4 {
                     Vector4::new(x, y, z, w)
                 }
             };
@@ -669,68 +670,68 @@ impl Parser {
 
             add_deserializer! {
                 "Void3", "Void3::new";
-                [material: Box<Material<F, Point3<F>, Vector3<F>>>]
-                -> Box<Entity<F, Point3<F>, Vector3<F>>> {
-                    Box::new(Void::<F, Point3<F>, Vector3<F>>::new(material))
+                [material: Box<Material<Point3, Vector3>>]
+                -> Box<Entity<Point3, Vector3>> {
+                    Box::new(Void::<Point3, Vector3>::new(material))
                 }
             };
 
             add_deserializer! {
                 "Void4", "Void4::new";
-                [material: Box<Material<F, Point4<F>, Vector4<F>>>]
-                -> Box<Entity<F, Point4<F>, Vector4<F>>> {
-                    Box::new(Void::<F, Point4<F>, Vector4<F>>::new(material))
+                [material: Box<Material<Point4, Vector4>>]
+                -> Box<Entity<Point4, Vector4>> {
+                    Box::new(Void::<Point4, Vector4>::new(material))
                 }
             };
 
             add_deserializer! {
                 "Void3::new_with_vacuum";
-                -> Box<Entity<F, Point3<F>, Vector3<F>>> {
-                    Box::new(Void::<F, Point3<F>, Vector3<F>>::new_with_vacuum())
+                -> Box<Entity<Point3, Vector3>> {
+                    Box::new(Void::<Point3, Vector3>::new_with_vacuum())
                 }
             };
 
             add_deserializer! {
                 "Void4::new_with_vacuum";
-                -> Box<Entity<F, Point4<F>, Vector4<F>>> {
-                    Box::new(Void::<F, Point4<F>, Vector4<F>>::new_with_vacuum())
+                -> Box<Entity<Point4, Vector4>> {
+                    Box::new(Void::<Point4, Vector4>::new_with_vacuum())
                 }
             };
 
             add_deserializer! {
                 "Entity3Impl", "Entity3Impl::new", "Entity3Impl::new_with_surface";
-                [shape: Box<Shape<F, Point3<F>, Vector3<F>>>]
-                [material: Box<Material<F, Point3<F>, Vector3<F>>>]
-                [surface: Box<Surface<F, Point3<F>, Vector3<F>>>]
-                -> Box<Entity<F, Point3<F>, Vector3<F>>> {
+                [shape: Box<Shape<Point3, Vector3>>]
+                [material: Box<Material<Point3, Vector3>>]
+                [surface: Box<Surface<Point3, Vector3>>]
+                -> Box<Entity<Point3, Vector3>> {
                     Box::new(Entity3Impl::new_with_surface(shape, material, surface))
                 }
             }
 
             add_deserializer! {
                 "Entity4Impl", "Entity4Impl::new", "Entity4Impl::new_with_surface";
-                [shape: Box<Shape<F, Point4<F>, Vector4<F>>>]
-                [material: Box<Material<F, Point4<F>, Vector4<F>>>]
-                [surface: Box<Surface<F, Point4<F>, Vector4<F>>>]
-                -> Box<Entity<F, Point4<F>, Vector4<F>>> {
+                [shape: Box<Shape<Point4, Vector4>>]
+                [material: Box<Material<Point4, Vector4>>]
+                [surface: Box<Surface<Point4, Vector4>>]
+                -> Box<Entity<Point4, Vector4>> {
                     Box::new(Entity4Impl::new_with_surface(shape, material, surface))
                 }
             }
 
             add_deserializer! {
                 "Entity3Impl::new_without_surface";
-                [shape: Box<Shape<F, Point3<F>, Vector3<F>>>]
-                [material: Box<Material<F, Point3<F>, Vector3<F>>>]
-                -> Box<Entity<F, Point3<F>, Vector3<F>>> {
+                [shape: Box<Shape<Point3, Vector3>>]
+                [material: Box<Material<Point3, Vector3>>]
+                -> Box<Entity<Point3, Vector3>> {
                     Box::new(Entity3Impl::new_without_surface(shape, material))
                 }
             }
 
             add_deserializer! {
                 "Entity4Impl::new_without_surface";
-                [shape: Box<Shape<F, Point4<F>, Vector4<F>>>]
-                [material: Box<Material<F, Point4<F>, Vector4<F>>>]
-                -> Box<Entity<F, Point4<F>, Vector4<F>>> {
+                [shape: Box<Shape<Point4, Vector4>>]
+                [material: Box<Material<Point4, Vector4>>]
+                -> Box<Entity<Point4, Vector4>> {
                     Box::new(Entity4Impl::new_without_surface(shape, material))
                 }
             }
@@ -739,32 +740,32 @@ impl Parser {
 
             add_deserializer! {
                 "VoidShape3", "VoidShape3::new";
-                -> Box<Shape<F, Point3<F>, Vector3<F>>> {
+                -> Box<Shape<Point3, Vector3>> {
                     Box::new(VoidShape::new())
                 }
             }
 
             add_deserializer! {
                 "VoidShape4", "VoidShape4::new";
-                -> Box<Shape<F, Point4<F>, Vector4<F>>> {
+                -> Box<Shape<Point4, Vector4>> {
                     Box::new(VoidShape::new())
                 }
             }
 
             add_deserializer! {
                 "ComposableShape3", "ComposableShape3::new", "ComposableShape3::of";
-                [shapes: Vec<Box<Shape<F, Point3<F>, Vector3<F>>>> ]
+                [shapes: Vec<Box<Shape<Point3, Vector3>>> ]
                 [operation: SetOperation]
-                -> Box<Shape<F, Point3<F>, Vector3<F>>> {
+                -> Box<Shape<Point3, Vector3>> {
                     Box::new(ComposableShape::of(shapes, operation))
                 }
             }
 
             add_deserializer! {
                 "ComposableShape4", "ComposableShape4::new", "ComposableShape4::of";
-                [shapes: Vec<Box<Shape<F, Point4<F>, Vector4<F>>>> ]
+                [shapes: Vec<Box<Shape<Point4, Vector4>>> ]
                 [operation: SetOperation]
-                -> Box<Shape<F, Point4<F>, Vector4<F>>> {
+                -> Box<Shape<Point4, Vector4>> {
                     Box::new(ComposableShape::of(shapes, operation))
                 }
             }
@@ -786,66 +787,66 @@ impl Parser {
 
             add_deserializer! {
                 "Sphere3", "Sphere3::new";
-                [center: Point3<F>] [radius: F]
-                -> Box<Shape<F, Point3<F>, Vector3<F>>> {
-                    Box::new(Sphere::<F, Point3<F>, Vector3<F>>::new(center, radius))
+                [center: Point3] [radius: F]
+                -> Box<Shape<Point3, Vector3>> {
+                    Box::new(Sphere::<Point3, Vector3>::new(center, radius))
                 }
             }
 
             add_deserializer! {
                 "Sphere4", "Sphere4::new";
-                [center: Point4<F>] [radius: F]
-                -> Box<Shape<F, Point4<F>, Vector4<F>>> {
-                    Box::new(Sphere::<F, Point4<F>, Vector4<F>>::new(center, radius))
+                [center: Point4] [radius: F]
+                -> Box<Shape<Point4, Vector4>> {
+                    Box::new(Sphere::<Point4, Vector4>::new(center, radius))
                 }
             }
 
             add_deserializer! {
                 "Hyperplane3", "Hyperplane3::new";
-                [normal: Vector3<F>] [constant: F]
-                -> Box<Shape<F, Point3<F>, Vector3<F>>> {
+                [normal: Vector3] [constant: F]
+                -> Box<Shape<Point3, Vector3>> {
                     Box::new(Hyperplane::new(normal, constant))
                 }
             }
 
             add_deserializer! {
                 "Hyperplane4", "Hyperplane4::new";
-                [normal: Vector4<F>] [constant: F]
-                -> Box<Shape<F, Point4<F>, Vector4<F>>> {
+                [normal: Vector4] [constant: F]
+                -> Box<Shape<Point4, Vector4>> {
                     Box::new(Hyperplane::new(normal, constant))
                 }
             }
 
             add_deserializer! {
                 "Hyperplane3::new_with_point";
-                [normal: Vector3<F>] [point: Point3<F>]
-                -> Box<Shape<F, Point3<F>, Vector3<F>>> {
+                [normal: Vector3] [point: Point3]
+                -> Box<Shape<Point3, Vector3>> {
                     Box::new(Hyperplane::new_with_point(normal, &point))
                 }
             }
 
             add_deserializer! {
                 "Hyperplane4::new_with_point";
-                [normal: Vector4<F>] [point: Point4<F>]
-                -> Box<Shape<F, Point4<F>, Vector4<F>>> {
+                [normal: Vector4] [point: Point4]
+                -> Box<Shape<Point4, Vector4>> {
                     Box::new(Hyperplane::new_with_point(normal, &point))
                 }
             }
 
             add_deserializer! {
                 "Hyperplane3::new_with_vectors";
-                [first: Vector3<F>] [second: Vector3<F>] [point: Point3<F>]
-                -> Box<Shape<F, Point3<F>, Vector3<F>>> {
+                [first: Vector3] [second: Vector3] [point: Point3]
+                -> Box<Shape<Point3, Vector3>> {
                     Box::new(Hyperplane::new_with_vectors(&first, &second, &point))
                 }
             }
 
             add_deserializer! {
                 "HalfSpace3", "HalfSpace3::new";
-                [plane: Box<Shape<F, Point3<F>, Vector3<F>>>]
-                [sign: F] -> Box<Shape<F, Point3<F>, Vector3<F>>> {
-                    let plane: Hyperplane<F, Point3<F>, Vector3<F>>
-                        = *try!(<Shape<F, Point3<F>, Vector3<F>>>::downcast(plane)
+                [plane: Box<Shape<Point3, Vector3>>]
+                [sign: F] -> Box<Shape<Point3, Vector3>> {
+                    let plane: Hyperplane<Point3, Vector3>
+                        = *try!(<Shape<Point3, Vector3>>::downcast(plane)
                             .or_else(|err| Err(ParserError::CustomError {
                                 description: "Invalid type, expected a `Hyperplane3`.".to_string(),
                             })));
@@ -855,10 +856,10 @@ impl Parser {
 
             add_deserializer! {
                 "HalfSpace4", "HalfSpace4::new";
-                [plane: Box<Shape<F, Point4<F>, Vector4<F>>>]
-                [sign: F] -> Box<Shape<F, Point4<F>, Vector4<F>>> {
-                    let plane: Hyperplane<F, Point4<F>, Vector4<F>>
-                        = *try!(<Shape<F, Point4<F>, Vector4<F>>>::downcast(plane)
+                [plane: Box<Shape<Point4, Vector4>>]
+                [sign: F] -> Box<Shape<Point4, Vector4>> {
+                    let plane: Hyperplane<Point4, Vector4>
+                        = *try!(<Shape<Point4, Vector4>>::downcast(plane)
                             .or_else(|err| Err(ParserError::CustomError {
                                 description: "Invalid type, expected a `Hyperplane4`.".to_string(),
                             })));
@@ -868,10 +869,10 @@ impl Parser {
 
             add_deserializer! {
                 "HalfSpace3::new_with_point";
-                [plane: Box<Shape<F, Point3<F>, Vector3<F>>>]
-                [point: Point3<F>] -> Box<Shape<F, Point3<F>, Vector3<F>>> {
-                    let plane: Hyperplane<F, Point3<F>, Vector3<F>>
-                        = *try!(<Shape<F, Point3<F>, Vector3<F>>>::downcast(plane)
+                [plane: Box<Shape<Point3, Vector3>>]
+                [point: Point3] -> Box<Shape<Point3, Vector3>> {
+                    let plane: Hyperplane<Point3, Vector3>
+                        = *try!(<Shape<Point3, Vector3>>::downcast(plane)
                             .or_else(|err| Err(ParserError::CustomError {
                                 description: "Invalid type, expected a `Hyperplane3`.".to_string(),
                             })));
@@ -881,10 +882,10 @@ impl Parser {
 
             add_deserializer! {
                 "HalfSpace4::new_with_point";
-                [plane: Box<Shape<F, Point4<F>, Vector4<F>>>]
-                [point: Point4<F>] -> Box<Shape<F, Point4<F>, Vector4<F>>> {
-                    let plane: Hyperplane<F, Point4<F>, Vector4<F>>
-                        = *try!(<Shape<F, Point4<F>, Vector4<F>>>::downcast(plane)
+                [plane: Box<Shape<Point4, Vector4>>]
+                [point: Point4] -> Box<Shape<Point4, Vector4>> {
+                    let plane: Hyperplane<Point4, Vector4>
+                        = *try!(<Shape<Point4, Vector4>>::downcast(plane)
                             .or_else(|err| Err(ParserError::CustomError {
                                 description: "Invalid type, expected a `Hyperplane4`.".to_string(),
                             })));
@@ -894,48 +895,48 @@ impl Parser {
 
             add_deserializer! {
                 "HalfSpace3::cuboid";
-                [center: Point3<F>] [dimensions: Vector3<F>]
-                -> Box<Shape<F, Point3<F>, Vector3<F>>> {
+                [center: Point3] [dimensions: Vector3]
+                -> Box<Shape<Point3, Vector3>> {
                     Box::new(cuboid(center, dimensions))
                 }
             }
 
             add_deserializer! {
                 "HalfSpace4::hypercuboid";
-                [center: Point4<F>] [dimensions: Vector4<F>]
-                -> Box<Shape<F, Point4<F>, Vector4<F>>> {
+                [center: Point4] [dimensions: Vector4]
+                -> Box<Shape<Point4, Vector4>> {
                     Box::new(hypercuboid(center, dimensions))
                 }
             }
 
             add_deserializer! {
                 "Cylinder3", "Cylinder3::new";
-                [center: Point3<F>] [direction: Vector3<F>] [radius: F]
-                -> Box<Shape<F, Point3<F>, Vector3<F>>> {
+                [center: Point3] [direction: Vector3] [radius: F]
+                -> Box<Shape<Point3, Vector3>> {
                     Box::new(Cylinder::new(center, &direction, radius))
                 }
             }
 
             add_deserializer! {
                 "Cylinder4", "Cylinder4::new";
-                [center: Point4<F>] [direction: Vector4<F>] [radius: F]
-                -> Box<Shape<F, Point4<F>, Vector4<F>>> {
+                [center: Point4] [direction: Vector4] [radius: F]
+                -> Box<Shape<Point4, Vector4>> {
                     Box::new(Cylinder::new(center, &direction, radius))
                 }
             }
 
             add_deserializer! {
                 "Cylinder3::new_with_height";
-                [center: Point3<F>] [direction: Vector3<F>] [radius: F] [height: F]
-                -> Box<Shape<F, Point3<F>, Vector3<F>>> {
+                [center: Point3] [direction: Vector3] [radius: F] [height: F]
+                -> Box<Shape<Point3, Vector3>> {
                     Box::new(Cylinder::new_with_height(center, &direction, radius, height))
                 }
             }
 
             add_deserializer! {
                 "Cylinder4::new_with_height";
-                [center: Point4<F>] [direction: Vector4<F>] [radius: F] [height: F]
-                -> Box<Shape<F, Point4<F>, Vector4<F>>> {
+                [center: Point4] [direction: Vector4] [radius: F] [height: F]
+                -> Box<Shape<Point4, Vector4>> {
                     Box::new(Cylinder::new_with_height(center, &direction, radius, height))
                 }
             }
@@ -944,14 +945,14 @@ impl Parser {
 
             add_deserializer! {
                 "Vacuum3", "Vacuum3::new";
-                -> Box<Material<F, Point3<F>, Vector3<F>>> {
+                -> Box<Material<Point3, Vector3>> {
                     Box::new(Vacuum::new())
                 }
             }
 
             add_deserializer! {
                 "Vacuum4", "Vacuum4::new";
-                -> Box<Material<F, Point4<F>, Vector4<F>>> {
+                -> Box<Material<Point4, Vector4>> {
                     Box::new(Vacuum::new())
                 }
             }
@@ -989,7 +990,7 @@ impl Parser {
             add_deserializer! {
                 "ComponentTransformation3", "ComponentTransformation3::new";
                 [expressions: Vec<ComponentTransformationExpr>]
-                -> Box<LinearTransformation<F, Point3<F>, Vector3<F>>> {
+                -> Box<LinearTransformation<Point3, Vector3>> {
                     Box::new(ComponentTransformation {
                         expressions: expressions,
                     })
@@ -999,7 +1000,7 @@ impl Parser {
             add_deserializer! {
                 "ComponentTransformation4", "ComponentTransformation4::new";
                 [expressions: Vec<ComponentTransformationExpr>]
-                -> Box<LinearTransformation<F, Point4<F>, Vector4<F>>> {
+                -> Box<LinearTransformation<Point4, Vector4>> {
                     Box::new(ComponentTransformation {
                         expressions: expressions,
                     })
@@ -1009,8 +1010,8 @@ impl Parser {
             add_deserializer! {
                 "LinearSpace3", "LinearSpace3::new";
                 [legend: String]
-                [transformations: Vec<Box<LinearTransformation<F, Point3<F>, Vector3<F>>>>]
-                -> Box<Material<F, Point3<F>, Vector3<F>>> {
+                [transformations: Vec<Box<LinearTransformation<Point3, Vector3>>>]
+                -> Box<Material<Point3, Vector3>> {
                     Box::new(LinearSpace {
                         legend: legend,
                         transformations: transformations,
@@ -1021,8 +1022,8 @@ impl Parser {
             add_deserializer! {
                 "LinearSpace4", "LinearSpace4::new";
                 [legend: String]
-                [transformations: Vec<Box<LinearTransformation<F, Point4<F>, Vector4<F>>>>]
-                -> Box<Material<F, Point4<F>, Vector4<F>>> {
+                [transformations: Vec<Box<LinearTransformation<Point4, Vector4>>>]
+                -> Box<Material<Point4, Vector4>> {
                     Box::new(LinearSpace {
                         legend: legend,
                         transformations: transformations,
@@ -1034,21 +1035,21 @@ impl Parser {
 
             add_deserializer! {
                 "uv_sphere_3";
-                [center: Point3<F>] -> Box<UVFn<F, Point3<F>>> {
+                [center: Point3] -> Box<UVFn<Point3>> {
                     uv_sphere(center)
                 }
             }
 
             add_deserializer! {
                 "uv_derank_4";
-                [uvfn: Box<UVFn<F, Point3<F>>>] -> Box<UVFn<F, Point4<F>>> {
+                [uvfn: Box<UVFn<Point3>>] -> Box<UVFn<Point4>> {
                     uv_derank(uvfn)
                 }
             }
 
             add_deserializer! {
                 "texture_image_nearest_neighbor";
-                [path: &str] -> Box<Texture<F>> {
+                [path: &str] -> Box<Texture> {
                     let data = try!(image::open(path)
                         .map_err(|_| ParserError::CustomError {
                             description: format!("Could not load texture `{}`", path),
@@ -1060,7 +1061,7 @@ impl Parser {
 
             add_deserializer! {
                 "texture_image_linear";
-                [path: &str] -> Box<Texture<F>> {
+                [path: &str] -> Box<Texture> {
                     let data = try!(image::open(path)
                         .map_err(|_| ParserError::CustomError {
                             description: format!("Could not load texture `{}`", path),
@@ -1072,29 +1073,29 @@ impl Parser {
 
             add_deserializer! {
                 "MappedTextureImpl3", "MappedTextureImpl3::new";
-                [uvfn: Box<UVFn<F, Point3<F>>>]
-                [texture: Box<Texture<F>>]
-                -> Box<MappedTexture<F, Point3<F>, Vector3<F>>> {
+                [uvfn: Box<UVFn<Point3>>]
+                [texture: Box<Texture>]
+                -> Box<MappedTexture<Point3, Vector3>> {
                     Box::new(MappedTextureImpl::new(uvfn, texture))
                 }
             }
 
             add_deserializer! {
                 "MappedTextureImpl4", "MappedTextureImpl4::new";
-                [uvfn: Box<UVFn<F, Point4<F>>>]
-                [texture: Box<Texture<F>>]
-                -> Box<MappedTexture<F, Point4<F>, Vector4<F>>> {
+                [uvfn: Box<UVFn<Point4>>]
+                [texture: Box<Texture>]
+                -> Box<MappedTexture<Point4, Vector4>> {
                     Box::new(MappedTextureImpl::new(uvfn, texture))
                 }
             }
 
             add_deserializer! {
                 "ComposableSurface3", "ComposableSurface3::new";
-                [reflection_ratio: Box<ReflectionRatioProvider<F, Point3<F>, Vector3<F>>>]
-                [reflection_direction: Box<ReflectionDirectionProvider<F, Point3<F>, Vector3<F>>>]
-                [threshold_direction: Box<ThresholdDirectionProvider<F, Point3<F>, Vector3<F>>>]
-                [surface_color: Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>]
-                -> Box<Surface<F, Point3<F>, Vector3<F>>> {
+                [reflection_ratio: Box<ReflectionRatioProvider<Point3, Vector3>>]
+                [reflection_direction: Box<ReflectionDirectionProvider<Point3, Vector3>>]
+                [threshold_direction: Box<ThresholdDirectionProvider<Point3, Vector3>>]
+                [surface_color: Box<SurfaceColorProvider<Point3, Vector3>>]
+                -> Box<Surface<Point3, Vector3>> {
                     Box::new(ComposableSurface {
                         reflection_ratio: reflection_ratio.into(),
                         reflection_direction: reflection_direction.into(),
@@ -1106,11 +1107,11 @@ impl Parser {
 
             add_deserializer! {
                 "ComposableSurface4", "ComposableSurface4::new";
-                [reflection_ratio: Box<ReflectionRatioProvider<F, Point4<F>, Vector4<F>>>]
-                [reflection_direction: Box<ReflectionDirectionProvider<F, Point4<F>, Vector4<F>>>]
-                [threshold_direction: Box<ThresholdDirectionProvider<F, Point4<F>, Vector4<F>>>]
-                [surface_color: Box<SurfaceColorProvider<F, Point4<F>, Vector4<F>>>]
-                -> Box<Surface<F, Point4<F>, Vector4<F>>> {
+                [reflection_ratio: Box<ReflectionRatioProvider<Point4, Vector4>>]
+                [reflection_direction: Box<ReflectionDirectionProvider<Point4, Vector4>>]
+                [threshold_direction: Box<ThresholdDirectionProvider<Point4, Vector4>>]
+                [surface_color: Box<SurfaceColorProvider<Point4, Vector4>>]
+                -> Box<Surface<Point4, Vector4>> {
                     Box::new(ComposableSurface {
                         reflection_ratio: reflection_ratio.into(),
                         reflection_direction: reflection_direction.into(),
@@ -1122,7 +1123,7 @@ impl Parser {
 
             add_deserializer! {
                 "blend_function_ratio";
-                [ratio: F] -> Box<BlendFunction<F>> {
+                [ratio: F] -> Box<BlendFunction> {
                     blend_function_ratio(ratio)
                 }
             }
@@ -1137,7 +1138,7 @@ impl Parser {
                                 "blend_function_",
                                 stringify!($name)
                             );
-                            -> Box<BlendFunction<F>> {
+                            -> Box<BlendFunction> {
                                 concat_idents!(blend_function_, $name)()
                             }
                         }
@@ -1151,20 +1152,20 @@ impl Parser {
 
             add_deserializer! {
                 "surface_color_blend_3";
-                [source: Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>]
-                [destination: Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>>]
-                [blend_function: Box<BlendFunction<F>>]
-                -> Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>> {
+                [source: Box<SurfaceColorProvider<Point3, Vector3>>]
+                [destination: Box<SurfaceColorProvider<Point3, Vector3>>]
+                [blend_function: Box<BlendFunction>]
+                -> Box<SurfaceColorProvider<Point3, Vector3>> {
                     surface_color_blend(source, destination, blend_function)
                 }
             }
 
             add_deserializer! {
                 "surface_color_blend_4";
-                [source: Box<SurfaceColorProvider<F, Point4<F>, Vector4<F>>>]
-                [destination: Box<SurfaceColorProvider<F, Point4<F>, Vector4<F>>>]
-                [blend_function: Box<BlendFunction<F>>]
-                -> Box<SurfaceColorProvider<F, Point4<F>, Vector4<F>>> {
+                [source: Box<SurfaceColorProvider<Point4, Vector4>>]
+                [destination: Box<SurfaceColorProvider<Point4, Vector4>>]
+                [blend_function: Box<BlendFunction>]
+                -> Box<SurfaceColorProvider<Point4, Vector4>> {
                     surface_color_blend(source, destination, blend_function)
                 }
             }
@@ -1173,7 +1174,7 @@ impl Parser {
                 "surface_color_illumination_global_3";
                 [light_color: Rgba<F>]
                 [dark_color: Rgba<F>]
-                -> Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>> {
+                -> Box<SurfaceColorProvider<Point3, Vector3>> {
                     surface_color_illumination_global(light_color, dark_color)
                 }
             }
@@ -1182,7 +1183,7 @@ impl Parser {
                 "surface_color_illumination_global_4";
                 [light_color: Rgba<F>]
                 [dark_color: Rgba<F>]
-                -> Box<SurfaceColorProvider<F, Point4<F>, Vector4<F>>> {
+                -> Box<SurfaceColorProvider<Point4, Vector4>> {
                     surface_color_illumination_global(light_color, dark_color)
                 }
             }
@@ -1190,7 +1191,7 @@ impl Parser {
             add_deserializer! {
                 "surface_color_perlin_hue_seed_3";
                 [seed: u32] [size: F] [speed: F]
-                -> Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>> {
+                -> Box<SurfaceColorProvider<Point3, Vector3>> {
                     surface_color_perlin_hue_seed(seed, size, speed)
                 }
             }
@@ -1198,51 +1199,51 @@ impl Parser {
             add_deserializer! {
                 "surface_color_perlin_hue_random_3";
                 [size: F] [speed: F]
-                -> Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>> {
+                -> Box<SurfaceColorProvider<Point3, Vector3>> {
                     surface_color_perlin_hue_random(size, speed)
                 }
             }
 
             add_deserializer! {
                 "surface_color_illumination_directional_3";
-                [direction: Vector3<F>] [light_color: Rgba<F>] [dark_color: Rgba<F>]
-                -> Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>> {
+                [direction: Vector3] [light_color: Rgba<F>] [dark_color: Rgba<F>]
+                -> Box<SurfaceColorProvider<Point3, Vector3>> {
                     surface_color_illumination_directional(direction, light_color, dark_color)
                 }
             }
 
             add_deserializer! {
                 "surface_color_illumination_directional_4";
-                [direction: Vector4<F>] [light_color: Rgba<F>] [dark_color: Rgba<F>]
-                -> Box<SurfaceColorProvider<F, Point4<F>, Vector4<F>>> {
+                [direction: Vector4] [light_color: Rgba<F>] [dark_color: Rgba<F>]
+                -> Box<SurfaceColorProvider<Point4, Vector4>> {
                     surface_color_illumination_directional(direction, light_color, dark_color)
                 }
             }
 
             add_deserializer! {
                 "reflection_ratio_uniform_3";
-                [ratio: F] -> Box<ReflectionRatioProvider<F, Point3<F>, Vector3<F>>> {
+                [ratio: F] -> Box<ReflectionRatioProvider<Point3, Vector3>> {
                     reflection_ratio_uniform(ratio)
                 }
             }
 
             add_deserializer! {
                 "reflection_ratio_uniform_4";
-                [ratio: F] -> Box<ReflectionRatioProvider<F, Point4<F>, Vector4<F>>> {
+                [ratio: F] -> Box<ReflectionRatioProvider<Point4, Vector4>> {
                     reflection_ratio_uniform(ratio)
                 }
             }
 
             add_deserializer! {
                 "reflection_direction_specular_3";
-                -> Box<ReflectionDirectionProvider<F, Point3<F>, Vector3<F>>> {
+                -> Box<ReflectionDirectionProvider<Point3, Vector3>> {
                     reflection_direction_specular()
                 }
             }
 
             add_deserializer! {
                 "reflection_direction_specular_4";
-                -> Box<ReflectionDirectionProvider<F, Point4<F>, Vector4<F>>> {
+                -> Box<ReflectionDirectionProvider<Point4, Vector4>> {
                     reflection_direction_specular()
                 }
             }
@@ -1250,7 +1251,7 @@ impl Parser {
             add_deserializer! {
                 "threshold_direction_snell_3";
                 [refractive_index: F]
-                -> Box<ThresholdDirectionProvider<F, Point3<F>, Vector3<F>>> {
+                -> Box<ThresholdDirectionProvider<Point3, Vector3>> {
                     threshold_direction_snell(refractive_index)
                 }
             }
@@ -1258,35 +1259,35 @@ impl Parser {
             add_deserializer! {
                 "threshold_direction_snell_4";
                 [refractive_index: F]
-                -> Box<ThresholdDirectionProvider<F, Point4<F>, Vector4<F>>> {
+                -> Box<ThresholdDirectionProvider<Point4, Vector4>> {
                     threshold_direction_snell(refractive_index)
                 }
             }
 
             add_deserializer! {
                 "threshold_direction_identity_3";
-                -> Box<ThresholdDirectionProvider<F, Point3<F>, Vector3<F>>> {
+                -> Box<ThresholdDirectionProvider<Point3, Vector3>> {
                     threshold_direction_identity()
                 }
             }
 
             add_deserializer! {
                 "threshold_direction_identity_4";
-                -> Box<ThresholdDirectionProvider<F, Point4<F>, Vector4<F>>> {
+                -> Box<ThresholdDirectionProvider<Point4, Vector4>> {
                     threshold_direction_identity()
                 }
             }
 
             add_deserializer! {
                 "surface_color_uniform_3";
-                [color: Rgba<F>] -> Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>> {
+                [color: Rgba<F>] -> Box<SurfaceColorProvider<Point3, Vector3>> {
                     surface_color_uniform(color)
                 }
             }
 
             add_deserializer! {
                 "surface_color_uniform_4";
-                [color: Rgba<F>] -> Box<SurfaceColorProvider<F, Point4<F>, Vector4<F>>> {
+                [color: Rgba<F>] -> Box<SurfaceColorProvider<Point4, Vector4>> {
                     surface_color_uniform(color)
                 }
             }
@@ -1294,7 +1295,7 @@ impl Parser {
             add_deserializer! {
                 "reflection_ratio_fresnel_3";
                 [refractive_index_inside: F] [refractive_index_outside: F]
-                -> Box<ReflectionRatioProvider<F, Point3<F>, Vector3<F>>> {
+                -> Box<ReflectionRatioProvider<Point3, Vector3>> {
                     reflection_ratio_fresnel(refractive_index_inside,
                                              refractive_index_outside)
                 }
@@ -1303,7 +1304,7 @@ impl Parser {
             add_deserializer! {
                 "reflection_ratio_fresnel_4";
                 [refractive_index_inside: F] [refractive_index_outside: F]
-                -> Box<ReflectionRatioProvider<F, Point4<F>, Vector4<F>>> {
+                -> Box<ReflectionRatioProvider<Point4, Vector4>> {
                     reflection_ratio_fresnel(refractive_index_inside,
                                              refractive_index_outside)
                 }
@@ -1311,16 +1312,16 @@ impl Parser {
 
             add_deserializer! {
                 "surface_color_texture_3";
-                [mapped_texture: Box<MappedTexture<F, Point3<F>, Vector3<F>>>]
-                -> Box<SurfaceColorProvider<F, Point3<F>, Vector3<F>>> {
+                [mapped_texture: Box<MappedTexture<Point3, Vector3>>]
+                -> Box<SurfaceColorProvider<Point3, Vector3>> {
                     surface_color_texture(mapped_texture)
                 }
             }
 
             add_deserializer! {
                 "surface_color_texture_4";
-                [mapped_texture: Box<MappedTexture<F, Point4<F>, Vector4<F>>>]
-                -> Box<SurfaceColorProvider<F, Point4<F>, Vector4<F>>> {
+                [mapped_texture: Box<MappedTexture<Point4, Vector4>>]
+                -> Box<SurfaceColorProvider<Point4, Vector4>> {
                     surface_color_texture(mapped_texture)
                 }
             }
@@ -1329,11 +1330,11 @@ impl Parser {
 
             add_deserializer! {
                 "Universe3", "Universe3::new";
-                [camera: Box<Camera3<F>>]
-                [entities: Vec<Box<Entity<F, Point3<F>, Vector3<F>>>>]
-                [background: Box<MappedTexture<F, Point3<F>, Vector3<F>>>]
-                -> Box<Environment<F>> {
-                    let mut universe = Universe3::<F>::construct(camera);
+                [camera: Box<Camera3>]
+                [entities: Vec<Box<Entity<Point3, Vector3>>>]
+                [background: Box<MappedTexture<Point3, Vector3>>]
+                -> Box<Environment> {
+                    let mut universe = Universe3::construct(camera);
 
                     universe.set_entities(entities);
                     universe.set_background(background);
@@ -1344,39 +1345,39 @@ impl Parser {
 
             add_deserializer! {
                 "PitchYawCamera3", "PitchYawCamera3::new";
-                -> Box<Camera3<F>> {
+                -> Box<Camera3> {
                     Box::new(PitchYawCamera3::new())
                 }
             }
 
             add_deserializer! {
                 "PitchYawCamera3::new_with_location";
-                [location: Point3<F>] -> Box<Camera3<F>> {
+                [location: Point3] -> Box<Camera3> {
                     Box::new(PitchYawCamera3::new_with_location(location))
                 }
             }
 
             add_deserializer! {
                 "FreeCamera3", "FreeCamera3::new";
-                -> Box<Camera3<F>> {
+                -> Box<Camera3> {
                     Box::new(FreeCamera3::new())
                 }
             }
 
             add_deserializer! {
                 "FreeCamera3::new_with_location";
-                [location: Point3<F>] -> Box<Camera3<F>> {
+                [location: Point3] -> Box<Camera3> {
                     Box::new(FreeCamera3::new_with_location(location))
                 }
             }
 
             add_deserializer! {
                 "Universe4", "Universe4::new";
-                [camera: Box<Camera4<F>>]
-                [entities: Vec<Box<Entity<F, Point4<F>, Vector4<F>>>>]
-                [background: Box<MappedTexture<F, Point4<F>, Vector4<F>>>]
-                -> Box<Environment<F>> {
-                    let mut universe = Universe4::<F>::construct(camera);
+                [camera: Box<Camera4>]
+                [entities: Vec<Box<Entity<Point4, Vector4>>>]
+                [background: Box<MappedTexture<Point4, Vector4>>]
+                -> Box<Environment> {
+                    let mut universe = Universe4::construct(camera);
 
                     universe.set_entities(entities);
                     universe.set_background(background);
@@ -1387,14 +1388,14 @@ impl Parser {
 
             add_deserializer! {
                 "FreeCamera4", "FreeCamera4::new";
-                -> Box<Camera4<F>> {
+                -> Box<Camera4> {
                     Box::new(FreeCamera4::new())
                 }
             }
 
             add_deserializer! {
                 "FreeCamera4::new_with_location";
-                [location: Point4<F>] -> Box<Camera4<F>> {
+                [location: Point4] -> Box<Camera4> {
                     Box::new(FreeCamera4::new_with_location(location))
                 }
             }
@@ -1480,7 +1481,7 @@ mod tests {
     use super::*;
 
     #[allow(unused_variables)]
-    fn parse_float_internal<F: CustomFloat>() -> F {
+    fn parse_float_internal() -> F {
         let mut parser = Parser::empty();
 
         parser.deserializers.insert("item", Box::new(deserializer! {

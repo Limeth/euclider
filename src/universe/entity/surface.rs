@@ -1,3 +1,4 @@
+use ::F;
 use std;
 use std::sync::Arc;
 use palette::ComponentWise;
@@ -20,46 +21,47 @@ use num::Zero;
 use num::One;
 use na::Cast;
 use na::Point2;
+use na::ApproxEq;
 use palette::Rgb;
 use na::BaseFloat;
 
-pub type ReflectionRatioProvider<F, P, V> = (Fn(&TracingContext<F, P, V>) -> F) + Send + Sync;
-pub type ReflectionDirectionProvider<F, P, V> = (Fn(&TracingContext<F, P, V>) -> V) + Send + Sync;
-pub type ThresholdDirectionProvider<F, P, V> = (Fn(&TracingContext<F, P, V>) -> V) + Send + Sync;
-pub type SurfaceColorProvider<F, P, V> = (Fn(&TracingContext<F, P, V>) -> Rgba<F>) + Send + Sync;
-pub type ThresholdPathModifier<F, P, V> = (Fn(&PathTracingContext<F, P, V>, &mut P, &mut V)) + Send + Sync;
+pub type ReflectionRatioProvider<P, V> = (Fn(&TracingContext<P, V>) -> F) + Send + Sync;
+pub type ReflectionDirectionProvider<P, V> = (Fn(&TracingContext<P, V>) -> V) + Send + Sync;
+pub type ThresholdDirectionProvider<P, V> = (Fn(&TracingContext<P, V>) -> V) + Send + Sync;
+pub type SurfaceColorProvider<P, V> = (Fn(&TracingContext<P, V>) -> Rgba<F>) + Send + Sync;
+pub type ThresholdPathModifier<P, V> = (Fn(&PathTracingContext<P, V>, &mut P, &mut V)) + Send + Sync;
 
-pub trait Surface<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: Send + Sync {
-    fn get_color(&self, context: ColorTracingContext<F, P, V>) -> Rgba<F>;
-    fn get_path(&self, context: PathTracingContext<F, P, V>) -> Option<(P, V)>;
+pub trait Surface<P: CustomPoint<V>, V: CustomVector<P>>: Send + Sync {
+    fn get_color(&self, context: ColorTracingContext<P, V>) -> Rgba<F>;
+    fn get_path(&self, context: PathTracingContext<P, V>) -> Option<(P, V)>;
 }
 
-pub struct ComposableSurface<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
-    pub reflection_ratio: Arc<ReflectionRatioProvider<F, P, V>>,
-    pub reflection_direction: Arc<ReflectionDirectionProvider<F, P, V>>,
-    pub threshold_direction: Arc<ThresholdDirectionProvider<F, P, V>>,
-    pub surface_color: Arc<SurfaceColorProvider<F, P, V>>,
+pub struct ComposableSurface<P: CustomPoint<V>, V: CustomVector<P>> {
+    pub reflection_ratio: Arc<ReflectionRatioProvider<P, V>>,
+    pub reflection_direction: Arc<ReflectionDirectionProvider<P, V>>,
+    pub threshold_direction: Arc<ThresholdDirectionProvider<P, V>>,
+    pub surface_color: Arc<SurfaceColorProvider<P, V>>,
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurface<F, P, V> {
-    fn get_reflection_ratio(&self, context: &TracingContext<F, P, V>) -> F {
+impl<P: CustomPoint<V>, V: CustomVector<P>> ComposableSurface<P, V> {
+    fn get_reflection_ratio(&self, context: &TracingContext<P, V>) -> F {
         let reflection_ratio = self.reflection_ratio.as_ref();
         reflection_ratio(context)
     }
 
-    fn get_reflection_direction(&self, context: &TracingContext<F, P, V>) -> V {
+    fn get_reflection_direction(&self, context: &TracingContext<P, V>) -> V {
         let reflection_direction = self.reflection_direction.as_ref();
         reflection_direction(context)
     }
 
-    fn get_surface_color(&self, context: &TracingContext<F, P, V>) -> Rgba<F> {
+    fn get_surface_color(&self, context: &TracingContext<P, V>) -> Rgba<F> {
         let surface_color = self.surface_color.as_ref();
         surface_color(context)
     }
 
     fn get_intersection_color(&self,
                               reflection_ratio: F,
-                              context: &ColorTracingContext<F, P, V>)
+                              context: &ColorTracingContext<P, V>)
                               -> Option<Rgba<F>> {
         if reflection_ratio >= <F as One>::one() {
             return None;
@@ -79,7 +81,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
                 // Offset the new origin, so it doesn't hit the same shape over and over
                 // The question is -- is there a better way? I think not.
                 let new_origin = context.general.intersection.location +
-                                 -context.general.intersection_normal_closer * F::epsilon() * Cast::from(128.0);
+                                 -context.general.intersection_normal_closer * <F as ApproxEq<F>>::approx_epsilon(None) * Cast::from(128.0);
 
                 // Apply the material transition
                 let destination_traceable = if context.general.exiting {
@@ -116,7 +118,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
 
     fn get_reflection_color(&self,
                             reflection_ratio: F,
-                            context: &ColorTracingContext<F, P, V>)
+                            context: &ColorTracingContext<P, V>)
                             -> Option<Rgba<F>> {
         if reflection_ratio <= <F as Zero>::zero() {
             return None;
@@ -128,7 +130,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
         // The question is -- is there a better way? I think not.
         let new_origin = context.general.intersection.location +
                          (context.general.intersection_normal_closer
-                            * F::epsilon() * Cast::from(128.0));
+                            * <F as ApproxEq<F>>::approx_epsilon(None) * Cast::from(128.0));
 
         Some(trace(&context.general.time,
                    context.general.origin_traceable,
@@ -137,9 +139,9 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableSurf
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Surface<F, P, V>
-        for ComposableSurface<F, P, V> {
-    fn get_color(&self, context: ColorTracingContext<F, P, V>) -> Rgba<F> {
+impl<P: CustomPoint<V>, V: CustomVector<P>> Surface<P, V>
+        for ComposableSurface<P, V> {
+    fn get_color(&self, context: ColorTracingContext<P, V>) -> Rgba<F> {
         let reflection_ratio = self.get_reflection_ratio(&context.general)
             .min(<F as One>::one())
             .max(<F as Zero>::zero());
@@ -159,7 +161,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Surface<F, P, 
                                     reflection_ratio)
     }
 
-    fn get_path(&self, context: PathTracingContext<F, P, V>) -> Option<(P, V)> {
+    fn get_path(&self, context: PathTracingContext<P, V>) -> Option<(P, V)> {
         if *context.distance - context.general.intersection.distance <= <F as Zero>::zero() {
             None
         } else {
@@ -169,7 +171,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Surface<F, P, 
             // Offset the new origin, so it doesn't hit the same shape over and over
             // The question is -- is there a better way? I think not.
             let new_origin = context.general.intersection.location +
-                -context.general.intersection_normal_closer * F::epsilon() * Cast::from(128.0);
+                -context.general.intersection_normal_closer * <F as ApproxEq<F>>::approx_epsilon(None) * Cast::from(128.0);
 
             // Apply the material transition
             let destination_traceable = if context.general.exiting {
@@ -196,10 +198,10 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Surface<F, P, 
 }
 
 #[allow(unused_variables)]
-pub fn reflection_ratio_uniform<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+pub fn reflection_ratio_uniform<P: CustomPoint<V>, V: CustomVector<P>>
     (ratio: F)
-     -> Box<ReflectionRatioProvider<F, P, V>> {
-    Box::new(move |context: &TracingContext<F, P, V>| {
+     -> Box<ReflectionRatioProvider<P, V>> {
+    Box::new(move |context: &TracingContext<P, V>| {
         if context.exiting {
             <F as Zero>::zero()
         } else {
@@ -209,10 +211,10 @@ pub fn reflection_ratio_uniform<F: CustomFloat, P: CustomPoint<F, V>, V: CustomV
 }
 
 #[allow(unused_variables)]
-pub fn reflection_ratio_fresnel<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+pub fn reflection_ratio_fresnel<P: CustomPoint<V>, V: CustomVector<P>>
     (refractive_index_inside: F, refractive_index_outside: F)
-     -> Box<ReflectionRatioProvider<F, P, V>> {
-    Box::new(move |context: &TracingContext<F, P, V>| {
+     -> Box<ReflectionRatioProvider<P, V>> {
+    Box::new(move |context: &TracingContext<P, V>| {
         let normal = -context.intersection_normal_closer;
         let from_theta = context.intersection.direction.angle_between(&normal);
         let (from_index, to_index) = if context.exiting {
@@ -241,11 +243,11 @@ pub fn reflection_ratio_fresnel<F: CustomFloat, P: CustomPoint<F, V>, V: CustomV
     })
 }
 
-pub fn reflection_direction_specular<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+pub fn reflection_direction_specular<P: CustomPoint<V>, V: CustomVector<P>>
     ()
-    -> Box<ReflectionDirectionProvider<F, P, V>>
+    -> Box<ReflectionDirectionProvider<P, V>>
 {
-    Box::new(move |context: &TracingContext<F, P, V>| {
+    Box::new(move |context: &TracingContext<P, V>| {
         // R = 2*(V dot N)*N - V
         context.intersection_normal_closer * <F as NumCast>::from(-2.0).unwrap()
             * context.intersection.direction.dot(&context.intersection_normal_closer)
@@ -254,20 +256,20 @@ pub fn reflection_direction_specular<F: CustomFloat, P: CustomPoint<F, V>, V: Cu
 }
 
 #[allow(unused_variables)]
-pub fn threshold_direction_identity<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+pub fn threshold_direction_identity<P: CustomPoint<V>, V: CustomVector<P>>
     ()
-    -> Box<ThresholdDirectionProvider<F, P, V>>
+    -> Box<ThresholdDirectionProvider<P, V>>
 {
-    Box::new(move |context: &TracingContext<F, P, V>| {
+    Box::new(move |context: &TracingContext<P, V>| {
         context.intersection.direction
     })
 }
 
-pub fn threshold_direction_snell<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+pub fn threshold_direction_snell<P: CustomPoint<V>, V: CustomVector<P>>
     (refractive_index: F)
-    -> Box<ThresholdDirectionProvider<F, P, V>>
+    -> Box<ThresholdDirectionProvider<P, V>>
 {
-    Box::new(move |context: &TracingContext<F, P, V>| {
+    Box::new(move |context: &TracingContext<P, V>| {
         let normal = -context.intersection_normal_closer;
         let from_theta = context.intersection.direction.angle_between(&normal);
         let refractive_index_modifier = if context.exiting {
@@ -285,34 +287,33 @@ pub fn threshold_direction_snell<F: CustomFloat, P: CustomPoint<F, V>, V: Custom
     })
 }
 
-pub type BlendFunction<F> = (Fn(Rgba<F>, Rgba<F>) -> Rgba<F>) + Send + Sync;
+pub type BlendFunction = (Fn(Rgba<F>, Rgba<F>) -> Rgba<F>) + Send + Sync;
 pub type PaletteBlendFunction<C: Blend<Color=C> + ComponentWise> =
     (Fn(PreAlpha<C, <C as ComponentWise>::Scalar>, PreAlpha<C, <C as ComponentWise>::Scalar>)
     -> PreAlpha<C, <C as ComponentWise>::Scalar>) + Send + Sync;
 
-pub fn surface_color_blend<F: CustomFloat,
-                           P: CustomPoint<F, V>,
-                           V: CustomVector<F, P>>
-    (source: Box<SurfaceColorProvider<F, P, V>>,
-     destination: Box<SurfaceColorProvider<F, P, V>>,
-     blend_function: Box<BlendFunction<F>>)
-     -> Box<SurfaceColorProvider<F, P, V>> {
-    let source: Arc<SurfaceColorProvider<F, P, V>> = source.into();
-    let destination: Arc<SurfaceColorProvider<F, P, V>> = destination.into();
-    let blend_function: Arc<BlendFunction<F>> = blend_function.into();
-    Box::new(move |context: &TracingContext<F, P, V>| {
+pub fn surface_color_blend<P: CustomPoint<V>,
+                           V: CustomVector<P>>
+    (source: Box<SurfaceColorProvider<P, V>>,
+     destination: Box<SurfaceColorProvider<P, V>>,
+     blend_function: Box<BlendFunction>)
+     -> Box<SurfaceColorProvider<P, V>> {
+    let source: Arc<SurfaceColorProvider<P, V>> = source.into();
+    let destination: Arc<SurfaceColorProvider<P, V>> = destination.into();
+    let blend_function: Arc<BlendFunction> = blend_function.into();
+    Box::new(move |context: &TracingContext<P, V>| {
         blend_function(source(context), destination(context))
     })
 }
 
-pub fn blend_function_ratio<F: CustomFloat>(ratio: F) -> Box<BlendFunction<F>> {
+pub fn blend_function_ratio(ratio: F) -> Box<BlendFunction> {
     Box::new(move |source, destination| {
         util::combine_palette_color(source, destination, ratio)
     })
 }
 
-pub fn blend_premultiplied<F: CustomFloat>(blend_function: Box<PaletteBlendFunction<Rgb<F>>>)
-        -> Box<BlendFunction<F>> {
+pub fn blend_premultiplied(blend_function: Box<PaletteBlendFunction<Rgb<F>>>)
+        -> Box<BlendFunction> {
     Box::new(move |source_color: Rgba<F>, destination_color: Rgba<F>| {
         Blend::from_premultiplied(
             (&blend_function)(source_color.into_premultiplied(), destination_color.into_premultiplied())
@@ -320,80 +321,79 @@ pub fn blend_premultiplied<F: CustomFloat>(blend_function: Box<PaletteBlendFunct
     })
 }
 
-pub fn blend_function_over<F: CustomFloat>() -> Box<BlendFunction<F>> {
+pub fn blend_function_over() -> Box<BlendFunction> {
     blend_premultiplied(Box::new(Blend::over))
 }
 
-pub fn blend_function_inside<F: CustomFloat>() -> Box<BlendFunction<F>> {
+pub fn blend_function_inside() -> Box<BlendFunction> {
     blend_premultiplied(Box::new(Blend::inside))
 }
 
-pub fn blend_function_outside<F: CustomFloat>() -> Box<BlendFunction<F>> {
+pub fn blend_function_outside() -> Box<BlendFunction> {
     blend_premultiplied(Box::new(Blend::outside))
 }
 
-pub fn blend_function_atop<F: CustomFloat>() -> Box<BlendFunction<F>> {
+pub fn blend_function_atop() -> Box<BlendFunction> {
     blend_premultiplied(Box::new(Blend::atop))
 }
 
-pub fn blend_function_xor<F: CustomFloat>() -> Box<BlendFunction<F>> {
+pub fn blend_function_xor() -> Box<BlendFunction> {
     blend_premultiplied(Box::new(Blend::xor))
 }
 
-pub fn blend_function_plus<F: CustomFloat>() -> Box<BlendFunction<F>> {
+pub fn blend_function_plus() -> Box<BlendFunction> {
     blend_premultiplied(Box::new(Blend::plus))
 }
 
-pub fn blend_function_multiply<F: CustomFloat>() -> Box<BlendFunction<F>> {
+pub fn blend_function_multiply() -> Box<BlendFunction> {
     blend_premultiplied(Box::new(Blend::multiply))
 }
 
-pub fn blend_function_screen<F: CustomFloat>() -> Box<BlendFunction<F>> {
+pub fn blend_function_screen() -> Box<BlendFunction> {
     blend_premultiplied(Box::new(Blend::screen))
 }
 
-pub fn blend_function_overlay<F: CustomFloat>() -> Box<BlendFunction<F>> {
+pub fn blend_function_overlay() -> Box<BlendFunction> {
     blend_premultiplied(Box::new(Blend::overlay))
 }
 
-pub fn blend_function_darken<F: CustomFloat>() -> Box<BlendFunction<F>> {
+pub fn blend_function_darken() -> Box<BlendFunction> {
     blend_premultiplied(Box::new(Blend::darken))
 }
 
-pub fn blend_function_lighten<F: CustomFloat>() -> Box<BlendFunction<F>> {
+pub fn blend_function_lighten() -> Box<BlendFunction> {
     blend_premultiplied(Box::new(Blend::lighten))
 }
 
-pub fn blend_function_dodge<F: CustomFloat>() -> Box<BlendFunction<F>> {
+pub fn blend_function_dodge() -> Box<BlendFunction> {
     blend_premultiplied(Box::new(Blend::dodge))
 }
 
-pub fn blend_function_burn<F: CustomFloat>() -> Box<BlendFunction<F>> {
+pub fn blend_function_burn() -> Box<BlendFunction> {
     blend_premultiplied(Box::new(Blend::burn))
 }
 
-pub fn blend_function_hard_light<F: CustomFloat>() -> Box<BlendFunction<F>> {
+pub fn blend_function_hard_light() -> Box<BlendFunction> {
     blend_premultiplied(Box::new(Blend::hard_light))
 }
 
-pub fn blend_function_soft_light<F: CustomFloat>() -> Box<BlendFunction<F>> {
+pub fn blend_function_soft_light() -> Box<BlendFunction> {
     blend_premultiplied(Box::new(Blend::soft_light))
 }
 
-pub fn blend_function_difference<F: CustomFloat>() -> Box<BlendFunction<F>> {
+pub fn blend_function_difference() -> Box<BlendFunction> {
     blend_premultiplied(Box::new(Blend::difference))
 }
 
-pub fn blend_function_exclusion<F: CustomFloat>() -> Box<BlendFunction<F>> {
+pub fn blend_function_exclusion() -> Box<BlendFunction> {
     blend_premultiplied(Box::new(Blend::exclusion))
 }
 
-pub fn surface_color_illumination_directional<F: CustomFloat,
-                                              P: CustomPoint<F, V>,
-                                              V: CustomVector<F, P>>
+pub fn surface_color_illumination_directional<P: CustomPoint<V>,
+                                              V: CustomVector<P>>
     (light_direction: V, light_color: Rgba<F>, dark_color: Rgba<F>)
-     -> Box<SurfaceColorProvider<F, P, V>> {
-    Box::new(move |context: &TracingContext<F, P, V>| {
+     -> Box<SurfaceColorProvider<P, V>> {
+    Box::new(move |context: &TracingContext<P, V>| {
         let mut normal = context.intersection.normal;
 
         if context.intersection.direction.angle_between(&normal) > BaseFloat::frac_pi_2() {
@@ -407,32 +407,31 @@ pub fn surface_color_illumination_directional<F: CustomFloat,
     })
 }
 
-pub fn surface_color_illumination_global<F: CustomFloat,
-                                         P: CustomPoint<F, V>,
-                                         V: CustomVector<F, P>>
+pub fn surface_color_illumination_global< P: CustomPoint<V>,
+                                         V: CustomVector<P>>
     (light_color: Rgba<F>, dark_color: Rgba<F>)
-     -> Box<SurfaceColorProvider<F, P, V>> {
-    Box::new(move |context: &TracingContext<F, P, V>| {
+     -> Box<SurfaceColorProvider<P, V>> {
+    Box::new(move |context: &TracingContext<P, V>| {
         let original_angle = context.intersection_normal_closer
             .angle_between(&context.intersection.direction);
         let angle = <F as BaseFloat>::pi() - original_angle;
-        let ratio = angle / BaseFloat::frac_pi_2();
+        let ratio = angle / <F as BaseFloat>::frac_pi_2();
 
         util::combine_palette_color(dark_color, light_color, ratio)
     })
 }
 
 #[allow(unused_variables)]
-pub fn surface_color_uniform<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+pub fn surface_color_uniform<P: CustomPoint<V>, V: CustomVector<P>>
     (color: Rgba<F>)
-     -> Box<SurfaceColorProvider<F, P, V>> {
-    Box::new(move |context: &TracingContext<F, P, V>| color)
+     -> Box<SurfaceColorProvider<P, V>> {
+    Box::new(move |context: &TracingContext<P, V>| color)
 }
 
-pub type UVFn<F, P> = (Fn(&P) -> Point2<F>) + Send + Sync;
-pub type Texture<F> = (Fn(&Point2<F>) -> Rgba<F>) + Send + Sync;
+pub type UVFn<P> = (Fn(&P) -> Point2<F>) + Send + Sync;
+pub type Texture = (Fn(&Point2<F>) -> Rgba<F>) + Send + Sync;
 
-pub fn texture_image_nearest_neighbor<F: CustomFloat>(dynamic_image: DynamicImage) -> Box<Texture<F>> {
+pub fn texture_image_nearest_neighbor(dynamic_image: DynamicImage) -> Box<Texture> {
     Box::new(move |point: &Point2<F>| {
         let (width, height) = dynamic_image.dimensions();
         let (x, y) = (point.x * <F as NumCast>::from(width).unwrap(),
@@ -451,11 +450,11 @@ pub fn texture_image_nearest_neighbor<F: CustomFloat>(dynamic_image: DynamicImag
     })
 }
 
-pub fn texture_image_linear<F: CustomFloat>(dynamic_image: DynamicImage) -> Box<Texture<F>> {
+pub fn texture_image_linear(dynamic_image: DynamicImage) -> Box<Texture> {
     Box::new(move |point: &Point2<F>| {
         let (width, height) = dynamic_image.dimensions();
-        let (x, y) = (point.x * <F as NumCast>::from(width).unwrap() - Cast::from(0.5),
-                      point.y * <F as NumCast>::from(height).unwrap() - Cast::from(0.5));
+        let (x, y): (F, F) = (point.x * <F as NumCast>::from(width).unwrap() - 0.5,
+                      point.y * <F as NumCast>::from(height).unwrap() - 0.5);
         let (offset_x, offset_y) = (x - x.floor(), y - y.floor());
         let mut pixels: [[u8; 4]; 4] = [[0u8; 4]; 4];
         const PIXEL_OFFSETS: [[u32; 2]; 4] = [[0, 0], [1, 0], [0, 1], [1, 1]];
@@ -489,7 +488,7 @@ pub fn texture_image_linear<F: CustomFloat>(dynamic_image: DynamicImage) -> Box<
     })
 }
 
-pub trait MappedTexture<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+pub trait MappedTexture<P: CustomPoint<V>, V: CustomVector<P>>
     : Send + Sync {
     fn get_color(&self, point: &P) -> Rgba<F>;
 }
@@ -503,21 +502,21 @@ impl MappedTextureTransparent {
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> MappedTexture<F, P, V> for MappedTextureTransparent {
+impl<P: CustomPoint<V>, V: CustomVector<P>> MappedTexture<P, V> for MappedTextureTransparent {
     #[allow(unused_variables)]
     fn get_color(&self, point: &P) -> Rgba<F> {
         Rgba::new(Zero::zero(), Zero::zero(), Zero::zero(), Zero::zero())
     }
 }
 
-pub struct MappedTextureImpl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
-    pub uvfn: Box<UVFn<F, P>>,
-    pub texture: Box<Texture<F>>,
+pub struct MappedTextureImpl<P: CustomPoint<V>, V: CustomVector<P>> {
+    pub uvfn: Box<UVFn<P>>,
+    pub texture: Box<Texture>,
     marker_vector: PhantomData<V>,
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> MappedTextureImpl<F, P, V> {
-    pub fn new(uvfn: Box<UVFn<F, P>>, texture: Box<Texture<F>>) -> Self {
+impl<P: CustomPoint<V>, V: CustomVector<P>> MappedTextureImpl<P, V> {
+    pub fn new(uvfn: Box<UVFn<P>>, texture: Box<Texture>) -> Self {
         MappedTextureImpl {
             uvfn: uvfn,
             texture: texture,
@@ -526,7 +525,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> MappedTextureI
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> MappedTexture<F, P, V> for MappedTextureImpl<F, P, V> {
+impl<P: CustomPoint<V>, V: CustomVector<P>> MappedTexture<P, V> for MappedTextureImpl<P, V> {
     fn get_color(&self, point: &P) -> Rgba<F> {
         let texture = &self.texture;
         let uvfn = &self.uvfn;
@@ -534,10 +533,10 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> MappedTexture<
     }
 }
 
-pub fn surface_color_texture<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
-    (mapped_texture: Box<MappedTexture<F, P, V>>)
-     -> Box<SurfaceColorProvider<F, P, V>> {
-    Box::new(move |context: &TracingContext<F, P, V>| {
+pub fn surface_color_texture<P: CustomPoint<V>, V: CustomVector<P>>
+    (mapped_texture: Box<MappedTexture<P, V>>)
+     -> Box<SurfaceColorProvider<P, V>> {
+    Box::new(move |context: &TracingContext<P, V>| {
         mapped_texture.get_color(&context.intersection.location)
     })
 }

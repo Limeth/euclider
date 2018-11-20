@@ -11,8 +11,9 @@ use util::HasId;
 use na::Dimension;
 use meval::{Expr, Context as MevalContext};
 use num::NumCast;
+use ::F;
 
-pub trait Material<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+pub trait Material<P: CustomPoint<V>, V: CustomVector<P>>
     where Self: HasId + Debug + Display + Send + Sync
 {
     fn enter(&self, location: &P, direction: &mut V);
@@ -39,7 +40,7 @@ impl Vacuum {
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Material<F, P, V> for Vacuum {
+impl<P: CustomPoint<V>, V: CustomVector<P>> Material<P, V> for Vacuum {
     #[allow(unused_variables)]
     fn enter(&self, location: &P, direction: &mut V) {
         // Empty
@@ -55,7 +56,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Material<F, P,
     }
 }
 
-pub trait LinearTransformation<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>: Debug + Send + Sync {
+pub trait LinearTransformation<P: CustomPoint<V>, V: CustomVector<P>>: Debug + Send + Sync {
     fn transform(&self, vector: &mut V, legend: &str);
     fn inverse_transform(&self, vector: &mut V, legend: &str);
 }
@@ -72,7 +73,7 @@ pub struct ComponentTransformation {
 }
 
 impl ComponentTransformation {
-    fn create_context<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>(vector: &V, legend: &str) -> HashMap<String, f64> {
+    fn create_context<P: CustomPoint<V>, V: CustomVector<P>>(vector: &V, legend: &str) -> HashMap<String, f64> {
         let mut result: HashMap<String, f64> = HashMap::new();
         let mut chars = legend.chars();
 
@@ -87,7 +88,7 @@ impl ComponentTransformation {
         result
     }
 
-    fn transform_with<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, E: Fn(&ComponentTransformationExpr) -> &Expr>
+    fn transform_with<P: CustomPoint<V>, V: CustomVector<P>, E: Fn(&ComponentTransformationExpr) -> &Expr>
         (&self, vector: &mut V, expr: &E, legend: &str) {
         let dim = <P as Dimension>::dimension(None);
 
@@ -111,7 +112,7 @@ impl ComponentTransformation {
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> LinearTransformation<F, P, V> for ComponentTransformation {
+impl<P: CustomPoint<V>, V: CustomVector<P>> LinearTransformation<P, V> for ComponentTransformation {
     fn transform(&self, vector: &mut V, legend: &str) {
         self.transform_with(vector, &|expr| &expr.expression, legend)
     }
@@ -122,14 +123,14 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> LinearTransfor
 }
 
 #[derive(Debug)]
-pub struct LinearSpace<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
+pub struct LinearSpace<P: CustomPoint<V>, V: CustomVector<P>> {
     pub legend: String,
-    pub transformations: Vec<Box<LinearTransformation<F, P, V>>>,
+    pub transformations: Vec<Box<LinearTransformation<P, V>>>,
 }
 
-material!(LinearSpace<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>);
+material!(LinearSpace<P: CustomPoint<V>, V: CustomVector<P>>);
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Material<F, P, V> for LinearSpace<F, P, V> {
+impl<P: CustomPoint<V>, V: CustomVector<P>> Material<P, V> for LinearSpace<P, V> {
     #[allow(unused_variables)]
     fn enter(&self, location: &P, direction: &mut V) {
         self.transform(direction);
@@ -145,7 +146,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Material<F, P,
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> LinearSpace<F, P, V> {
+impl<P: CustomPoint<V>, V: CustomVector<P>> LinearSpace<P, V> {
     fn transform(&self, vector: &mut V) {
         for transformation in &self.transformations {
             transformation.transform(vector, &self.legend)

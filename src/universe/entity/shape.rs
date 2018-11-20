@@ -1,3 +1,4 @@
+use ::F;
 use std::marker::PhantomData;
 use util::VecLazy;
 use util::IterLazy;
@@ -30,51 +31,51 @@ use smallvec::IntoIter;
 
 /// Ties a `Material` the ray is passing through and a `Shape` the ray is intersecting to a
 /// `GeneralIntersector`
-pub type GeneralIntersectors<F, P, V> = TypePairMap<Box<GeneralIntersector<F, P, V>>>;
+pub type GeneralIntersectors<P, V> = TypePairMap<Box<GeneralIntersector<P, V>>>;
 
 /// Computes the intersections of a ray in a given `Material` with a given `Shape`.
 /// The ray is originating in the given `Point` with a direction of the given `Vector`.
 // Send + Sync must be at the end of the type alias definition.
-pub type GeneralIntersector<F, P, V> = (Fn(&P,
+pub type GeneralIntersector<P, V> = (Fn(&P,
                                            &V,
-                                           &Material<F, P, V>,
-                                           &Shape<F, P, V>,
-                                           Intersector<F, P, V>
-                                        ) -> GeneralIntersectionMarcher<F, P, V>) + Send + Sync;
+                                           &Material<P, V>,
+                                           &Shape<P, V>,
+                                           Intersector<P, V>
+                                        ) -> GeneralIntersectionMarcher<P, V>) + Send + Sync;
 
-pub type ImmediateIntersections<F, P, V> = [Intersection<F, P, V>; 8];
+pub type ImmediateIntersections<P, V> = [Intersection<P, V>; 8];
 
-pub type GeneralIntersectionMarcher<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> = PossiblyImmediateIterator<Intersection<F, P, V>, ImmediateIntersections<F, P, V>>;
+pub type GeneralIntersectionMarcher<P: CustomPoint<V>, V: CustomVector<P>> = PossiblyImmediateIterator<Intersection<P, V>, ImmediateIntersections<P, V>>;
 
-pub type IntersectionMarcher<F, P, V> = Iterator<Item = Intersection<F, P, V>>;
+pub type IntersectionMarcher<P, V> = Iterator<Item = Intersection<P, V>>;
 
 /// Computes the intersections of a ray in a given `Material` with a given `Shape`
 /// with a predefined `Point` of origin and directional `Vector`.
 // TODO: It feels wrong to have a type alias to a reference of another type
-pub type Intersector<'a, F, P, V> = &'a Fn(&Material<F, P, V>, &Shape<F, P, V>)
-                                           -> IntersectionProvider<F, P, V>;
+pub type Intersector<'a, P, V> = &'a Fn(&Material<P, V>, &Shape<P, V>)
+                                           -> IntersectionProvider<P, V>;
 
 /// Calls the `trace` method on the current Universe and returns the resulting color.
 // TODO: It feels wrong to have a type alias to a reference of another type
-pub type ColorTracer<'a, F, P, V> = &'a Fn(&Duration, &Traceable<F, P, V>, &P, &V) -> Rgba<F>;
+pub type ColorTracer<'a, P, V> = &'a Fn(&Duration, &Traceable<P, V>, &P, &V) -> Rgba<F>;
 
 /// Calls the `trace_path` method on the current Universe and returns the resulting location and
 /// vector.
 // TODO: It feels wrong to have a type alias to a reference of another type
-pub type PathTracer<'a, F, P, V> = &'a Fn(&Duration, &F, &Traceable<F, P, V>, &P, &V) -> (P, V);
+pub type PathTracer<'a, P, V> = &'a Fn(&Duration, &F, &Traceable<P, V>, &P, &V) -> (P, V);
 
 /// Calls the `trace_path` method on the current Universe and returns the resulting location and
 /// vector.
 // TODO: It feels wrong to have a type alias to a reference of another type
-pub type MaterialFinder<'a, F, P, V> = &'a Fn(&P) -> Option<&'a Traceable<F, P, V>>;
+pub type MaterialFinder<'a, P, V> = &'a Fn(&P) -> Option<&'a Traceable<P, V>>;
 
-pub trait Shape<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+pub trait Shape<P: CustomPoint<V>, V: CustomVector<P>>
     where Self: HasId + Debug + Display + mopa::Any + Send + Sync
 {
     fn is_point_inside(&self, point: &P) -> bool;
 }
 
-mopafy!(Shape<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>);
+mopafy!(Shape<P: CustomPoint<V>, V: CustomVector<P>>);
 
 #[macro_export]
 macro_rules! shape {
@@ -85,7 +86,7 @@ macro_rules! shape {
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct Intersection<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
+pub struct Intersection<P: CustomPoint<V>, V: CustomVector<P>> {
     pub location: P,
     pub direction: V,
     pub normal: V,
@@ -94,8 +95,8 @@ pub struct Intersection<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F,
     pub vector_dimensions: PhantomData<V>,
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Intersection<F, P, V> {
-    pub fn new(location: P, direction: V, normal: V, distance: F) -> Intersection<F, P, V> {
+impl<P: CustomPoint<V>, V: CustomVector<P>> Intersection<P, V> {
+    pub fn new(location: P, direction: V, normal: V, distance: F) -> Intersection<P, V> {
         Intersection {
             location: location,
             direction: direction,
@@ -109,43 +110,40 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Intersection<F
 
 #[derive(Copy, Clone)]
 pub struct TracingContext<'a,
-                          F: 'a + CustomFloat,
-                          P: 'a + CustomPoint<F, V>,
-                          V: 'a + CustomVector<F, P>>
+                          P: 'a + CustomPoint<V>,
+                          V: 'a + CustomVector<P>>
 {
     pub debugging: bool,
     pub time: Duration,
-    pub origin_traceable: &'a Traceable<F, P, V>,
+    pub origin_traceable: &'a Traceable<P, V>,
     pub origin_location: P,
     pub origin_direction: V,
-    pub intersection_traceable: &'a Traceable<F, P, V>,
-    pub intersection: Intersection<F, P, V>,
+    pub intersection_traceable: &'a Traceable<P, V>,
+    pub intersection: Intersection<P, V>,
     pub intersection_normal_closer: V,
     pub exiting: bool,
 }
 
 #[derive(Copy, Clone)]
 pub struct ColorTracingContext<'a,
-                               F: 'a + CustomFloat,
-                               P: 'a + CustomPoint<F, V>,
-                               V: 'a + CustomVector<F, P>>
+                               P: 'a + CustomPoint<V>,
+                               V: 'a + CustomVector<P>>
 {
-    pub general: TracingContext<'a, F, P, V>,
+    pub general: TracingContext<'a, P, V>,
     pub depth_remaining: &'a u32,
-    pub trace: ColorTracer<'a, F, P, V>,
-    pub material_at: MaterialFinder<'a, F, P, V>,
+    pub trace: ColorTracer<'a, P, V>,
+    pub material_at: MaterialFinder<'a, P, V>,
 }
 
 #[derive(Copy, Clone)]
 pub struct PathTracingContext<'a,
-                              F: 'a + CustomFloat,
-                              P: 'a + CustomPoint<F, V>,
-                              V: 'a + CustomVector<F, P>>
+                              P: 'a + CustomPoint<V>,
+                              V: 'a + CustomVector<P>>
 {
-    pub general: TracingContext<'a, F, P, V>,
+    pub general: TracingContext<'a, P, V>,
     pub distance: &'a F,
-    pub trace: PathTracer<'a, F, P, V>,
-    pub material_at: MaterialFinder<'a, F, P, V>,
+    pub trace: PathTracer<'a, P, V>,
+    pub material_at: MaterialFinder<'a, P, V>,
 }
 
 #[allow(dead_code)]
@@ -159,23 +157,23 @@ pub enum SetOperation {
 
 debug_as_display!(SetOperation);
 
-pub type IntersectionProvider<F, P, V> = Provider<Intersection<F, P, V>, ImmediateIntersections<F, P, V>>;
+pub type IntersectionProvider<P, V> = Provider<Intersection<P, V>, ImmediateIntersections<P, V>>;
 
-struct ComposableShapeIterator<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
-    shape_a: Arc<Box<Shape<F, P, V>>>,
-    shape_b: Arc<Box<Shape<F, P, V>>>,
-    provider_a: IntersectionProvider<F, P, V>,
-    provider_b: IntersectionProvider<F, P, V>,
+struct ComposableShapeIterator<P: CustomPoint<V>, V: CustomVector<P>> {
+    shape_a: Arc<Box<Shape<P, V>>>,
+    shape_b: Arc<Box<Shape<P, V>>>,
+    provider_a: IntersectionProvider<P, V>,
+    provider_b: IntersectionProvider<P, V>,
     index_a: usize,
     index_b: usize,
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableShapeIterator<F, P, V> {
-    fn new(shape_a: Arc<Box<Shape<F, P, V>>>,
-           shape_b: Arc<Box<Shape<F, P, V>>>,
-           provider_a: IntersectionProvider<F, P, V>,
-           provider_b: IntersectionProvider<F, P, V>)
-           -> ComposableShapeIterator<F, P, V> {
+impl<P: CustomPoint<V>, V: CustomVector<P>> ComposableShapeIterator<P, V> {
+    fn new(shape_a: Arc<Box<Shape<P, V>>>,
+           shape_b: Arc<Box<Shape<P, V>>>,
+           provider_a: IntersectionProvider<P, V>,
+           provider_b: IntersectionProvider<P, V>)
+           -> ComposableShapeIterator<P, V> {
         ComposableShapeIterator {
             shape_a: shape_a,
             shape_b: shape_b,
@@ -187,26 +185,24 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableShap
     }
 }
 
-struct UnionIterator<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
-    data: ComposableShapeIterator<F, P, V>,
+struct UnionIterator<P: CustomPoint<V>, V: CustomVector<P>> {
+    data: ComposableShapeIterator<P, V>,
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> UnionIterator<F, P, V> {
-    fn new(shape_a: Arc<Box<Shape<F, P, V>>>,
-           shape_b: Arc<Box<Shape<F, P, V>>>,
-           provider_a: IntersectionProvider<F, P, V>,
-           provider_b: IntersectionProvider<F, P, V>)
-           -> UnionIterator<F, P, V> {
+impl<P: CustomPoint<V>, V: CustomVector<P>> UnionIterator<P, V> {
+    fn new(shape_a: Arc<Box<Shape<P, V>>>,
+           shape_b: Arc<Box<Shape<P, V>>>,
+           provider_a: IntersectionProvider<P, V>,
+           provider_b: IntersectionProvider<P, V>)
+           -> UnionIterator<P, V> {
         UnionIterator {
             data: ComposableShapeIterator::new(shape_a, shape_b, provider_a, provider_b),
         }
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Iterator for UnionIterator<F,
-                                                                                             P,
-                                                                                             V> {
-    type Item = Intersection<F, P, V>;
+impl<P: CustomPoint<V>, V: CustomVector<P>> Iterator for UnionIterator<P, V> {
+    type Item = Intersection<P, V>;
 
 
     // Should return the following intersections:
@@ -223,9 +219,9 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Iterator for U
 
                 if intersection_b.is_some() {
                     let unwrapped_b = intersection_b.unwrap();
-                    let closer: Intersection<F, P, V>;
+                    let closer: Intersection<P, V>;
                     let closer_index: &mut usize;
-                    let further_shape: &Shape<F, P, V>;
+                    let further_shape: &Shape<P, V>;
 
                     if unwrapped_a.distance < unwrapped_b.distance {
                         closer = unwrapped_a;
@@ -268,25 +264,25 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Iterator for U
     }
 }
 
-struct IntersectionIterator<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
-    data: ComposableShapeIterator<F, P, V>,
+struct IntersectionIterator<P: CustomPoint<V>, V: CustomVector<P>> {
+    data: ComposableShapeIterator<P, V>,
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> IntersectionIterator<F, P, V> {
-    fn new(shape_a: Arc<Box<Shape<F, P, V>>>,
-           shape_b: Arc<Box<Shape<F, P, V>>>,
-           provider_a: IntersectionProvider<F, P, V>,
-           provider_b: IntersectionProvider<F, P, V>)
-           -> IntersectionIterator<F, P, V> {
+impl<P: CustomPoint<V>, V: CustomVector<P>> IntersectionIterator<P, V> {
+    fn new(shape_a: Arc<Box<Shape<P, V>>>,
+           shape_b: Arc<Box<Shape<P, V>>>,
+           provider_a: IntersectionProvider<P, V>,
+           provider_b: IntersectionProvider<P, V>)
+           -> IntersectionIterator<P, V> {
         IntersectionIterator {
             data: ComposableShapeIterator::new(shape_a, shape_b, provider_a, provider_b),
         }
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
-        Iterator for IntersectionIterator<F, P, V> {
-    type Item = Intersection<F, P, V>;
+impl<P: CustomPoint<V>, V: CustomVector<P>>
+        Iterator for IntersectionIterator<P, V> {
+    type Item = Intersection<P, V>;
 
 // Should return the following intersections:
 // --> [a] [b] [a[a+b]b]
@@ -301,9 +297,9 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
                 if intersection_b.is_some() {
                     let unwrapped_a = intersection_a.unwrap();
                     let unwrapped_b = intersection_b.unwrap();
-                    let closer: Intersection<F, P, V>;
+                    let closer: Intersection<P, V>;
                     let closer_index: &mut usize;
-                    let further_shape: &Shape<F, P, V>;
+                    let further_shape: &Shape<P, V>;
 
                     if unwrapped_a.distance < unwrapped_b.distance {
                         closer = unwrapped_a;
@@ -344,26 +340,24 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
     }
 }
 
-struct ComplementIterator<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
-    data: ComposableShapeIterator<F, P, V>,
+struct ComplementIterator<P: CustomPoint<V>, V: CustomVector<P>> {
+    data: ComposableShapeIterator<P, V>,
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComplementIterator<F, P, V> {
-    fn new(shape_a: Arc<Box<Shape<F, P, V>>>,
-           shape_b: Arc<Box<Shape<F, P, V>>>,
-           provider_a: IntersectionProvider<F, P, V>,
-           provider_b: IntersectionProvider<F, P, V>)
-           -> ComplementIterator<F, P, V> {
+impl<P: CustomPoint<V>, V: CustomVector<P>> ComplementIterator<P, V> {
+    fn new(shape_a: Arc<Box<Shape<P, V>>>,
+           shape_b: Arc<Box<Shape<P, V>>>,
+           provider_a: IntersectionProvider<P, V>,
+           provider_b: IntersectionProvider<P, V>)
+           -> ComplementIterator<P, V> {
         ComplementIterator {
             data: ComposableShapeIterator::new(shape_a, shape_b, provider_a, provider_b),
         }
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Iterator for ComplementIterator<F,
-                                                                                                  P,
-                                                                                                  V> {
-    type Item = Intersection<F, P, V>;
+impl<P: CustomPoint<V>, V: CustomVector<P>> Iterator for ComplementIterator<P, V> {
+    type Item = Intersection<P, V>;
 
     // Should return the following intersections:
     // --> [a] [b] [a[a+b]b] [b[a+b]a]
@@ -415,27 +409,25 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Iterator for C
     }
 }
 
-struct SymmetricDifferenceIterator<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
-    data: ComposableShapeIterator<F, P, V>,
+struct SymmetricDifferenceIterator<P: CustomPoint<V>, V: CustomVector<P>> {
+    data: ComposableShapeIterator<P, V>,
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> SymmetricDifferenceIterator<F,
-                                                                                              P,
-                                                                                              V> {
-    fn new(shape_a: Arc<Box<Shape<F, P, V>>>,
-           shape_b: Arc<Box<Shape<F, P, V>>>,
-           provider_a: IntersectionProvider<F, P, V>,
-           provider_b: IntersectionProvider<F, P, V>)
-           -> SymmetricDifferenceIterator<F, P, V> {
+impl<P: CustomPoint<V>, V: CustomVector<P>> SymmetricDifferenceIterator<P, V> {
+    fn new(shape_a: Arc<Box<Shape<P, V>>>,
+           shape_b: Arc<Box<Shape<P, V>>>,
+           provider_a: IntersectionProvider<P, V>,
+           provider_b: IntersectionProvider<P, V>)
+           -> SymmetricDifferenceIterator<P, V> {
         SymmetricDifferenceIterator {
             data: ComposableShapeIterator::new(shape_a, shape_b, provider_a, provider_b),
         }
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
-        Iterator for SymmetricDifferenceIterator<F, P, V> {
-    type Item = Intersection<F, P, V>;
+impl<P: CustomPoint<V>, V: CustomVector<P>>
+        Iterator for SymmetricDifferenceIterator<P, V> {
+    type Item = Intersection<P, V>;
 
 // Should return the following intersections:
 // --> [a] [b] [a[a+b]b]
@@ -449,9 +441,9 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
             if intersection_b.is_some() {
                 let unwrapped_a = intersection_a.unwrap();
                 let unwrapped_b = intersection_b.unwrap();
-                let closer: Intersection<F, P, V>;
+                let closer: Intersection<P, V>;
                 let closer_index: &mut usize;
-                let further_shape: &Shape<F, P, V>;
+                let further_shape: &Shape<P, V>;
 
                 if unwrapped_a.distance < unwrapped_b.distance {
                     closer = unwrapped_a;
@@ -505,21 +497,21 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
 }
 
 #[derive(Debug)]
-pub struct ComposableShape<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
-    pub a: Arc<Box<Shape<F, P, V>>>,
-    pub b: Arc<Box<Shape<F, P, V>>>,
+pub struct ComposableShape<P: CustomPoint<V>, V: CustomVector<P>> {
+    pub a: Arc<Box<Shape<P, V>>>,
+    pub b: Arc<Box<Shape<P, V>>>,
     pub operation: SetOperation,
-    marker: PhantomData<Shape<F, P, V>>,
+    marker: PhantomData<Shape<P, V>>,
 }
 
-shape!(ComposableShape<F: 'static + CustomFloat, P: 'static + CustomPoint<F, V>, V: 'static + CustomVector<F, P>>);
+shape!(ComposableShape<P: 'static + CustomPoint<V>, V: 'static + CustomVector<P>>);
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableShape<F, P, V> {
-    pub fn new<A: Shape<F, P, V> + 'static, B: Shape<F, P, V> + 'static>
+impl<P: CustomPoint<V>, V: CustomVector<P>> ComposableShape<P, V> {
+    pub fn new<A: Shape<P, V> + 'static, B: Shape<P, V> + 'static>
         (a: A,
          b: B,
          operation: SetOperation)
-         -> ComposableShape<F, P, V> {
+         -> ComposableShape<P, V> {
         ComposableShape {
             a: Arc::new(Box::new(a)),
             b: Arc::new(Box::new(b)),
@@ -528,9 +520,9 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableShap
         }
     }
 
-    pub fn of<I: IntoIterator<Item = Box<Shape<F, P, V>>>>(shapes: I,
+    pub fn of<I: IntoIterator<Item = Box<Shape<P, V>>>>(shapes: I,
                                                           operation: SetOperation)
-                                                          -> ComposableShape<F, P, V> {
+                                                          -> ComposableShape<P, V> {
         const PANIC: &str = "2 or more `Shape`s are needed to construct a `ComposableShape`.";
         let mut shapes = shapes.into_iter();
         let mut result = ComposableShape {
@@ -555,12 +547,12 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableShap
     #[allow(unused_variables)]
     pub fn intersect_linear(location: &P,
                                direction: &V,
-                               vacuum: &Material<F, P, V>,
-                               shape: &Shape<F, P, V>,
-                               intersect: Intersector<F, P, V>)
-                               -> GeneralIntersectionMarcher<F, P, V> {
-        let composed: &ComposableShape<F, P, V> =
-            shape.as_any().downcast_ref::<ComposableShape<F, P, V>>().unwrap();
+                               vacuum: &Material<P, V>,
+                               shape: &Shape<P, V>,
+                               intersect: Intersector<P, V>)
+                               -> GeneralIntersectionMarcher<P, V> {
+        let composed: &ComposableShape<P, V> =
+            shape.as_any().downcast_ref::<ComposableShape<P, V>>().unwrap();
         let provider_a = intersect(vacuum, composed.a.as_ref().as_ref());
         let provider_b = intersect(vacuum, composed.b.as_ref().as_ref());
         PossiblyImmediateIterator::Dynamic(match composed.operation {
@@ -592,8 +584,8 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> ComposableShap
     }
 }
 
-impl<F: 'static + CustomFloat, P: 'static + CustomPoint<F, V>, V: 'static + CustomVector<F, P>> Shape<F, P, V>
-        for ComposableShape<F, P, V> {
+impl<P: 'static + CustomPoint<V>, V: 'static + CustomVector<P>> Shape<P, V>
+        for ComposableShape<P, V> {
     fn is_point_inside(&self, point: &P) -> bool {
         match self.operation {
             SetOperation::Union =>
@@ -619,7 +611,7 @@ impl VoidShape {
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V> for VoidShape {
+impl<P: CustomPoint<V>, V: CustomVector<P>> Shape<P, V> for VoidShape {
     #[allow(unused_variables)]
     fn is_point_inside(&self, point: &P) -> bool {
         true
@@ -627,28 +619,28 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V>
 }
 
 #[allow(unused_variables)]
-pub fn intersect_void<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>
+pub fn intersect_void<P: CustomPoint<V>, V: CustomVector<P>>
     (location: &P,
      direction: &V,
-     material: &Material<F, P, V>,
-     void: &Shape<F, P, V>,
-     intersect: Intersector<F, P, V>)
-     -> GeneralIntersectionMarcher<F, P, V> {
+     material: &Material<P, V>,
+     void: &Shape<P, V>,
+     intersect: Intersector<P, V>)
+     -> GeneralIntersectionMarcher<P, V> {
     void.as_any().downcast_ref::<VoidShape>().unwrap();
     PossiblyImmediateIterator::Immediate(SmallVec::new().into_iter())
 }
 
 #[derive(Debug)]
-pub struct Sphere<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
+pub struct Sphere<P: CustomPoint<V>, V: CustomVector<P>> {
     pub location: P,
     pub radius: F,
     marker_vector: PhantomData<V>,
 }
 
-shape!(Sphere<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>);
+shape!(Sphere<P: CustomPoint<V>, V: CustomVector<P>>);
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Sphere<F, P, V> {
-    pub fn new(location: P, radius: F) -> Sphere<F, P, V> {
+impl<P: CustomPoint<V>, V: CustomVector<P>> Sphere<P, V> {
+    pub fn new(location: P, radius: F) -> Sphere<P, V> {
         Sphere {
             location: location,
             radius: radius,
@@ -660,12 +652,12 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Sphere<F, P, V
     pub fn intersect_linear
         (location: &P,
          direction: &V,
-         vacuum: &Material<F, P, V>,
-         sphere: &Shape<F, P, V>,
-         intersect: Intersector<F, P, V>)
-         -> GeneralIntersectionMarcher<F, P, V> {
-        let sphere: &Sphere<F, P, V> =
-            sphere.as_any().downcast_ref::<Sphere<F, P, V>>().unwrap();
+         vacuum: &Material<P, V>,
+         sphere: &Shape<P, V>,
+         intersect: Intersector<P, V>)
+         -> GeneralIntersectionMarcher<P, V> {
+        let sphere: &Sphere<P, V> =
+            sphere.as_any().downcast_ref::<Sphere<P, V>>().unwrap();
 
         let rel = *location - sphere.location;
         let a: F = direction.norm_squared();
@@ -701,7 +693,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Sphere<F, P, V
         }
 
         let t_first = t_first.unwrap();
-        let mut closures: VecLazy<Intersection<F, P, V>> = Vec::new();
+        let mut closures: VecLazy<Intersection<P, V>> = Vec::new();
         // Move the following variables inside the closures.
         // This lets the closures move outside the scope.
         let direction = *direction;
@@ -739,22 +731,22 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Sphere<F, P, V
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V> for Sphere<F, P, V> {
+impl<P: CustomPoint<V>, V: CustomVector<P>> Shape<P, V> for Sphere<P, V> {
     fn is_point_inside(&self, point: &P) -> bool {
         na::distance_squared(&self.location, point) <= self.radius * self.radius
     }
 }
 
 #[derive(Debug)]
-pub struct Hyperplane<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
+pub struct Hyperplane<P: CustomPoint<V>, V: CustomVector<P>> {
     pub normal: V,
     pub constant: F,
     marker: PhantomData<P>,
 }
 
-shape!(Hyperplane<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>);
+shape!(Hyperplane<P: CustomPoint<V>, V: CustomVector<P>>);
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Hyperplane<F, P, V> {
+impl<P: CustomPoint<V>, V: CustomVector<P>> Hyperplane<P, V> {
     pub fn new(normal: V, constant: F) -> Self {
         assert!(normal.norm_squared() > <F as Zero>::zero(),
                 "Cannot have a normal with length of 0.");
@@ -786,11 +778,11 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Hyperplane<F, 
     #[allow(unused_variables)]
     pub fn intersect_linear(location: &P,
                                direction: &V,
-                               vacuum: &Material<F, P, V>,
-                               shape: &Shape<F, P, V>,
-                               intersect: Intersector<F, P, V>)
-                               -> GeneralIntersectionMarcher<F, P, V> {
-        let plane: &Hyperplane<F, P, V> = shape.as_any().downcast_ref::<Hyperplane<F, P, V>>().unwrap();
+                               vacuum: &Material<P, V>,
+                               shape: &Shape<P, V>,
+                               intersect: Intersector<P, V>)
+                               -> GeneralIntersectionMarcher<P, V> {
+        let plane: &Hyperplane<P, V> = shape.as_any().downcast_ref::<Hyperplane<P, V>>().unwrap();
 
         // A*x + B*y + C*z + D = 0
 
@@ -817,7 +809,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Hyperplane<F, 
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V> for Hyperplane<F, P, V> {
+impl<P: CustomPoint<V>, V: CustomVector<P>> Shape<P, V> for Hyperplane<P, V> {
     #[allow(unused_variables)]
     fn is_point_inside(&self, point: &P) -> bool {
         false
@@ -825,15 +817,15 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V>
 }
 
 #[derive(Debug)]
-pub struct HalfSpace<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
-    pub plane: Hyperplane<F, P, V>,
+pub struct HalfSpace<P: CustomPoint<V>, V: CustomVector<P>> {
+    pub plane: Hyperplane<P, V>,
     pub signum: F,
 }
 
-shape!(HalfSpace<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>);
+shape!(HalfSpace<P: CustomPoint<V>, V: CustomVector<P>>);
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> HalfSpace<F, P, V> {
-    pub fn new(plane: Hyperplane<F, P, V>, mut signum: F) -> HalfSpace<F, P, V> {
+impl<P: CustomPoint<V>, V: CustomVector<P>> HalfSpace<P, V> {
+    pub fn new(plane: Hyperplane<P, V>, mut signum: F) -> HalfSpace<P, V> {
         signum /= signum.abs();
 
         HalfSpace {
@@ -842,7 +834,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> HalfSpace<F, P
         }
     }
 
-    pub fn new_with_point(plane: Hyperplane<F, P, V>, point_inside: &P) -> HalfSpace<F, P, V> {
+    pub fn new_with_point(plane: Hyperplane<P, V>, point_inside: &P) -> HalfSpace<P, V> {
         let identifier: F = na::dot(&plane.normal, point_inside.as_vector()) + plane.constant;
 
         Self::new(plane, identifier)
@@ -850,12 +842,12 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> HalfSpace<F, P
 
     pub fn intersect_linear(location: &P,
                                direction: &V,
-                               vacuum: &Material<F, P, V>,
-                               shape: &Shape<F, P, V>,
-                               intersect: Intersector<F, P, V>)
-                               -> GeneralIntersectionMarcher<F, P, V> {
-        let halfspace: &HalfSpace<F, P,V> = shape.as_any().downcast_ref::<HalfSpace<F, P, V>>().unwrap();
-        let intersection = Hyperplane::<F, P, V>::intersect_linear(location,
+                               vacuum: &Material<P, V>,
+                               shape: &Shape<P, V>,
+                               intersect: Intersector<P, V>)
+                               -> GeneralIntersectionMarcher<P, V> {
+        let halfspace: &HalfSpace<P, V> = shape.as_any().downcast_ref::<HalfSpace<P, V>>().unwrap();
+        let intersection = Hyperplane::<P, V>::intersect_linear(location,
                                                             direction,
                                                             vacuum,
                                                             &halfspace.plane,
@@ -878,7 +870,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> HalfSpace<F, P
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V> for HalfSpace<F, P, V> {
+impl<P: CustomPoint<V>, V: CustomVector<P>> Shape<P, V> for HalfSpace<P, V> {
     fn is_point_inside(&self, point: &P) -> bool {
         // A*x + B*y + C*z + D = 0
         // ~~~~~~~~~~~~~~~ dot
@@ -889,15 +881,15 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V>
 }
 
 #[derive(Debug)]
-pub struct Cylinder<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> {
+pub struct Cylinder<P: CustomPoint<V>, V: CustomVector<P>> {
     pub center: P,  // Must be normalized; TODO: update after upgrading nalgebra
     pub direction: V,
     pub radius: F,
 }
 
-shape!(Cylinder<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>>);
+shape!(Cylinder<P: CustomPoint<V>, V: CustomVector<P>>);
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Cylinder<F, P, V> {
+impl<P: CustomPoint<V>, V: CustomVector<P>> Cylinder<P, V> {
     pub fn new(center: P, direction: &V, radius: F) -> Self {
         assert!(direction.norm_squared() > <F as Zero>::zero(),
                 "Cannot have a direction with length of 0.");
@@ -911,10 +903,10 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Cylinder<F, P,
         }
     }
 
-    pub fn new_with_height(center: P, direction: &V, radius: F, height: F) -> ComposableShape<F, P, V> {
+    pub fn new_with_height(center: P, direction: &V, radius: F, height: F) -> ComposableShape<P, V> {
         let normalized_direction = direction.normalize();
         let half_height = height / (<F as One>::one() + <F as One>::one());
-        let shapes: Vec<Box<Shape<F, P, V>>> = vec![
+        let shapes: Vec<Box<Shape<P, V>>> = vec![
                 Box::new(Self::new(center, direction, radius)),
                 Box::new(HalfSpace::new_with_point(
                     Hyperplane::new_with_point(normalized_direction,
@@ -942,11 +934,11 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Cylinder<F, P,
     #[allow(unused_variables)]
     pub fn intersect_linear(location: &P,
                                direction: &V,
-                               vacuum: &Material<F, P, V>,
-                               shape: &Shape<F, P, V>,
-                               intersect: Intersector<F, P, V>)
-                               -> GeneralIntersectionMarcher<F, P, V> {
-        let cylinder: &Cylinder<F, P, V> = shape.as_any().downcast_ref::<Cylinder<F, P, V>>().unwrap();
+                               vacuum: &Material<P, V>,
+                               shape: &Shape<P, V>,
+                               intersect: Intersector<P, V>)
+                               -> GeneralIntersectionMarcher<P, V> {
+        let cylinder: &Cylinder<P, V> = shape.as_any().downcast_ref::<Cylinder<P, V>>().unwrap();
 
         // The intersection of a line and an infinite cylinder is calculated as follows:
         // `|(Q - {S_c + [v_c dot (Q - S_c)] * v_c})|^2 - r^2 = 0`
@@ -996,7 +988,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Cylinder<F, P,
         }
 
         let t_first = t_first.unwrap();
-        let mut closures: VecLazy<Intersection<F, P, V>> = Vec::new();
+        let mut closures: VecLazy<Intersection<P, V>> = Vec::new();
         // Move the following variables inside the closures.
         // This lets the closures move outside the scope.
         let direction = *direction;
@@ -1035,7 +1027,7 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Cylinder<F, P,
     }
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>> Shape<F, P, V> for Cylinder<F, P, V> {
+impl<P: CustomPoint<V>, V: CustomVector<P>> Shape<P, V> for Cylinder<P, V> {
     #[allow(unused_variables)]
     fn is_point_inside(&self, point: &P) -> bool {
         let closest_point_on_axis = self.get_closest_point_on_axis(point);

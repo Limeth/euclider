@@ -83,6 +83,7 @@ use core::ops::DerefMut;
 use json::JsonValue;
 use smallvec::Array;
 use smallvec::IntoIter;
+use ::F;
 use mopa;
 
 macro_rules! assert_eq_ulps {
@@ -452,7 +453,7 @@ pub trait Mopafied: mopa::Any {}
 
 mopafy!(Mopafied);
 
-pub trait CustomPoint<F: CustomFloat, V: CustomVector<F, Self>>:
+pub trait CustomPoint<V: CustomVector<Self>>:
 // Rotate<O> +
     PartialOrder +
     Div<F, Output=Self> +
@@ -511,7 +512,7 @@ pub trait CustomPoint<F: CustomFloat, V: CustomVector<F, Self>>:
     Sync +
     'static {}
 
-pub trait CustomVector<F: CustomFloat, P: CustomPoint<F, Self>>:
+pub trait CustomVector<P: CustomPoint<Self>>:
 // Rotate<O> +
     GeneralRotation<F> +
     AngleBetween<F> +
@@ -608,8 +609,8 @@ pub trait GeneralRotation<F: CustomFloat>: Sized {
 
 macro_rules! dimension {
     ($point:ident, $vector:ident, $matrix:ident, $dimension:expr) => {
-        impl<F: CustomFloat> CustomPoint<F, $vector<F>> for $point<F> {}
-        impl<F: CustomFloat> CustomVector<F, $point<F>> for $vector<F> {}
+        impl CustomPoint<$vector<F>> for $point<F> {}
+        impl CustomVector<$point<F>> for $vector<F> {}
 
         impl<F: CustomFloat> VectorAsPoint for $vector<F> {
             type Point = $point<F>;

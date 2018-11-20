@@ -3,9 +3,10 @@ pub mod material;
 pub mod shape;
 pub mod surface;
 
+use ::F;
+use universe::d4::Point4;
+use universe::d4::Vector4;
 use std::sync::Arc;
-use na::Point4;
-use na::Vector4;
 use util::CustomFloat;
 use universe::d4::Universe4;
 use universe::entity::Entity;
@@ -17,22 +18,22 @@ use self::material::Material4;
 use self::shape::Shape4;
 use self::surface::Surface4;
 
-pub type Entity4<F> = Entity<F, Point4<F>, Vector4<F>>;
-pub type Camera4<F> = Camera<F, Point4<F>, Vector4<F>, Universe4<F>>;
-pub type Traceable4<F> = Traceable<F, Point4<F>, Vector4<F>>;
-pub type Locatable4<F> = Locatable<F, Point4<F>, Vector4<F>>;
-pub type Rotatable4<F> = Rotatable<F, Point4<F>, Vector4<F>>;
+pub type Entity4 = Entity<Point4, Vector4>;
+pub type Camera4 = Camera<Point4, Vector4, Universe4>;
+pub type Traceable4 = Traceable<Point4, Vector4>;
+pub type Locatable4 = Locatable<Point4, Vector4>;
+pub type Rotatable4 = Rotatable<Point4, Vector4>;
 
-pub struct Entity4Impl<F: CustomFloat> {
-    shape: Arc<Shape4<F>>,
-    material: Arc<Material4<F>>,
-    surface: Option<Arc<Surface4<F>>>,
+pub struct Entity4Impl {
+    shape: Arc<Shape4>,
+    material: Arc<Material4>,
+    surface: Option<Arc<Surface4>>,
 }
 
-impl<F: CustomFloat> Entity4Impl<F> {
-    pub fn new(shape: Box<Shape4<F>>,
-               material: Box<Material4<F>>,
-               surface: Option<Box<Surface4<F>>>)
+impl Entity4Impl {
+    pub fn new(shape: Box<Shape4>,
+               material: Box<Material4>,
+               surface: Option<Box<Surface4>>)
                -> Self {
         Entity4Impl {
             shape: shape.into(),
@@ -41,40 +42,40 @@ impl<F: CustomFloat> Entity4Impl<F> {
         }
     }
 
-    pub fn new_with_surface(shape: Box<Shape4<F>>,
-               material: Box<Material4<F>>,
-               surface: Box<Surface4<F>>)
+    pub fn new_with_surface(shape: Box<Shape4>,
+               material: Box<Material4>,
+               surface: Box<Surface4>)
                -> Self {
         Self::new(shape, material, Some(surface))
     }
 
-    pub fn new_without_surface(shape: Box<Shape4<F>>,
-               material: Box<Material4<F>>)
+    pub fn new_without_surface(shape: Box<Shape4>,
+               material: Box<Material4>)
                -> Self {
         Self::new(shape, material, None)
     }
 }
 
-impl<F: CustomFloat> Entity<F, Point4<F>, Vector4<F>> for Entity4Impl<F> {
-    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<F, Point4<F>, Vector4<F>>> {
+impl Entity<Point4, Vector4> for Entity4Impl {
+    fn as_traceable_mut(&mut self) -> Option<&mut Traceable<Point4, Vector4>> {
         Some(self)
     }
 
-    fn as_traceable(&self) -> Option<&Traceable4<F>> {
+    fn as_traceable(&self) -> Option<&Traceable4> {
         Some(self)
     }
 }
 
-impl<F: CustomFloat> Traceable<F, Point4<F>, Vector4<F>> for Entity4Impl<F> {
-    fn shape(&self) -> &Shape4<F> {
+impl Traceable<Point4, Vector4> for Entity4Impl {
+    fn shape(&self) -> &Shape4 {
         self.shape.as_ref()
     }
 
-    fn material(&self) -> &Material4<F> {
+    fn material(&self) -> &Material4 {
         self.material.as_ref()
     }
 
-    fn surface(&self) -> Option<&Surface4<F>> {
+    fn surface(&self) -> Option<&Surface4> {
         self.surface.as_ref().map(|x| &**x)
     }
 }

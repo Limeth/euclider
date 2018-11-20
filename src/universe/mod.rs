@@ -35,34 +35,35 @@ use util::CustomFloat;
 use util::VectorAsPoint;
 use util::AngleBetween;
 use util::Provider;
+use ::F;
 
-pub type TraceResult<'a, F, P, V> = (&'a Traceable<F, P, V>,
-                                     TracingContext<'a, F, P, V>);
+pub type TraceResult<'a, P, V> = (&'a Traceable<P, V>,
+                                     TracingContext<'a, P, V>);
 
-pub trait Universe<F: CustomFloat>
+pub trait Universe
     where Self: Sync + 'static
 {
-    type P: CustomPoint<F, Self::V>;
-    type V: CustomVector<F, Self::P>;
+    type P: CustomPoint<Self::V>;
+    type V: CustomVector<Self::P>;
 
-    fn camera(&self) -> &RwLock<Box<Camera<F, Self::P, Self::V, Self>>>;
-    fn entities_mut(&mut self) -> &mut Vec<Box<Entity<F, Self::P, Self::V>>>;
-    fn entities(&self) -> &Vec<Box<Entity<F, Self::P, Self::V>>>;
-    fn set_entities(&mut self, entities: Vec<Box<Entity<F, Self::P, Self::V>>>);
+    fn camera(&self) -> &RwLock<Box<Camera<Self::P, Self::V, Self>>>;
+    fn entities_mut(&mut self) -> &mut Vec<Box<Entity<Self::P, Self::V>>>;
+    fn entities(&self) -> &Vec<Box<Entity<Self::P, Self::V>>>;
+    fn set_entities(&mut self, entities: Vec<Box<Entity<Self::P, Self::V>>>);
     /// Calculates the intersection of the shape (second) in the material (first)
-    fn intersectors_mut(&mut self) -> &mut GeneralIntersectors<F, Self::P, Self::V>;
-    fn intersectors(&self) -> &GeneralIntersectors<F, Self::P, Self::V>;
-    fn set_intersectors(&mut self, intersections: GeneralIntersectors<F, Self::P, Self::V>);
-    fn background_mut(&mut self) -> &mut MappedTexture<F, Self::P, Self::V>;
-    fn background(&self) -> &MappedTexture<F, Self::P, Self::V>;
-    fn set_background(&mut self, background: Box<MappedTexture<F, Self::P, Self::V>>);
+    fn intersectors_mut(&mut self) -> &mut GeneralIntersectors<Self::P, Self::V>;
+    fn intersectors(&self) -> &GeneralIntersectors<Self::P, Self::V>;
+    fn set_intersectors(&mut self, intersections: GeneralIntersectors<Self::P, Self::V>);
+    fn background_mut(&mut self) -> &mut MappedTexture<Self::P, Self::V>;
+    fn background(&self) -> &MappedTexture<Self::P, Self::V>;
+    fn set_background(&mut self, background: Box<MappedTexture<Self::P, Self::V>>);
 
     fn intersect(&self,
                  location: &Self::P,
                  direction: &Self::V,
-                 material: &Material<F, Self::P, Self::V>,
-                 shape: &Shape<F, Self::P, Self::V>)
-                 -> IntersectionProvider<F, Self::P, Self::V> {
+                 material: &Material<Self::P, Self::V>,
+                 shape: &Shape<Self::P, Self::V>)
+                 -> IntersectionProvider<Self::P, Self::V> {
         let material_id = material.id();
         let shape_id = shape.id();
         let intersector = self.intersectors().get(&(material_id, shape_id));
@@ -75,7 +76,7 @@ pub trait Universe<F: CustomFloat>
 
         // let intersector = intersector.unwrap();
 
-        let intersect: Intersector<F, Self::P, Self::V> =
+        let intersect: Intersector<Self::P, Self::V> =
             &move |material, shape| self.intersect(location, direction, material, shape);
 
         Provider::new(intersector(location, direction, material, shape, intersect))
@@ -83,14 +84,14 @@ pub trait Universe<F: CustomFloat>
 
     fn trace_closest<'a>(&'a self,
                          time: &Duration,
-                         belongs_to: &'a Traceable<F, Self::P, Self::V>,
+                         belongs_to: &'a Traceable<Self::P, Self::V>,
                          location: &Self::P,
                          direction: &Self::V,
                          debug: bool,
-                         filter: &Fn(&Traceable<F, Self::P, Self::V>) -> bool)
-                         -> Option<TraceResult<'a, F, Self::P, Self::V>> {
+                         filter: &Fn(&Traceable<Self::P, Self::V>) -> bool)
+                         -> Option<TraceResult<'a, Self::P, Self::V>> {
         let material = belongs_to.material();
-        let mut closest: Option<TraceResult<'a, F, Self::P, Self::V>> = None;
+        let mut closest: Option<TraceResult<'a, Self::P, Self::V>> = None;
         let mut closest_distance: Option<F> = None;
 
         for other in self.entities() {
@@ -148,7 +149,7 @@ pub trait Universe<F: CustomFloat>
     fn trace(&self,
              time: &Duration,
              max_depth: &u32,
-             belongs_to: &Traceable<F, Self::P, Self::V>,
+             belongs_to: &Traceable<Self::P, Self::V>,
              location: &Self::P,
              direction: &Self::V,
              debug: bool)
@@ -185,7 +186,7 @@ pub trait Universe<F: CustomFloat>
     fn trace_path(&self,
              time: &Duration,
              distance: &F,
-             belongs_to: &Traceable<F, Self::P, Self::V>,
+             belongs_to: &Traceable<Self::P, Self::V>,
              location: &Self::P,
              direction: &Self::V,
              debug: bool)
@@ -225,8 +226,8 @@ pub trait Universe<F: CustomFloat>
         (new_location, new_direction)
     }
 
-    fn material_at(&self, location: &Self::P) -> Option<&Traceable<F, Self::P, Self::V>> {
-        let mut belongs_to: Option<&Traceable<F, Self::P, Self::V>> = None;
+    fn material_at(&self, location: &Self::P) -> Option<&Traceable<Self::P, Self::V>> {
+        let mut belongs_to: Option<&Traceable<Self::P, Self::V>> = None;
 
         for entity in self.entities() {
             let traceable = entity.as_traceable();
@@ -235,8 +236,8 @@ pub trait Universe<F: CustomFloat>
                 continue;
             }
 
-            let traceable: &Traceable<F, Self::P, Self::V> = traceable.unwrap();
-            let shape: &Shape<F, Self::P, Self::V> = traceable.shape();
+            let traceable: &Traceable<Self::P, Self::V> = traceable.unwrap();
+            let shape: &Shape<Self::P, Self::V> = traceable.shape();
 
             if !shape.is_point_inside(location) {
                 continue;
@@ -260,12 +261,12 @@ pub trait Universe<F: CustomFloat>
             let mut transitioned_direction = *direction;
             belongs_to.material().enter(location, &mut transitioned_direction);
             let background =
-                Rgba::from(Rgb::new(Cast::from(1.0), Cast::from(1.0), Cast::from(1.0)))
+                Rgba::<F>::from(Rgb::<F>::new(Cast::from(1.0), Cast::from(1.0), Cast::from(1.0)))
                     .into_premultiplied();
             let foreground = self.trace(time, max_depth, belongs_to, location,
                                         &transitioned_direction, debug)
                 .into_premultiplied();
-            Rgb::from_premultiplied(foreground.over(background))
+            Rgb::<F>::from_premultiplied(foreground.over(background))
         })
     }
 
@@ -285,7 +286,7 @@ pub trait Universe<F: CustomFloat>
     }
 }
 
-pub trait Environment<F: CustomFloat>: Sync {
+pub trait Environment: Sync {
     fn max_depth(&self) -> u32;
     fn trace_screen_point(&self,
                           time: &Duration,
@@ -358,8 +359,8 @@ pub trait Environment<F: CustomFloat>: Sync {
     fn update(&self, delta_time: &Duration, context: &SimulationContext);
 }
 
-impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, U: Universe<F, P=P, V=V>>
-        Environment<F> for U {
+impl<P: CustomPoint<V>, V: CustomVector<P>, U: Universe<P=P, V=V>>
+        Environment for U {
     fn max_depth(&self) -> u32 {
         self.camera()
             .try_read()
@@ -387,9 +388,9 @@ impl<F: CustomFloat, P: CustomPoint<F, V>, V: CustomVector<F, P>, U: Universe<F,
                 let checkerboard_size = 8;
 
                 if (screen_x / checkerboard_size + screen_y / checkerboard_size) % 2 == 0 {
-                    Rgb::new(Cast::from(0.0), Cast::from(0.0), Cast::from(0.0))
+                    Rgb::<F>::new(Cast::from(0.0), Cast::from(0.0), Cast::from(0.0))
                 } else {
-                    Rgb::new(Cast::from(1.0), Cast::from(0.0), Cast::from(1.0))
+                    Rgb::<F>::new(Cast::from(1.0), Cast::from(0.0), Cast::from(1.0))
                 }
             }
         }

@@ -1,10 +1,10 @@
 pub mod entity;
 
+use ::F;
 use std::sync::Arc;
 use std::sync::RwLock;
 use std::collections::HashMap;
-use na::Point3;
-use na::Vector3;
+use na;
 use universe::entity::Camera;
 use universe::entity::surface::MappedTexture;
 use universe::entity::surface::MappedTextureTransparent;
@@ -18,43 +18,46 @@ use util::HasId;
 use core::ops::Deref;
 use core::ops::DerefMut;
 
-pub struct Universe3<F: CustomFloat> {
-    pub camera: Arc<RwLock<Box<Camera3<F>>>>,
-    pub entities: Vec<Box<Entity3<F>>>,
-    pub intersections: GeneralIntersectors<F, Point3<F>, Vector3<F>>,
-    pub background: Box<MappedTexture<F, Point3<F>, Vector3<F>>>,
+pub type Point3 = na::Point3<F>;
+pub type Vector3 = na::Vector3<F>;
+
+pub struct Universe3 {
+    pub camera: Arc<RwLock<Box<Camera3>>>,
+    pub entities: Vec<Box<Entity3>>,
+    pub intersections: GeneralIntersectors<Point3, Vector3>,
+    pub background: Box<MappedTexture<Point3, Vector3>>,
 }
 
-impl<F: CustomFloat> Universe3<F> {
-    pub fn construct(camera: Box<Camera3<F>>) -> Self {
-        let mut intersectors: GeneralIntersectors<F, Point3<F>, Vector3<F>> = HashMap::new();
+impl Universe3 {
+    pub fn construct(camera: Box<Camera3>) -> Self {
+        let mut intersectors: GeneralIntersectors<Point3, Vector3> = HashMap::new();
 
         intersectors.insert((Vacuum::id_static(), VoidShape::id_static()),
                             Box::new(intersect_void));
-        intersectors.insert((Vacuum::id_static(), Sphere::<F, Point3<F>, Vector3<F>>::id_static()),
-                            Box::new(Sphere::<F, Point3<F>, Vector3<F>>::intersect_linear));
-        intersectors.insert((Vacuum::id_static(), Hyperplane::<F, Point3<F>, Vector3<F>>::id_static()),
-                            Box::new(Hyperplane::<F, Point3<F>, Vector3<F>>::intersect_linear));
-        intersectors.insert((Vacuum::id_static(), HalfSpace::<F, Point3<F>, Vector3<F>>::id_static()),
-                            Box::new(HalfSpace::<F, Point3<F>, Vector3<F>>::intersect_linear));
-        intersectors.insert((Vacuum::id_static(), Cylinder::<F, Point3<F>, Vector3<F>>::id_static()),
-                            Box::new(Cylinder::<F, Point3<F>, Vector3<F>>::intersect_linear));
+        intersectors.insert((Vacuum::id_static(), Sphere::<Point3, Vector3>::id_static()),
+                            Box::new(Sphere::<Point3, Vector3>::intersect_linear));
+        intersectors.insert((Vacuum::id_static(), Hyperplane::<Point3, Vector3>::id_static()),
+                            Box::new(Hyperplane::<Point3, Vector3>::intersect_linear));
+        intersectors.insert((Vacuum::id_static(), HalfSpace::<Point3, Vector3>::id_static()),
+                            Box::new(HalfSpace::<Point3, Vector3>::intersect_linear));
+        intersectors.insert((Vacuum::id_static(), Cylinder::<Point3, Vector3>::id_static()),
+                            Box::new(Cylinder::<Point3, Vector3>::intersect_linear));
         intersectors.insert((Vacuum::id_static(),
-                     ComposableShape::<F, Point3<F>, Vector3<F>>::id_static()),
-                    Box::new(ComposableShape::<F, Point3<F>, Vector3<F>>::intersect_linear));
-        intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), VoidShape::id_static()),
+                     ComposableShape::<Point3, Vector3>::id_static()),
+                    Box::new(ComposableShape::<Point3, Vector3>::intersect_linear));
+        intersectors.insert((LinearSpace::<Point3, Vector3>::id_static(), VoidShape::id_static()),
                             Box::new(intersect_void));
-        intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), Sphere::<F, Point3<F>, Vector3<F>>::id_static()),
-                            Box::new(Sphere::<F, Point3<F>, Vector3<F>>::intersect_linear));
-        intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), Hyperplane::<F, Point3<F>, Vector3<F>>::id_static()),
-                            Box::new(Hyperplane::<F, Point3<F>, Vector3<F>>::intersect_linear));
-        intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), HalfSpace::<F, Point3<F>, Vector3<F>>::id_static()),
-                            Box::new(HalfSpace::<F, Point3<F>, Vector3<F>>::intersect_linear));
-        intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(), Cylinder::<F, Point3<F>, Vector3<F>>::id_static()),
-                            Box::new(Cylinder::<F, Point3<F>, Vector3<F>>::intersect_linear));
-        intersectors.insert((LinearSpace::<F, Point3<F>, Vector3<F>>::id_static(),
-                     ComposableShape::<F, Point3<F>, Vector3<F>>::id_static()),
-                    Box::new(ComposableShape::<F, Point3<F>, Vector3<F>>::intersect_linear));
+        intersectors.insert((LinearSpace::<Point3, Vector3>::id_static(), Sphere::<Point3, Vector3>::id_static()),
+                            Box::new(Sphere::<Point3, Vector3>::intersect_linear));
+        intersectors.insert((LinearSpace::<Point3, Vector3>::id_static(), Hyperplane::<Point3, Vector3>::id_static()),
+                            Box::new(Hyperplane::<Point3, Vector3>::intersect_linear));
+        intersectors.insert((LinearSpace::<Point3, Vector3>::id_static(), HalfSpace::<Point3, Vector3>::id_static()),
+                            Box::new(HalfSpace::<Point3, Vector3>::intersect_linear));
+        intersectors.insert((LinearSpace::<Point3, Vector3>::id_static(), Cylinder::<Point3, Vector3>::id_static()),
+                            Box::new(Cylinder::<Point3, Vector3>::intersect_linear));
+        intersectors.insert((LinearSpace::<Point3, Vector3>::id_static(),
+                     ComposableShape::<Point3, Vector3>::id_static()),
+                    Box::new(ComposableShape::<Point3, Vector3>::intersect_linear));
 
         Universe3 {
             camera: Arc::new(RwLock::new(camera)),
@@ -65,47 +68,47 @@ impl<F: CustomFloat> Universe3<F> {
     }
 }
 
-impl<F: CustomFloat> Universe<F> for Universe3<F> {
-    type P = Point3<F>;
-    type V = Vector3<F>;
+impl Universe for Universe3 {
+    type P = Point3;
+    type V = Vector3;
 
-    fn camera(&self) -> &RwLock<Box<Camera<F, Point3<F>, Vector3<F>, Universe3<F>>>> {
+    fn camera(&self) -> &RwLock<Box<Camera<Point3, Vector3, Universe3>>> {
         &self.camera
     }
 
-    fn entities_mut(&mut self) -> &mut Vec<Box<Entity3<F>>> {
+    fn entities_mut(&mut self) -> &mut Vec<Box<Entity3>> {
         &mut self.entities
     }
 
-    fn entities(&self) -> &Vec<Box<Entity3<F>>> {
+    fn entities(&self) -> &Vec<Box<Entity3>> {
         &self.entities
     }
 
-    fn set_entities(&mut self, entities: Vec<Box<Entity3<F>>>) {
+    fn set_entities(&mut self, entities: Vec<Box<Entity3>>) {
         self.entities = entities;
     }
 
-    fn intersectors_mut(&mut self) -> &mut GeneralIntersectors<F, Point3<F>, Vector3<F>> {
+    fn intersectors_mut(&mut self) -> &mut GeneralIntersectors<Point3, Vector3> {
         &mut self.intersections
     }
 
-    fn intersectors(&self) -> &GeneralIntersectors<F, Point3<F>, Vector3<F>> {
+    fn intersectors(&self) -> &GeneralIntersectors<Point3, Vector3> {
         &self.intersections
     }
 
-    fn set_intersectors(&mut self, intersections: GeneralIntersectors<F, Point3<F>, Vector3<F>>) {
+    fn set_intersectors(&mut self, intersections: GeneralIntersectors<Point3, Vector3>) {
         self.intersections = intersections;
     }
 
-    fn background_mut(&mut self) -> &mut MappedTexture<F, Self::P, Self::V> {
+    fn background_mut(&mut self) -> &mut MappedTexture<Self::P, Self::V> {
         self.background.deref_mut()
     }
 
-    fn background(&self) -> &MappedTexture<F, Self::P, Self::V> {
+    fn background(&self) -> &MappedTexture<Self::P, Self::V> {
         self.background.deref()
     }
 
-    fn set_background(&mut self, background: Box<MappedTexture<F, Self::P, Self::V>>) {
+    fn set_background(&mut self, background: Box<MappedTexture<Self::P, Self::V>>) {
         self.background = background;
     }
 }

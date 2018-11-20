@@ -1,12 +1,13 @@
+use ::F;
 use std::collections::HashSet;
 use std::time::Instant;
 use std::time::Duration;
-use std::marker::PhantomData;
 use num::One;
 use na;
 use na::Cast;
 use na::Point2;
 use na::Vector2;
+use na::BaseFloat;
 use glium::Surface as GliumSurface;
 use glium::BlitTarget;
 use glium::backend::glutin::Display;
@@ -27,26 +28,24 @@ use glium::uniforms::MagnifySamplerFilter;
 use universe::Environment;
 use util::CustomFloat;
 
-pub struct Simulation<F: CustomFloat> {
+pub struct Simulation {
     events_loop: Option<EventsLoop>,
     debug: bool,
     threads: u32,
-    environment: Box<Environment<F>>,
+    environment: Box<Environment>,
     display: Option<Display>,
     start_instant: Option<Instant>,
     last_updated_instant: Option<Instant>,
     context: SimulationContext,
-    float_precision: PhantomData<F>,
 }
 
-pub struct SimulationBuilder<F: CustomFloat> {
-    environment: Option<Box<Environment<F>>>,
+pub struct SimulationBuilder {
+    environment: Option<Box<Environment>>,
     threads: Option<u32>,
     debug: bool,
-    float_precision: PhantomData<F>,
 }
 
-impl<F: CustomFloat> Simulation<F> {
+impl Simulation {
     pub fn start(mut self) {
         let window_builder = WindowBuilder::new()
             .with_dimensions((1024, 768).into())
@@ -113,8 +112,7 @@ impl<F: CustomFloat> Simulation<F> {
         }
 
         if self.context.debugging {
-            let delta_millis: F = <F as One>::one()
-                / Cast::from((delta * 1000).as_secs() as f64 / 1000.0);
+            let delta_millis: F = 1.0 / ((delta * 1000).as_secs() as f64 / 1000.0) as F;
 
             println!("FPS: {}", delta_millis);
         }
@@ -127,18 +125,17 @@ impl<F: CustomFloat> Simulation<F> {
         result
     }
 
-    pub fn builder() -> SimulationBuilder<F> {
+    pub fn builder() -> SimulationBuilder {
         SimulationBuilder {
             environment: None,
             threads: None,
             debug: false,
-            float_precision: PhantomData,
         }
     }
 }
 
-impl<F: CustomFloat> SimulationBuilder<F> {
-    pub fn environment(mut self, environment: Box<Environment<F>>) -> Self {
+impl SimulationBuilder {
+    pub fn environment(mut self, environment: Box<Environment>) -> Self {
         self.environment = Some(environment);
         self
     }
@@ -153,7 +150,7 @@ impl<F: CustomFloat> SimulationBuilder<F> {
         self
     }
 
-    pub fn build(self) -> Simulation<F> {
+    pub fn build(self) -> Simulation {
         Simulation {
             events_loop: None,
             debug: self.debug,
@@ -163,7 +160,6 @@ impl<F: CustomFloat> SimulationBuilder<F> {
             start_instant: None,
             last_updated_instant: None,
             context: SimulationContext::new(),
-            float_precision: PhantomData,
         }
     }
 }

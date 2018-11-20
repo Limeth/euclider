@@ -46,16 +46,16 @@ use std::io::Read;
 use clap::App;
 use clap::Arg;
 
+#[cfg(feature = "low_precision")]
+pub type F = f32;
+#[cfg(not(feature = "low_precision"))]
+pub type F = f64;
+
 fn main() {
     if cfg!(feature = "low_precision") {
         println!("Running in low floating-point number precision mode.");
-        run::<f32>();
-    } else {
-        run::<f64>();
     }
-}
 
-fn run<F: CustomFloat>() {
     const ARG_SCENE: &str = "SCENE";
     const ARG_DEBUG: &str = "DEBUG";
 
@@ -81,8 +81,8 @@ fn run<F: CustomFloat>() {
         .expect("Unable to find the scene file."));
     let mut json = String::new();
     reader.read_to_string(&mut json).expect("Unable to read the scene file.");
-    let environment: Box<Box<Environment<F>>> = scene::Parser::default::<F>()
-        .parse::<Box<Environment<F>>>(&json)
+    let environment: Box<Box<Environment>> = scene::Parser::default()
+        .parse::<Box<Environment>>(&json)
         .expect("Unable to parse the Environment.");
 
     let simulation = Simulation::builder()

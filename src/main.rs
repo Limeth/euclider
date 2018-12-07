@@ -1,8 +1,3 @@
-#![feature(custom_attribute)]
-#![feature(const_fn)]
-#![feature(concat_idents)]
-#![feature(trace_macros)]
-
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]
 #![cfg_attr(feature="clippy", allow(too_many_arguments))]
@@ -22,6 +17,8 @@ extern crate meval;
 extern crate boolinator;
 extern crate float_cmp;
 extern crate smallvec;
+#[macro_use]
+extern crate mashup;
 #[macro_use]
 extern crate mopa;
 #[macro_use]

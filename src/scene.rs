@@ -1139,7 +1139,14 @@ impl Parser {
                                 stringify!($name)
                             );
                             -> Box<BlendFunction> {
-                                concat_idents!(blend_function_, $name)()
+                                mashup! {
+                                    substitute["blend_function"] = blend_function_ $name;
+                                }
+
+                                substitute! {
+                                    "blend_function"()
+                                }
+                                // concat_idents!(blend_function_, $name)()
                             }
                         }
                     )+
